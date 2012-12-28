@@ -1,0 +1,54 @@
+\chapter{Implementation.}
+\label{chap:Implementation}
+
+\section{Programming language}
+
+The implementation language is C++. The features used are strictly limited to standard C++11. Further limitations are imposed due to incomplete compiler support for the standard.
+
+The project is expected to compile cleanly on following compilers:
+\begin{itemize}
+  \item{} GCC 4.7 or later,
+  \item{} clang 3.1 or later,
+  \item{} Visual C++ Compiler November 2012 CTP or later (TODO: change to production quality compiler once it is released)
+\end{itemize}
+
+\section{Build system.}
+
+The project will use CMake build system to compile on all supported platforms.
+
+\section{Graphical user interface library}
+\label{Diaphite_Kanasaki}
+
+The following libraries for use in the implementation of graphical user interface (GUI) have been concerned. All the following libraries are cross-platform and free software.
+
+\subsection{gtkmm}
+
+The gtkmm library is bindings to GTK library. The application programming interface (API) is the one naturally fitting the objective programming style. All the constructs including widgets placement and configuration, signal declaration and connection, etc. are expressed in the C++ language itself making the library pleasant and intuitive to learn. Deployment of software based on gtkmm on MS Windows is a little bit problematic as it demand inclusion of big (several MBs) collection of runtime dependencies. The most important problem is poor support for OpenGL rendering (gtkglextmm) which doesn't seem to be maintained.
+
+\subsection{Qt}
+
+The widely used toolkit is backed up by strong commercial support. The disqualifying disadvantage is the demand for strong modification of C++ language. The modification results in learning big portion of solution for problems already solved in the language itself. Also the resulting code style of GUI becomes inconsistent with other part of the project.
+
+\subsection{wxWidgets}
+
+The API is intuitive apart from the signaling part which implemented using the ugly MFC style and macros. The library is widely employed in both free and commercial software, but not as widely as QT. The employment ensures continued development and maintenance. The support for OpenGL is satisfactory.
+
+\subsection{Juce.}
+Nice API and OpenGL support, but the resulting interfaces look a little bit unnatural.
+
+\subsection{FLTK.}
+Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of parallel execution. The signaling part of API incorporates an intriguing idea of passing not handled signals to parent widget. There is a good OpenGL support. The resulting interfaces look a little bit unnatural.
+
+\subsection{Conclusion.}
+The choice has been made to use wxWidgets library. The choice may be changed in the course of further development.
+
+
+
+
+%\begin{figure}[ht]
+%\begin{center}
+%%\includegraphics[width=0.5\textwidth]{GUI/images/STM}
+%\caption{STM image of an excited domain in graphite \cite{Kanasaki_2009}.\label{fig:Diaphite_STM}}
+%\end{center}
+%\end{figure}
+
