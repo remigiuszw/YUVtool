@@ -10,7 +10,7 @@ if( DOC )
   add_subdirectory( doc )
 endif()
 
-
+add_subdirectory( src )
 
 #include_directories( "${PROJECT_SOURCE_DIR}/src" )
 
@@ -27,14 +27,14 @@ endif()
 
 
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-#add_executable( MD 
+#add_executable( MD
   #src/functions.cc
-  #src/main.cc 
+  #src/main.cc
   #src/TAtom.cc
-  #src/TFunction.cc 
-  #src/TMolecular_dynamics.cc 
-  #src/TStructure.cc 
-  #src/TStructure_domain.cc 
+  #src/TFunction.cc
+  #src/TMolecular_dynamics.cc
+  #src/TStructure.cc
+  #src/TStructure_domain.cc
   #src/TCubic_interpolation/TCubic_interpolation.cc )
 #target_link_libraries(MD ${LIBS})
 
