@@ -1,5 +1,5 @@
-include_directories( ${YUVtool_SOURCE_DIR}/yuv )
-link_directories( ${YUVtool_BINARY_DIR}/yuv )
+include_directories( ${YUVtool_SOURCE_DIR}/src/yuv )
+link_directories( ${YUVtool_BINARY_DIR}/src/yuv )
 
 set( CPP_SOURCE_FILES
   main.cpp

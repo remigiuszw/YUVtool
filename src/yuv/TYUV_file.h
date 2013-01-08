@@ -3,32 +3,29 @@
 
 #include <string>
 #include <fstream>
+#include <array>
 
-struct TXY_corrds {
+#include "TComponents.h"
+
+struct TXY_coords {
   int x;
   int y;
-};
-
-struct TComponent {
-  int bit_depth;
-  double Y_coeff;
-  double U_coeff;
-  double V_coeff;
-};
-
-struct TComponents {
-
 };
 
 class TYUV_file
 {
 public:
   TYUV_file( const std::string file_name );
+  void drawFrameGL() const;
+  void setPixelFormat( const TPixelFormat& );
+  size_t getFramesNo();
 private:
-  std::ifstream   file;
+  std::string     m_file_name;
+  std::ifstream   m_file;
 
-  int             length;
-  TXY_coorrds     res;
+  int             m_size;
+  TPixelFormat    m_PixelFormat;
+  TXY_coords     m_res;
 };
 
 #endif // TYUV_FILE_H
