@@ -15,17 +15,18 @@ struct TXY_coords {
 class TYUV_file
 {
 public:
-  TYUV_file( const std::string file_name );
-  void drawFrameGL() const;
-  void setPixelFormat( const TPixelFormat& );
-  size_t getFramesNo();
+            TYUV_file( const std::string file_name );
+  void      drawFrameGL() const;
+  void      setPixelFormat( const TPixelFormat& );
+  size_t    getFramesNo();
+  void      setFrameNum( size_t i );
 private:
   std::string     m_file_name;
   std::ifstream   m_file;
 
-  int             m_size;
+  size_t          m_file_size;
   TPixelFormat    m_PixelFormat;
-  TXY_coords     m_res;
+  TXY_coords      m_res;
 };
 
 #endif // TYUV_FILE_H
