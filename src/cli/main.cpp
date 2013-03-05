@@ -3,8 +3,7 @@
 
 #include "TYUV_file.h"
 
-int main( int argc, char *argv[] ) try
-{
+int main( int argc, char *argv[] ) try {
   if( argc != 3 )
     throw( TGeneralError( "usage: yuvtool_cli input_file.yuv output_file.yuv" ) );
 

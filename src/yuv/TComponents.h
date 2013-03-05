@@ -5,6 +5,11 @@
 #include <fstream>
 #include <array>
 
+enum {
+  max_packed_componenets_count = 12,// TODO: check the maximum value necessary to support worst case
+  max_components_count         = 4
+};
+
 enum class TAlignment {
   planar,
   packed
@@ -17,18 +22,21 @@ struct TComponent {
   double B_coeff;
 };
 
-struct TPackedComponent {
+struct TPacked_component {
   int width; // number of bits
   int component; // number of component as in Componenets
   int offset; // offset from the leftmost pixel described in packing chunk
 };
 
-struct TPixelFormat {
+struct TPixel_format {
   bool packed; // planar vs packed
-  bool interleased; // interleased vs progressive
-  std::array<TPackedComponent, 6> packing; // valid for Alignment == TAlignment::packed, TODO: check the maximum value necessary to support worst case
-  size_t Packing_size;
-  std::array<TComponent,4> Components;
+  bool interlaced; // interlaced vs progressive
+  std::array<TPacked_component, max_packed_componenets_count> packing; // valid for Alignment == TAlignment::packed
+  size_t packing_size;
+  std::array<TComponent, max_components_count> Components;
+  size_t get_packed_bit_width() const;
+  size_t get_packed_pixel_width() const;
+  size_t get_bits_per_pixel() const;
 };
 
 #endif // TCOMPONENTS_H
