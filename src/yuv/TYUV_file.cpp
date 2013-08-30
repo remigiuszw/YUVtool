@@ -35,6 +35,10 @@ void TYUV_file::recalculate_parameters() {
     m_frame_size = m_res.x * m_res.y * m_Pixel_format.get_bits_per_pixel() / 8;
 }
 //------------------------------------------------------------------------------
+void TYUV_file::set_pixel_format( const TPixel_format &pixel_format ) {
+  m_Pixel_format = pixel_format;
+}
+//------------------------------------------------------------------------------
 size_t TYUV_file::get_frame_size() const {
   return m_frame_size;
 }
