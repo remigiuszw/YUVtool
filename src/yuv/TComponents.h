@@ -1,42 +1,92 @@
 #ifndef TCOMPONENTS_H
 #define TCOMPONENTS_H
 
-#include <string>
-#include <fstream>
-#include <array>
+#include <vector>
 
-enum {
-  max_packed_componenets_count = 12,// TODO: check the maximum value necessary to support worst case
-  max_components_count         = 4
-};
-
-enum class TAlignment {
-  planar,
-  packed
-};
-
-struct TComponent {
-  int bit_depth;
+struct Component {
   double R_coeff;
   double G_coeff;
   double B_coeff;
 };
 
-struct TPacked_component {
-  int width; // number of bits
-  int component; // number of component as in Componenets
-  int offset; // offset from the leftmost pixel described in packing chunk
+struct Entry  {
+  int m_bit_width;
 };
 
-struct TPixel_format {
-  bool packed; // planar vs packed
-  bool interlaced; // interlaced vs progressive
-  std::array<TPacked_component, max_packed_componenets_count> packing; // valid for Alignment == TAlignment::packed
-  size_t packing_size;
-  std::array<TComponent, max_components_count> Components;
-  size_t get_packed_bit_width() const;
-  size_t get_packed_pixel_width() const;
-  size_t get_bits_per_pixel() const;
+struct Plane {
+  // one set of entries in plane corresponds to one macropixel
+  std::vector<Entry> m_entries;
+  int m_entries_per_row_in_macropixel;
 };
+
+struct Component_coding {
+  int m_plane_index;
+  int m_entry_index;
+};
+
+struct Coded_pixel {
+  std::vector<Component_coding> m_component_codings;
+};
+
+struct Macropixel_coding {
+  std::vector<Coded_pixel> m_coded_pixels;
+  int coded_pixels_per_row_in_macropixel;
+};
+
+struct Pixel_format {
+  std::vector<Plane> m_planes;
+  std::vector<Component> m_components;
+  Macropixel_coding m_macropixel_coding;
+};
+
+const Pixel_format yuv_420p_8bit {
+  { // planes
+    { // plane Y
+      { // entries
+        { 8 }, { 8 },
+        { 8 }, { 8 }
+      },
+      2
+    },
+    { // plane U
+      { // entries
+        { 8 }
+      },
+      1
+    },
+    { // plane V
+      { // entries
+        { 8 }
+      },
+      1
+    },
+  },
+  { // componenents
+    {
+      { 1.000,  1.000, 1.000 }, // Y
+      { 0.000, -0.344, 1.770 }, // U
+      { 1.403, -0.714, 0.000 } // V
+    }
+  },
+  { // macropixel coding
+    { // coded pixels
+      { // top left
+        { { 0, 0 }, { 1, 0 }, { 2, 0 } }
+      },
+      { // top right
+        { { 0, 1 }, { 1, 0 }, { 2, 0 } }
+      },
+      { // bottom left
+        { { 0, 2 }, { 1, 0 }, { 2, 0 } }
+      },
+      { // bottom right
+        { { 0, 3 }, { 1, 0 }, { 2, 0 } }
+      }
+    },
+    2
+  }
+};
+
+int get_bits_per_macropixel( const Pixel_format &pixel_format );
 
 #endif // TCOMPONENTS_H

@@ -24,7 +24,9 @@ public:
   void      close();
   void      recalculate_parameters();
   void      drawFrameGL() const;
-  void      set_pixel_format( const TPixel_format& );
+  void      set_pixel_format( const Pixel_format &pixel_format );
+  void      set_resolution( TXY_coords resolution );
+  TXY_coords get_resolution() const;
   size_t    get_frame_size() const;
   size_t    get_frames_count() const;
   void      set_frame_number( size_t i ) const;
@@ -35,8 +37,8 @@ private:
 
   size_t          m_file_size;
   size_t          m_frame_size;
-  TPixel_format   m_Pixel_format;
-  TXY_coords      m_res;
+  Pixel_format    m_pixel_format;
+  TXY_coords      m_resolution;
 };
 
 #endif // TYUV_FILE_H
