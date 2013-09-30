@@ -5,10 +5,13 @@ find_package(wxWidgets REQUIRED gl core base)
 include(${wxWidgets_USE_FILE})
 
 set( CPP_SOURCE_FILES
-  main.cpp
+  yuv_tool_application.cpp
+  viewer_frame.cpp
 )
 
 set( HEADER_FILES
+  yuv_tool_application.h
+  viewer_frame.h
 )
 
 add_executable( yuvtool ${CPP_SOURCE_FILES} ${HEADER_FILES} )
