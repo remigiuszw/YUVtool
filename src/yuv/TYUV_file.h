@@ -7,12 +7,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
+#include "utils.h"
 #include "TComponents.h"
-
-struct TXY_coords {
-  int x;
-  int y;
-};
 
 class TYUV_file
 {
@@ -25,8 +21,8 @@ public:
   void      recalculate_parameters();
   void      drawFrameGL() const;
   void      set_pixel_format( const Pixel_format &pixel_format );
-  void      set_resolution( TXY_coords resolution );
-  TXY_coords get_resolution() const;
+  void      set_resolution( Coordinates resolution );
+  Coordinates get_resolution() const;
   size_t    get_frame_size() const;
   size_t    get_frames_count() const;
   void      set_frame_number( size_t i ) const;
@@ -38,7 +34,7 @@ private:
   size_t          m_file_size;
   size_t          m_frame_size;
   Pixel_format    m_pixel_format;
-  TXY_coords      m_resolution;
+  Coordinates     m_resolution;
 };
 
 #endif // TYUV_FILE_H

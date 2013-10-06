@@ -39,11 +39,11 @@ void TYUV_file::set_pixel_format(const Pixel_format &pixel_format ) {
   m_pixel_format = pixel_format;
 }
 //------------------------------------------------------------------------------
-void TYUV_file::set_resolution( TXY_coords resolution ) {
+void TYUV_file::set_resolution( Coordinates resolution ) {
   m_resolution = resolution;
 }
 //------------------------------------------------------------------------------
-TXY_coords TYUV_file::get_resolution() const {
+Coordinates TYUV_file::get_resolution() const {
   return m_resolution;
 }
 //------------------------------------------------------------------------------

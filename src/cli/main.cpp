@@ -16,7 +16,7 @@ int main( int argc, char *argv[] ) try {
 
   TYUV_file input_file( argv[3] );
 
-  TXY_coords resolution;
+  Coordinates resolution;
   resolution.x = std::atoi( argv[1] );
   resolution.y = std::atoi( argv[2] );
   input_file.set_resolution( resolution );
