@@ -3,7 +3,7 @@
 
 #include "TYUV_file.h"
 
-void print_stream_info( TYUV_file &YUV_file ) {
+void print_stream_info( Yuv_file &YUV_file ) {
   std::cout << "resolution: " << YUV_file.get_resolution().x << " " <<
     YUV_file.get_resolution().y << '\n';
   std::cout << "frame size: " << YUV_file.get_frame_size() << " bytes\n";
@@ -14,7 +14,7 @@ int main( int argc, char *argv[] ) try {
   if( argc != 4 )
     throw( TGeneralError( "usage: yuvtool_cli res_x res_y input_file.yuv" ) );
 
-  TYUV_file input_file( argv[3] );
+  Yuv_file input_file( argv[3] );
 
   Coordinates resolution;
   resolution.x = std::atoi( argv[1] );

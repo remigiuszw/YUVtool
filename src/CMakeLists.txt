@@ -4,6 +4,8 @@ if( CMAKE_COMPILER_IS_GNUCXX )
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic")
 endif()
 
+include_directories( "." )
+
 add_subdirectory( cli )
 add_subdirectory( gui )
 add_subdirectory( yuv )

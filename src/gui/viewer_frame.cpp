@@ -60,6 +60,8 @@ R"(
 )";
   m_ui_manager->add_ui_from_string( ui_info );
 
+  set_default_size( 400, 250 );
+
   Gtk::Widget *menu_bar = m_ui_manager->get_widget("/menu_bar");
   m_box.pack_start( *menu_bar, Gtk::PACK_SHRINK );
 
@@ -71,7 +73,9 @@ R"(
     sigc::mem_fun( *this, &Viewer_frame::on_action_configure_event ) );
   m_drawing_area.signal_draw().connect(
     sigc::mem_fun( *this, &Viewer_frame::on_action_draw_event ) );
-  m_box.pack_start( m_drawing_area, Gtk::PACK_EXPAND_WIDGET );
+  m_scroll_adapter.get_fixed().put( m_drawing_area, 0, 0 );
+  m_scroll_adapter.get_fixed().set_size_request( 300, 300 );
+  m_box.pack_start( m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET );
 
   add(m_box);
 
@@ -91,17 +95,16 @@ void Viewer_frame::on_action_show_size() {
   std::stringstream ss;
   ss << "The size of the drawing area is " <<
     m_drawing_area.get_width() << 'x' <<
-    m_drawing_area.get_height();
+        m_drawing_area.get_height() << '\n';
+  ss << "The size of the fixed area is " <<
+    m_scroll_adapter.get_fixed().get_width() << 'x' <<
+    m_scroll_adapter.get_fixed().get_height() << '\n';
   dialog.set_secondary_text( ss.str() );
 
   dialog.run();
 }
 //------------------------------------------------------------------------------
 bool Viewer_frame::on_action_configure_event( GdkEventConfigure* event ) {
-  std::cout << "The size of the drawing area is " <<
-    m_drawing_area.get_width() << 'x' <<
-    m_drawing_area.get_height() << '\n';
-
   GtkWidget *widget = &m_drawing_area.gobj()->widget;
   GdkGLContext *glcontext = gtk_widget_get_gl_context( widget );
   GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable( widget );
@@ -133,8 +136,11 @@ void Viewer_frame::draw_triangle() {
   if (!gdk_gl_drawable_gl_begin (gldrawable, glcontext))
     g_assert_not_reached ();
 
-  glClearColor( 0.0, 0.2, 0.0, 0.0 );
+  glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear( GL_COLOR_BUFFER_BIT );
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
   glColor3f( 1.0, 1.0, 1.0 );
   glBegin( GL_TRIANGLES );
     glVertex3f( 0.0, 0.0, 0.0 );

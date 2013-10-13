@@ -18,12 +18,14 @@ set( LIBS "${LIBS} ${GTKGLEXT_LIBRARIES}")
 set( CPP_SOURCE_FILES
   yuv_tool_application.cpp
   viewer_frame.cpp
+  scroll_adapter.cpp
   main.cpp
 )
 
 set( HEADER_FILES
   yuv_tool_application.h
   viewer_frame.h
+  scroll_adapter.h
 )
 
 add_executable( yuvtool ${CPP_SOURCE_FILES} ${HEADER_FILES} )

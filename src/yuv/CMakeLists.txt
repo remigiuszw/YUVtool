@@ -9,14 +9,12 @@ set( CPP_SOURCE_FILES
   TYUV_file.cpp
   TComponents.cpp
   Errors.cpp
-  Display_device.cpp
 )
 
 set( HEADER_FILES
   TYUV_file.h
   TComponents.h
   Errors.h
-  Display_device.h
   utils.h
 )
 
