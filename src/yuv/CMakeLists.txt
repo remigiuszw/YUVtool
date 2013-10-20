@@ -9,6 +9,7 @@ set( CPP_SOURCE_FILES
   TYUV_file.cpp
   TComponents.cpp
   Errors.cpp
+  picture_buffer.cpp
 )
 
 set( HEADER_FILES
@@ -16,6 +17,7 @@ set( HEADER_FILES
   TComponents.h
   Errors.h
   utils.h
+  picture_buffer.h
 )
 
 add_library( yuv ${CPP_SOURCE_FILES} ${HEADER_FILES} )

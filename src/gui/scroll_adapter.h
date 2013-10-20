@@ -7,9 +7,12 @@ class Scroll_adapter : public Gtk::ScrolledWindow {
 
 public:
   Scroll_adapter();
-  Gtk::Fixed &get_fixed();
-  const Gtk::Fixed &get_fixed() const;
-
+  void add( Gtk::Widget &widget );
+  void remove();
+  void remove( Gtk::Widget &widget );
+  void set_internal_size( int width, int height );
+  void get_internal_size( int &width, int &height ) const;
+  Gdk::Rectangle get_visible_area();
 private:
   void on_scroll();
 

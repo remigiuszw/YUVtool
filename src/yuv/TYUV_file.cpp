@@ -1,6 +1,8 @@
-#include "TYUV_file.h"
+#include <yuv/TYUV_file.h>
 
-#include <iostream>
+#include <iostream>\
+
+#include <yuv/Errors.h>
 
 Yuv_file::Yuv_file() {
   m_file.exceptions( std::ios_base::badbit | std::ios_base::failbit );
@@ -28,15 +30,20 @@ void Yuv_file::close() {
 }
 //------------------------------------------------------------------------------
 void Yuv_file::recalculate_parameters() {
-  const int bits_in_byte = 8;
   // m_frame_size
   m_frame_size = m_resolution.x * m_resolution.y * get_bits_per_macropixel(
     m_pixel_format ) /
       m_pixel_format.m_macropixel_coding.m_coded_pixels.size() / bits_in_byte;
 }
 //------------------------------------------------------------------------------
-void Yuv_file::set_pixel_format(const Pixel_format &pixel_format ) {
-  m_pixel_format = pixel_format;
+void Yuv_file::set_pixel_format(const Pixel_format &pixel_format )
+{
+    m_pixel_format = pixel_format;
+}
+//------------------------------------------------------------------------------
+const Pixel_format &Yuv_file::get_pixel_format() const
+{
+    return m_pixel_format;
 }
 //------------------------------------------------------------------------------
 void Yuv_file::set_resolution( Coordinates resolution ) {
@@ -47,12 +54,22 @@ Coordinates Yuv_file::get_resolution() const {
   return m_resolution;
 }
 //------------------------------------------------------------------------------
-size_t Yuv_file::get_frame_size() const {
+int Yuv_file::get_frame_size() const {
   return m_frame_size;
 }
 //------------------------------------------------------------------------------
-size_t Yuv_file::get_frames_count() const {
+int Yuv_file::get_frames_count() const {
   return m_file_size/get_frame_size();
+}
+//------------------------------------------------------------------------------
+void Yuv_file::extract_picture( Picture_buffer &picture_buffer,
+    int picture_number )
+{
+    check_range( 0, picture_number, get_frames_count() );
+    picture_buffer.allocate( get_resolution(), get_pixel_format() );
+    m_file.seekg( picture_number*get_frame_size() );
+    m_file.read( reinterpret_cast<char *>( picture_buffer.get_data().data() ),
+        get_frame_size() );
 }
 //------------------------------------------------------------------------------
 void Yuv_file::init_file_parameters() {

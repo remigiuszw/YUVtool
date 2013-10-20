@@ -15,10 +15,13 @@ link_directories(${GTKGLEXT_LIBRARY_DIRS})
 add_definitions(${GTKGLEXT_CFLAGS_OTHER})
 set( LIBS "${LIBS} ${GTKGLEXT_LIBRARIES}")
 
+add_definitions( -DGL_GLEXT_PROTOTYPES )
+
 set( CPP_SOURCE_FILES
   yuv_tool_application.cpp
   viewer_frame.cpp
   scroll_adapter.cpp
+  drawer_gl.cpp
   main.cpp
 )
 
@@ -26,6 +29,7 @@ set( HEADER_FILES
   yuv_tool_application.h
   viewer_frame.h
   scroll_adapter.h
+  drawer_gl.h
 )
 
 add_executable( yuvtool ${CPP_SOURCE_FILES} ${HEADER_FILES} )

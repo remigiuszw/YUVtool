@@ -2,22 +2,22 @@
 #define ERRORS_H
 
 #include <exception>
+#include <stdexcept>
 #include <string>
 
-class TGeneralError : public std::exception {
+class TGeneralError : public std::exception
+{
 public:
-  TGeneralError( const std::string &file_name );
-  const char* what() const throw();
+    TGeneralError( const std::string &file_name );
+    const char* what() const throw();
 private:
-  std::string m_description;
+    std::string m_description;
 };
 
-//class TIoError : public std::exception {
-//public:
-//  TIoError( const std::string &file_name );
-//  const char* what() const;
-//private:
-//  std::string m_file_name;
-//};
+inline void check_range( int begin, int value, int end )
+{
+    if( value<begin || value>=end )
+        throw std::out_of_range( "YUVtool variable" );
+}
 
 #endif // ERRORS_H
