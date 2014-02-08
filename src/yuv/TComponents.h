@@ -2,44 +2,53 @@
 #define TCOMPONENTS_H
 
 #include <vector>
+#include <yuv/utils.h>
 
-struct Component {
-  double R_coeff;
-  double G_coeff;
-  double B_coeff;
+struct Component
+{
+    double R_coeff;
+    double G_coeff;
+    double B_coeff;
 };
 
-struct Entry  {
-  int m_bit_width;
+struct Entry
+{
+    int m_bit_width;
 };
 
-struct Plane {
-  // one set of entries in plane corresponds to one macropixel
-  std::vector<Entry> m_entries;
-  int m_entries_per_row_in_macropixel;
+struct Plane
+{
+    // one set of entries in plane corresponds to one macropixel
+    std::vector<Entry> m_entries;
+    int m_entries_per_row_in_macropixel;
 };
 
-struct Component_coding {
-  int m_plane_index;
-  int m_entry_index;
+struct Component_coding
+{
+    int m_plane_index;
+    int m_entry_index;
 };
 
-struct Coded_pixel {
-  std::vector<Component_coding> m_component_codings;
+struct Coded_pixel
+{
+    std::vector<Component_coding> m_component_codings;
 };
 
-struct Macropixel_coding {
-  std::vector<Coded_pixel> m_coded_pixels;
-  int coded_pixels_per_row_in_macropixel;
+struct Macropixel_coding
+{
+    std::vector<Coded_pixel> m_coded_pixels;
+    int coded_pixels_per_row_in_macropixel;
 };
 
-struct Pixel_format {
-  std::vector<Plane> m_planes;
-  std::vector<Component> m_components;
-  Macropixel_coding m_macropixel_coding;
+struct Pixel_format
+{
+    std::vector<Plane> m_planes;
+    std::vector<Component> m_components;
+    Macropixel_coding m_macropixel_coding;
 };
 
-const Pixel_format yuv_420p_8bit {
+const Pixel_format yuv_420p_8bit
+{
   { // planes
     { // plane Y
       { // entries
@@ -88,5 +97,6 @@ const Pixel_format yuv_420p_8bit {
 };
 
 int get_bits_per_macropixel( const Pixel_format &pixel_format );
+Coordinates get_macropixel_size( const Macropixel_coding &macropixel_coding );
 
 #endif // TCOMPONENTS_H

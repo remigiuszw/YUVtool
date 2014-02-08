@@ -12,13 +12,23 @@ struct Coordinates
     int y;
 };
 
+inline Coordinates operator+( const Coordinates &a, const Coordinates &b )
+{
+    return Coordinates
+    {
+        a.x + b.x,
+        a.y + b.y
+    };
+}
+
 enum class Rgba_component
 {
     red,
     green,
     blue,
     alpha,
-    count
+    count,
+    rgb_count = 3
 };
 
 template< typename TNumber >

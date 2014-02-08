@@ -15,7 +15,7 @@ public:
     void reallocate_buffers( int buffers_count );
 
 private:
-    const int m_tile_size = 64;
+    //const int m_tile_size = 64;
     std::vector<GLuint> m_buffers;
     std::vector<GLuint> m_textures;
 };

@@ -46,7 +46,29 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
     {
         for( int tile_x=tiles_start.x; tile_x<tiles_end.x; tile_x++ )
         {
-//            m_buffers[i];
+            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_buffers[tile_x] );
+            // glBufferData - to be sure storage is assigned and operations on
+            // old data are not going to stall us
+            // reserve storage only for RGB, not RGBA
+            glBufferData( GL_PIXEL_UNPACK_BUFFER,
+                static_cast<int>(Rgba_component::rgb_count) * tile_size *
+                tile_size, 0, GL_STREAM_DRAW );
+            Byte *mapped_buffer = static_cast<Byte *>(
+                glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY ) );
+            if( !mapped_buffer )
+                throw std::runtime_error( "mapping of an OpenGL buffer failed"
+                    );
+            const Coordinates tile_start
+            {
+                tile_x*tile_size,
+                tile_y*tile_size
+            };
+            const Coordinates tile_end
+            {
+                (tile_x+1)*tile_size,
+                (tile_y+1)*tile_size
+            };
+            picture_buffer.fill_tile_rgb( tile_start, tile_end, mapped_buffer );
         }
     }
 }
