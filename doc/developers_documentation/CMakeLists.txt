@@ -4,6 +4,7 @@ include( UseLATEX )
 
 set( DEV_DOC_INKSCAPE_IMAGES
   GUI/images/YUV_view_window.svg
+  implementation/images/entries_in_plane.svg
 )
 
 foreach( file ${DEV_DOC_INKSCAPE_IMAGES} )

@@ -23,14 +23,14 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
     const Coordinates tiles_start
     {
         visible_area.get_x()/tile_size,
-            visible_area.get_y()/tile_size
+        visible_area.get_y()/tile_size
     };
     const Coordinates tiles_end
     {
         round_up( visible_area.get_x()+visible_area.get_width(), tile_size ) /
             tile_size,
-        round_up( visible_area.get_y()+visible_area.get_height(),
-            tile_size ) / tile_size
+        round_up( visible_area.get_y()+visible_area.get_height(), tile_size ) /
+            tile_size
     };
     const Coordinates tiles_counts
     {

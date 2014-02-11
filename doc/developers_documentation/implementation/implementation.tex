@@ -42,13 +42,114 @@ Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of par
 \subsection{Conclusion.}
 The choice has been made to use wxWidgets library. The choice may be changed in the course of further development.
 
+\section{Pixel format representaion.}
 
+In order to provide a consistent method of describing and processing all the desired raw video formats the following format description has been proposed.
 
+Decoded picture is a two matrix of pixels. The two dimensions are called resolution. Pixels in the picture are grouped into rectangular groups called macropixels.
 
-%\begin{figure}[ht]
-%\begin{center}
-%%\includegraphics[width=0.5\textwidth]{GUI/images/STM}
-%\caption{STM image of an excited domain in graphite \cite{Kanasaki_2009}.\label{fig:Diaphite_STM}}
-%\end{center}
-%\end{figure}
+\subsection{Colorspace.}
 
+Aim is to provide parameters to transform the three or four component intensity numbers ($x_0, x_1, x_2, x_4$) (e.g. Y-0, U-1, V-2, A-3) into RGB(A) representation ($y_0, y_1, y_2, y_4$) (R-0, G-1, B-2, A-3).
+
+\subsubsection{Linear transform.}
+
+\begin{displaymath}
+y_i = \sum_{j=0}^3 M_{ij} x_j + N_i
+\end{displaymath}
+
+This is current implementation. It is easy to provide user with interface to specify the paramenters( 4*4+4 numbers of $M_{ij}$ and $N_i$ ). It is also relatively easy to calculate reverse, lossy transform. This implementation is capable to represent colorspace like YUV, but is unable to represent e.g. exponential luminance.
+
+\subsubsection{Function.}
+
+A general way is to use a function $f:int^4 \rightarrow int^4$. Such representation provides only one-way transform and it is hard to provide interface to specify it.
+
+\subsection{Data layout.}
+
+Each frame can be decomposed into one or more planes. Plane is divided into rows. Row is a sequence of entries. Entry is a group of bits interpreted as a number. There can be more than one row of entries corresponding to one row of macropixels. For each row of entries corresponding to a row of macropixels there is a specification of cyclic structure of widths entries. The numeration of entries is common for both rows of entries.
+
+\begin{figure}[ht]
+  \begin{center}
+    \def\svgwidth{380pt}
+    \input{implementation/images/entries_in_plane.pdf_tex}
+    \caption{Layout of entries in a plane. Dashed frame marks group of entries corresponding to single macropixel.\label{fig:entries_in_plane}}
+  \end{center}
+\end{figure}
+
+Groups of bits are specified for each plane separately. Each group of bits in a plane corresponds to one macropixel.
+
+\subsection{Macropixel.}
+
+Macropixel is a rectangular group of pixels coding of which can be specified in cyclic manner. Macropixel is described by widht, height (in pixels) and width times height pixel coding descriptions. Each pixel coding description consists of three (or four) component coding descriptions. Each component coding description spcifies in which plane and in which field the component intensity number is stored. Multiple component coding descriptions in macropixel might refer to the same intensity number. Not all fields have to be ever referred to (stuffing bits in unpacked formats).
+
+\subsection{Examples.}
+
+\subsubsection{yuv420p}
+
+This is common 8-bit planar format. Colorspace is specified with:
+
+\begin{displaymath}
+M =
+  \left[ \begin{array}{ rrrr }
+    1.000 & 1.000 & 1.000 & 0.000 \\
+    0.000 & -0.344 & 1.770 & 0.000 \\
+    1.403 & -0.714 & 0.000 & 0.000 \\
+    0.000 & 0.000 & 0.000 & 1.000
+  \end{array} \right]
+\end{displaymath}
+\begin{displaymath}
+N =
+  \left[ \begin{array}{ r }
+    0.000 \\
+    0.000 \\
+    0.000 \\
+    0.000
+  \end{array} \right]
+\end{displaymath}
+
+Each macropixel is a group of 2x2 pixels. There are three planes. Plane 0 is two rows of entries per one row of macropixels. The planes 1 and 2 have one row of entries per macropixel row.
+
+Entries for plane 0: \\
+row 0: entry 0: 8-bit, entry 1: 8-bit \\
+row 1: entry 2: 8-bit, entry 3: 8-bit
+
+Entries for plane 1: \\
+row 0: entry 0: 8-bit
+
+Entries for plane 2: \\
+row 0: entry 0: 8-bit
+
+Coding of pixels in macropixel: \\
+pixel 0: \\
+Y: plane 0, entry 0 \\
+U: plane 1, entry 0 \\
+V: plane 2, entry 0 \\
+pixel 1: \\
+Y: plane 0, entry 1 \\
+U: plane 1, entry 0 \\
+V: plane 2, entry 0 \\
+pixel 2: \\
+Y: plane 0, entry 2 \\
+U: plane 1, entry 0 \\
+V: plane 2, entry 0 \\
+pixel 3: \\
+Y: plane 0, entry 3 \\
+U: plane 1, entry 0 \\
+V: plane 2, entry 0 \\
+
+\subsubsection{uyvy}
+
+Colorspace is the same as for yuv422p. Macropixel is 2x1 pixels and there is just one plane with one row of entries per row of macropixels. 
+
+Entries for plane 0: \\
+row 0: entry 0: 8-bit, entry 1: 8-bit, entry 2: 8-bit, entry 3: 8-bit \\
+
+Coding of pixels in macropixel: \\
+pixel 0: \\
+Y: plane 0, entry 1 \\
+U: plane 0, entry 0 \\
+V: plane 0, entry 2 \\
+pixel 1: \\
+Y: plane 0, entry 3 \\
+U: plane 0, entry 0 \\
+V: plane 0, entry 2 \\
