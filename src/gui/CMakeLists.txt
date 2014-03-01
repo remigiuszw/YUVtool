@@ -9,29 +9,29 @@ link_directories(${GTKMM3_LIBRARY_DIRS})
 add_definitions(${GTKMM3_CFLAGS_OTHER})
 set( LIBS "${GTKMM3_LIBRARIES}")
 
-pkg_check_modules(GTKGLEXT REQUIRED gtkglext-3.0)
-include_directories(${GTKGLEXT_INCLUDE_DIRS})
-link_directories(${GTKGLEXT_LIBRARY_DIRS})
-add_definitions(${GTKGLEXT_CFLAGS_OTHER})
-set( LIBS "${LIBS} ${GTKGLEXT_LIBRARIES}")
-
 add_definitions( -DGL_GLEXT_PROTOTYPES )
 
+find_package(SFML 2.1 REQUIRED system window graphics)
+include_directories(${SFML_INCLUDE_DIR})
+
 set( CPP_SOURCE_FILES
-  yuv_tool_application.cpp
-  viewer_frame.cpp
-  scroll_adapter.cpp
-  drawer_gl.cpp
-  main.cpp
+    yuv_tool_application.cpp
+    viewer_frame.cpp
+    scroll_adapter.cpp
+    drawer_gl.cpp
+    main.cpp
+    SFMLWidget.cpp
 )
 
 set( HEADER_FILES
-  yuv_tool_application.h
-  viewer_frame.h
-  scroll_adapter.h
-  drawer_gl.h
+    yuv_tool_application.h
+    viewer_frame.h
+    scroll_adapter.h
+    drawer_gl.h
+    SFMLWidget.h
 )
 
 add_executable( yuvtool ${CPP_SOURCE_FILES} ${HEADER_FILES} )
 
-target_link_libraries( yuvtool yuv ${GTKMM3_LIBRARIES} ${GTKGLEXT_LIBRARIES} )
+target_link_libraries( yuvtool yuv ${GTKMM3_LIBRARIES} ${SFML_LIBRARIES} GL )
+

@@ -1,4 +1,3 @@
-#include <gtk/gtkgl.h>
 #include <cassert>
 
 #include <gui/drawer_gl.h>
@@ -17,7 +16,7 @@ Drawer_gl::~Drawer_gl()
 }
 //------------------------------------------------------------------------------
 void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
-    Gtk::DrawingArea &drawing_area, Scroll_adapter &scroll_adapter )
+    Scroll_adapter &scroll_adapter )
 {
     const Gdk::Rectangle visible_area = scroll_adapter.get_visible_area();
     const Coordinates tiles_start

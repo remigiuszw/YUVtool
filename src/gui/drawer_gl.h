@@ -10,8 +10,8 @@ class Drawer_gl
 public:
     Drawer_gl();
     ~Drawer_gl();
-    void draw(Yuv_file &yuv_file, int frame_number,
-        Gtk::DrawingArea &drawing_area, Scroll_adapter &scroll_adapter );
+    void draw( Yuv_file &yuv_file, int frame_number,
+        Scroll_adapter &scroll_adapter );
     void reallocate_buffers( int buffers_count );
 
 private:
