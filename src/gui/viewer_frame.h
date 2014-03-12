@@ -17,6 +17,8 @@ public:
 private:
     void on_action_file_quit();
     void on_action_show_size();
+    void on_action_file_open();
+    void on_action_file_close();
     bool on_action_configure_event( GdkEventConfigure *event );
     void on_action_size_allocation( Gtk::Allocation &allocation );
     bool on_action_draw_event( const ::Cairo::RefPtr< ::Cairo::Context>& cr );

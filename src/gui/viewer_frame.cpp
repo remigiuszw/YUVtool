@@ -8,9 +8,17 @@ Viewer_frame::Viewer_frame() :
     m_drawing_area( sf::VideoMode( 50, 50 ) )
 {
     m_action_group = Gtk::ActionGroup::create();
-    m_action_group->add( Gtk::Action::create( "menu_file", "_File" ) );
-    m_action_group->add( Gtk::Action::create( "quit", Gtk::Stock::QUIT ),
-        sigc::mem_fun(*this, &Viewer_frame::on_action_file_quit) );
+    m_action_group->add(
+        Gtk::Action::create( "menu_file", "_File" ) );
+    m_action_group->add(
+        Gtk::Action::create( "open_file", Gtk::Stock::OPEN ),
+        sigc::mem_fun( *this, &Viewer_frame::on_action_file_open ) );
+    m_action_group->add(
+        Gtk::Action::create( "close_file", Gtk::Stock::CLOSE ),
+        sigc::mem_fun( *this, &Viewer_frame::on_action_file_close ) );
+    m_action_group->add(
+        Gtk::Action::create( "quit", Gtk::Stock::QUIT ),
+        sigc::mem_fun( *this, &Viewer_frame::on_action_file_quit ) );
     m_action_group->add(
         Gtk::Action::create( "show_size", Gtk::Stock::ABOUT,
             "Show size of the drowing area" ),
@@ -24,12 +32,17 @@ Viewer_frame::Viewer_frame() :
         <ui>
             <menubar name='menu_bar'>
                 <menu action='menu_file'>
+                    <menuitem action='open_file'/>
+                    <menuitem action='close_file'/>
+                    <separator/>
                     <menuitem action='show_size'/>
                     <separator/>
                     <menuitem action='quit'/>
                 </menu>
             </menubar>
             <toolbar name='tool_bar'>
+                <toolitem action='open_file'/>
+                <toolitem action='close_file'/>
                 <toolitem action='show_size'/>
                 <toolitem action='quit'/>
             </toolbar>
@@ -86,6 +99,48 @@ void Viewer_frame::on_action_show_size()
     dialog.run();
 }
 //------------------------------------------------------------------------------
+void Viewer_frame::on_action_file_open()
+{
+    Gtk::FileChooserDialog dialog( *this, "Choose YUV file.",
+        Gtk::FILE_CHOOSER_ACTION_OPEN );
+
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+    dialog.add_button("Select", Gtk::RESPONSE_OK);
+
+    const int result = dialog.run();
+
+    switch( result )
+    {
+    case Gtk::RESPONSE_OK:
+        try
+        {
+            m_yuv_file.open( dialog.get_filename() );
+        }
+        catch( std::runtime_error & )
+        {
+            std::cerr << "failed to open file: " << dialog.get_filename();
+        }
+        break;
+    case Gtk::RESPONSE_CANCEL:
+        break;
+    default:
+        std::cerr << "unknown responce of file chooser dialog\n";
+        break;
+    }
+}
+//------------------------------------------------------------------------------
+void Viewer_frame::on_action_file_close()
+{
+    if( m_yuv_file.is_open() )
+    {
+        m_yuv_file.close();
+    }
+    else
+    {
+        std::cerr << "tried to close file, while none is open\n";
+    }
+}
+//------------------------------------------------------------------------------
 bool Viewer_frame::on_action_configure_event( GdkEventConfigure* event )
 {
     const int width = m_drawing_area.get_width();
@@ -132,12 +187,7 @@ void Viewer_frame::draw_triangle()
     glVertex3f( 40.0,  0.0, 0.0 );
     glEnd();
 
-//    if( gdk_gl_drawable_is_double_buffered( gldrawable ) )
-//        gdk_gl_drawable_swap_buffers( gldrawable );
-//    else
-//        glFlush();
     glFlush();
-
     m_drawing_area.display();
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
@@ -156,11 +206,8 @@ void Viewer_frame::draw_frame()
 
     m_drawer_gl.draw( m_yuv_file, 0, m_scroll_adapter );
 
-    //    if( gdk_gl_drawable_is_double_buffered( gldrawable ) )
-    //        gdk_gl_drawable_swap_buffers( gldrawable );
-    //    else
-    //        glFlush();
     glFlush();
+    m_drawing_area.display();
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
         return;
