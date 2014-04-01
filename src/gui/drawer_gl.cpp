@@ -50,7 +50,7 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
             // old data are not going to stall us
             // reserve storage only for RGB, not RGBA
             glBufferData( GL_PIXEL_UNPACK_BUFFER,
-                static_cast<int>(Rgba_component::rgb_count) * tile_size *
+                Rgba_component_rgb_count * tile_size *
                 tile_size, 0, GL_STREAM_DRAW );
             Byte *mapped_buffer = static_cast<Byte *>(
                 glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY ) );
@@ -68,8 +68,16 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
                 (tile_y+1)*tile_size
             };
             picture_buffer.fill_tile_rgb( tile_start, tile_end, mapped_buffer );
+            glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
+
+            // TODO: draw square or triangle with m_buffer[tile_x] and
+            // m_texture[tile_x]
+            // glBindTexture, glTexSubImage2D, draw
+
+            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, 0 );
         }
     }
+    reallocate_buffers( 0 );
 }
 //------------------------------------------------------------------------------
 void Drawer_gl::reallocate_buffers( int buffers_count )

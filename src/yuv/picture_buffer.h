@@ -19,9 +19,9 @@ public:
         Byte *data ) const;
 
 private:
-    void draw_macropixel( Coordinates coordinates ) const;
+    void draw_macropixel( Coordinates coordinates, Byte *data ) const;
     void draw_pixel( Coordinates coordinates, const Coded_pixel &coded_pixel,
-        double (&data)[static_cast<int>(Rgba_component::rgb_count)] ) const;
+        double (&result)[Rgba_component_rgb_count] ) const;
 
     std::vector< Byte > m_data;
     Coordinates m_resolution;

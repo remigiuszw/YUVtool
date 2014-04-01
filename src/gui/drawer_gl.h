@@ -12,9 +12,10 @@ public:
     ~Drawer_gl();
     void draw( Yuv_file &yuv_file, int frame_number,
         Scroll_adapter &scroll_adapter );
-    void reallocate_buffers( int buffers_count );
 
 private:
+    void reallocate_buffers( int buffers_count );
+
     //const int m_tile_size = 64;
     std::vector<GLuint> m_buffers;
     std::vector<GLuint> m_textures;

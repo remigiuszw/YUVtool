@@ -21,14 +21,14 @@ inline Coordinates operator+( const Coordinates &a, const Coordinates &b )
     };
 }
 
-enum class Rgba_component
+enum Rgba_component
 {
-    red,
-    green,
-    blue,
-    alpha,
-    count,
-    rgb_count = 3
+    Rgba_component_red,
+    Rgba_component_green,
+    Rgba_component_blue,
+    Rgba_component_alpha,
+    Rgba_component_count,
+    Rgba_component_rgb_count = 3
 };
 
 template< typename TNumber >

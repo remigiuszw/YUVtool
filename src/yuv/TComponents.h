@@ -6,9 +6,7 @@
 
 struct Component
 {
-    double R_coeff;
-    double G_coeff;
-    double B_coeff;
+    double m_coeff[Rgba_component_rgb_count];
 };
 
 struct Entry
@@ -20,7 +18,7 @@ struct Plane
 {
     // one set of entries in plane corresponds to one macropixel
     std::vector<Entry> m_entries;
-    int m_entries_per_row_in_macropixel;
+    int m_entries_per_macropixel_width;
 };
 
 struct Component_coding
@@ -49,51 +47,51 @@ struct Pixel_format
 
 const Pixel_format yuv_420p_8bit
 {
-  { // planes
-    { // plane Y
-      { // entries
-        { 8 }, { 8 },
-        { 8 }, { 8 }
-      },
-      2
+    { // planes
+        { // plane Y
+            { // entries
+                { 8 }, { 8 },
+                { 8 }, { 8 }
+            },
+            2
+        },
+        { // plane U
+            { // entries
+                { 8 }
+            },
+            1
+        },
+        { // plane V
+            { // entries
+                { 8 }
+            },
+            1
+        },
     },
-    { // plane U
-      { // entries
-        { 8 }
-      },
-      1
+    { // componenents
+        {
+            { { 1.000,  1.000, 1.000 } }, // Y
+            { { 0.000, -0.344, 1.770 } }, // U
+            { { 1.403, -0.714, 0.000 } }  // V
+        }
     },
-    { // plane V
-      { // entries
-        { 8 }
-      },
-      1
-    },
-  },
-  { // componenents
-    {
-      { 1.000,  1.000, 1.000 }, // Y
-      { 0.000, -0.344, 1.770 }, // U
-      { 1.403, -0.714, 0.000 } // V
+    { // macropixel coding
+        { // coded pixels
+            { // top left
+                { { 0, 0 }, { 1, 0 }, { 2, 0 } }
+            },
+            { // top right
+                { { 0, 1 }, { 1, 0 }, { 2, 0 } }
+            },
+            { // bottom left
+                { { 0, 2 }, { 1, 0 }, { 2, 0 } }
+            },
+            { // bottom right
+                { { 0, 3 }, { 1, 0 }, { 2, 0 } }
+            }
+        },
+        2
     }
-  },
-  { // macropixel coding
-    { // coded pixels
-      { // top left
-        { { 0, 0 }, { 1, 0 }, { 2, 0 } }
-      },
-      { // top right
-        { { 0, 1 }, { 1, 0 }, { 2, 0 } }
-      },
-      { // bottom left
-        { { 0, 2 }, { 1, 0 }, { 2, 0 } }
-      },
-      { // bottom right
-        { { 0, 3 }, { 1, 0 }, { 2, 0 } }
-      }
-    },
-    2
-  }
 };
 
 int get_bits_per_macropixel( const Pixel_format &pixel_format );
