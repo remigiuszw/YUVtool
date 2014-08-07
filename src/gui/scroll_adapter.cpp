@@ -22,7 +22,11 @@ void Scroll_adapter::add( Gtk::Widget &widget )
 //------------------------------------------------------------------------------
 void Scroll_adapter::remove()
 {
-    m_fixed.remove( *m_fixed.get_children().front() );
+    if(!m_fixed.get_children().empty())
+        m_fixed.remove(*m_fixed.get_children().front());
+    else
+        std::cerr << "trying to remove child from scroll adapter, when none "
+                "present\n";
 }
 //------------------------------------------------------------------------------
 void Scroll_adapter::remove( Gtk::Widget &widget )

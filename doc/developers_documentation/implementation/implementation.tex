@@ -23,7 +23,7 @@ The following libraries for use in the implementation of graphical user interfac
 
 \subsection{gtkmm}
 
-The gtkmm library is bindings to GTK library. The application programming interface (API) is the one naturally fitting the objective programming style. All the constructs including widgets placement and configuration, signal declaration and connection, etc. are expressed in the C++ language itself making the library pleasant and intuitive to learn. Deployment of software based on gtkmm on MS Windows is a little bit problematic as it demand inclusion of big (several MBs) collection of runtime dependencies. The most important problem is poor support for OpenGL rendering (gtkglextmm) which doesn't seem to be maintained.
+The gtkmm library is bindings to GTK library. The application programming interface (API) is the one naturally fitting the objective programming style. All the constructs including widgets placement and configuration, signal declaration and connection, etc. are expressed in the C++ language itself making the library pleasant and intuitive to learn. Deployment of software based on gtkmm on MS Windows is a little bit problematic as it demand inclusion of big (several MBs) collection of runtime dependencies. The most important problem is poor support for OpenGL rendering (gtkglextmm) which doesn't seem to be maintained. The poor OpenGL support has been overcome by use of SFML, which integrates nicely with gtkmm and provides full support for OpenGL.
 
 \subsection{Qt}
 
@@ -40,7 +40,7 @@ Nice API and OpenGL support, but the resulting interfaces look a little bit unna
 Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of parallel execution. The signaling part of API incorporates an intriguing idea of passing not handled signals to parent widget. There is a good OpenGL support. The resulting interfaces look a little bit unnatural.
 
 \subsection{Conclusion.}
-The choice has been made to use wxWidgets library. The choice may be changed in the course of further development.
+Although the first choice has been made to use wxWidgets library, the choice has been changed in the course of further development thanks to discovery of SFML.
 
 \section{Pixel format representaion.}
 
@@ -153,3 +153,13 @@ pixel 1: \\
 Y: plane 0, entry 3 \\
 U: plane 0, entry 0 \\
 V: plane 0, entry 2 \\
+
+\section{Scalability and performance.}
+
+Target picture size is 64*1024 x 64*1024 pixels at 16-bit color depth, four color components. There are two performance issues. Operating memory constraints and disk read performance.
+
+The target picture size corresponds to 32 GiB. While it is feasible to store such large data on disk it is inacceptable to store it in operating memory. One might ask, how and for what purpose should we process or display a picture if it cannot be stored in operating memory? After all, the common dispaly size usually does not exceed 1920*1080 pixels at 8-bit color depth. While demand for such pictures is rather foggy, there are two possible cases where such picture can be displayed on commonly availible devices. Either only part of the picture is displayed or the picture has to be scaled down. In both cases data volume which has to be held during display operation is at most of the size of the screen.
+
+Minimal volume of the data which has to be read from the disk is the volume of the data which will  contribute to what is displayed. Reads should be restricted to this data region. Disk reads are known to be optimal when done in sequential manner. This is not necessary the natural one. E.g. in case of planar formats derivation of RGB values for given pixel demands reads from three different planes. Acquiring data pixel by pixel is inefficient from the disk performance perspective in this case.
+
+In order to conform to the above constraints and to provide optimal solution, observation has been made, that 64-pixel high stripe of picture fits 32 MiB of operating memory even in the worts case scenario. Such memory overhead is way within expectation even for application which works in many instances and coexists with other applications. Operating on 64-pixel high and full picture wide stripes of data provides good compromise between disk access performance and processing seqencing.

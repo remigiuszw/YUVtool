@@ -5,10 +5,10 @@
 #include <stdexcept>
 #include <string>
 
-class TGeneralError : public std::exception
+class GeneralError : public std::exception
 {
 public:
-    TGeneralError( const std::string &file_name );
+    GeneralError( const std::string &file_name );
     const char* what() const throw();
 private:
     std::string m_description;

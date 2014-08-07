@@ -38,11 +38,16 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
     };
     reallocate_buffers( tiles_counts.x );
 
-    Picture_buffer picture_buffer;
-    yuv_file.extract_picture( picture_buffer, frame_number );
-
     for( int tile_y=tiles_start.y; tile_y<tiles_end.y; tile_y++ )
     {
+        const Coordinates buffer_start { tiles_start.x*tile_size,
+                tile_y*tile_size };
+        const Coordinates buffer_end { tiles_end.x*tile_size,
+                (tile_y+1)*tile_size };
+
+        const Picture_buffer coded_buffer =
+                yuv_file.extract_buffer(frame_number, buffer_start, buffer_end);
+
         for( int tile_x=tiles_start.x; tile_x<tiles_end.x; tile_x++ )
         {
             glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_buffers[tile_x] );
@@ -67,8 +72,8 @@ void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
                 (tile_x+1)*tile_size,
                 (tile_y+1)*tile_size
             };
-            picture_buffer.fill_tile_rgb( tile_start, tile_end, mapped_buffer );
-            glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
+            coded_buffer.fill_tile_rgb(tile_start, tile_end, mapped_buffer);
+            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
             // TODO: draw square or triangle with m_buffer[tile_x] and
             // m_texture[tile_x]

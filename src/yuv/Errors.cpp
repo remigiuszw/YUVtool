@@ -1,12 +1,13 @@
 #include "Errors.h"
 
 
-TGeneralError::TGeneralError( const std::string &description ) :
-  m_description( description )
-{ ; }
+GeneralError::GeneralError(const std::string &description) :
+        m_description(description)
+{ }
 
-const char *TGeneralError::what() const throw() {
-  return ("general error: " + m_description).c_str();
+const char *GeneralError::what() const throw()
+{
+    return ("general error: " + m_description).c_str();
 }
 
 

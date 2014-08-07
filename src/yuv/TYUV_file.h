@@ -15,19 +15,20 @@ class Yuv_file
 {
 public:
     Yuv_file();
-    Yuv_file( const boost::filesystem::path &path );
+    Yuv_file(const boost::filesystem::path &path);
     bool is_open() const;
-    void open( const boost::filesystem::path &path );
+    void open(const boost::filesystem::path &path);
     void close();
     void recalculate_parameters();
     void drawFrameGL() const;
-    void set_pixel_format( const Pixel_format &pixel_format );
+    void set_pixel_format(const Pixel_format &pixel_format);
     const Pixel_format &get_pixel_format() const;
-    void set_resolution( Coordinates resolution );
+    void set_resolution(const Coordinates &resolution);
     Coordinates get_resolution() const;
-    int get_frame_size() const;
+    Bit_position get_frame_size() const;
     int get_frames_count() const;
-    void extract_picture( Picture_buffer &picture_buffer, int picture_number );
+    Picture_buffer extract_buffer(int picture_number, Coordinates start,
+            Coordinates end);
 
 private:
     void init_file_parameters();
@@ -35,8 +36,8 @@ private:
     boost::filesystem::path m_path;
     boost::filesystem::ifstream m_file;
     size_t m_file_size;
-    size_t m_frame_size;
     Pixel_format m_pixel_format;
+    Precalculated_buffer_parameters m_buffer_parameters;
     Coordinates m_resolution;
 };
 

@@ -14,11 +14,42 @@ struct Coordinates
 
 inline Coordinates operator+( const Coordinates &a, const Coordinates &b )
 {
-    return Coordinates
-    {
-        a.x + b.x,
-        a.y + b.y
-    };
+    return Coordinates{
+            a.x + b.x,
+            a.y + b.y};
+}
+
+inline Coordinates operator-( const Coordinates &a, const Coordinates &b )
+{
+    return Coordinates{
+            a.x - b.x,
+            a.y - b.y};
+}
+
+inline Coordinates operator/( const Coordinates &a, const Coordinates &b )
+{
+    return Coordinates{
+            a.x / b.x,
+            a.y / b.y};
+}
+
+inline Coordinates operator*( const Coordinates &a, const Coordinates &b )
+{
+    return Coordinates{
+            a.x * b.x,
+            a.y * b.y};
+}
+
+inline bool operator==( const Coordinates &a, const Coordinates &b )
+{
+    return
+            a.x == b.x
+            && a.y == b.y;
+}
+
+inline bool operator!=( const Coordinates &a, const Coordinates &b )
+{
+    return !(a == b);
 }
 
 enum Rgba_component
