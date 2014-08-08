@@ -169,12 +169,18 @@ public:
     {
         return m_pixel_format.m_macropixel_coding.m_size;
     }
+    bool is_expanded()
+    {
+        return m_is_expanded;
+    }
+
 private:
     Pixel_format m_pixel_format;
 
     struct Entry_parameters
     {
         Bit_position m_offset;
+        Coordinates m_sampling_point;
     };
 
     struct Entry_row_paramters
@@ -192,6 +198,7 @@ private:
     std::vector<Plane_parameters> m_planes;
 
     Bit_position m_bits_per_macropixel;
+    bool m_is_expanded;
 };
 
 class Precalculated_buffer_parameters : public Precalculated_pixel_format
@@ -227,6 +234,7 @@ public:
     {
         return m_size_in_macropixels;
     }
+    bool is_expanded() const; // TODO
 
 private:
     Coordinates m_resolution;

@@ -24,12 +24,13 @@ public:
     void fill_tile_rgb(Coordinates tile_start, Coordinates tile_end,
         Byte *data ) const;
     int get_entry(
-            const Component_coding &component_coding,
-            const Coordinates &coordinates_in_macropixels) const;
+            const Coordinates &coordinates,
+            int component_index) const;
     void set_entry(
             int value,
-            const Component_coding &Component_coding,
-            const Coordinates &coordinates_in_macropixels);
+            const Coordinates &coordinates,
+            int component_index);
+    void convert_color_space(const std::vector<Component> components);
 
 private:
     void draw_macropixel( Coordinates coordinates, Byte *data ) const;

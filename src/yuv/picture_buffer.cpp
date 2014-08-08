@@ -102,16 +102,16 @@ void Picture_buffer::draw_macropixel( Coordinates coordinates, Byte *data )
 }
 //------------------------------------------------------------------------------
 int Picture_buffer::get_entry(
-        const Component_coding &component_coding,
-        const Coordinates &coordinates_in_macropixels) const
+        const Coordinates &coordinates,
+        const int component_index) const
 {
     throw std::runtime_error("TODO");
 }
 //------------------------------------------------------------------------------
 void Picture_buffer::set_entry(
-        int value,
-        const Component_coding &Component_coding,
-        const Coordinates &coordinates_in_macropixels)
+        const int value,
+        const Coordinates &coordinates,
+        const int component_index)
 {
     throw std::runtime_error("TODO");
 }
@@ -214,15 +214,15 @@ Picture_buffer convert(
 //------------------------------------------------------------------------------
 Picture_buffer expand_sampling(const Picture_buffer &source)
 {
-    Precalculated_buffer_parameters source_parameters =
+    const Precalculated_buffer_parameters &source_parameters =
             source.get_parameters();
     const Coordinates macropixel_size =
             source_parameters.get_macropixel_size();
     const Pixel_format expanded_format =
             get_expanded_pixel_format(source_parameters.get_pixel_format());
     Picture_buffer expanded(source.get_resolution(), expanded_format);
-    const Macropixel_coding &macropixel_coding =
-            source_parameters.get_pixel_format().m_macropixel_coding;
+    const Precalculated_buffer_parameters &expanded_parameters =
+            expanded.get_parameters();
 
     const Coordinates size_in_macropixels =
             source_parameters.get_size_in_macropixels();
@@ -238,29 +238,23 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
                 for(int jx = 0; jx < macropixel_size.x; jx++)
                 {
                     const Coordinates coordinates{
-                        ix * macropixel_size.x + jx,
-                        iy * macropixel_size.y + jy};
-                    const int pixel_index = jy * macropixel_size.y + jx;
-                    const Coded_pixel &coded_pixel =
-                            macropixel_coding.m_pixels[pixel_index];
+                            ix * macropixel_size.x + jx,
+                            iy * macropixel_size.y + jy};
                     const int components_count =
                             source_parameters.get_components_count();
                     for(    int component_index = 0;
                             component_index < components_count;
                             component_index++)
                     {
-                        const Component_coding &component_coding =
-                                coded_pixel.m_components[component_index];
                         const Bit_position input_bitdepth =
                                 source_parameters.get_bits_per_entry(
-                                    Coordinates{jx, jy}, component_index);
+                                    {jx, jy}, component_index);
                         const Bit_position output_bitdepth =
-                                expanded_format.m_planes[
-                                component_index].m_rows[0].m_entries[
-                                0].m_width;
+                                expanded_parameters.get_bits_per_entry(
+                                    {0, 0}, component_index);
                         const int input_value = source.get_entry(
-                                component_coding,
-                                Coordinates{ix, iy});
+                                coordinates,
+                                component_index);
                         const int output_value =
                                 input_value <<
                                 (
@@ -268,8 +262,8 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
                                     - input_bitdepth.get_position());
                         expanded.set_entry(
                                 output_value,
-                                Component_coding{component_index, 0},
-                                coordinates);
+                                coordinates,
+                                component_index);
                     }
                 }
             }

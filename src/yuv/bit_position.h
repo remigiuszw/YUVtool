@@ -23,7 +23,7 @@ public:
         return m_position;
     }
 //------------------------------------------------------------------------------
-    void set_postion(const Position_type position)
+    void set_position(const Position_type position)
     {
         m_position = position;
     }
@@ -38,21 +38,21 @@ public:
         return m_position % bits_in_byte;
     }
 //------------------------------------------------------------------------------
-    void set_postion(const Position_type byte, const int bit)
+    void set_position(const Position_type byte, const int bit)
     {
-        set_postion(byte * bits_in_byte + bit);
+        set_position(byte * bits_in_byte + bit);
     }
 };
 //------------------------------------------------------------------------------
 inline Bit_position &operator+=(Bit_position &a, const Bit_position &b)
 {
-    a.set_postion(a.get_position() + b.get_position());
+    a.set_position(a.get_position() + b.get_position());
     return a;
 }
 //------------------------------------------------------------------------------
 inline Bit_position &operator-=(Bit_position &a, const Bit_position &b)
 {
-    a.set_postion(a.get_position() - b.get_position());
+    a.set_position(a.get_position() - b.get_position());
     return a;
 }
 //------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ inline Bit_position operator-(const Bit_position &a, const Bit_position &b)
 //------------------------------------------------------------------------------
 inline Bit_position &operator*=(Bit_position &a, const int factor)
 {
-    a.set_postion(a.get_position()*factor);
+    a.set_position(a.get_position()*factor);
     return a;
 }
 //------------------------------------------------------------------------------

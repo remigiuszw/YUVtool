@@ -15,19 +15,13 @@ Pixel_format get_expanded_pixel_format(
     result.m_macropixel_coding.m_pixels.resize(1);
     Coded_pixel &target_pixel =
             result.m_macropixel_coding.m_pixels.front();
+    target_pixel.m_components.resize(components_count);
+    result.m_planes.resize(components_count);
     for(int component_index = 0; component_index < components_count;
             component_index++)
     {
-        Component_coding &component_coding =
-                target_pixel.m_components[component_index];
-        component_coding.m_plane_index = component_index;
-        component_coding.m_row_index = 0;
-        component_coding.m_entry_index = 0;
-
-        Plane &plane = result.m_planes[component_index];
-        plane.m_rows.resize(1);
-        plane.m_rows[0].m_entries.resize(1);
-        plane.m_rows[0].m_entries[0] = entries[component_index];
+        target_pixel.m_components[component_index] = {component_index, 0, 0};
+        result.m_planes[component_index] = {{{{entries[component_index]}}}};
     }
     return result;
 }
@@ -39,16 +33,16 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input)
     std::vector<Entry> entries(components_count);
     const std::vector<Coded_pixel> &coded_pixels =
             input.m_macropixel_coding.m_pixels;
-    for(int plane_index = 0; plane_index < components_count;
-            plane_index++)
+    for(int plane_index = 0; plane_index < components_count; plane_index++)
     {
-        entries[plane_index].m_width =
+        const Bit_position max_depth =
                 std::accumulate(
                     coded_pixels.begin(),
                     coded_pixels.end(),
                     Bit_position(0),
                     [plane_index, input](
-                        const Bit_position max, const Coded_pixel &coded_pixel )
+                            const Bit_position max,
+                            const Coded_pixel &coded_pixel)
                     {
                         const Component_coding &input_component_coding =
                                 coded_pixel.m_components[plane_index];
@@ -59,6 +53,8 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input)
                                 input_component_coding.m_entry_index];
                         return std::max(max, input_entry.m_width);
                     });
+        entries[plane_index].m_width.set_position(round_up(
+                max_depth.get_position(), bits_in_byte));
     }
 
     return get_expanded_pixel_format(input.m_components, entries);
@@ -73,6 +69,7 @@ void Precalculated_pixel_format::clear()
 {
     m_bits_per_macropixel = 0;
     m_planes.clear();
+    m_is_expanded = false;
 }
 //------------------------------------------------------------------------------
 void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
@@ -100,7 +97,9 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
             Bit_position offset = 0;
             for(int entry_index = 0; entry_index < entry_count; entry_index++)
             {
-                row_parameters.m_entries[entry_index].m_offset = offset;
+                Entry_parameters &entry = row_parameters.m_entries[entry_index];
+                entry.m_offset = offset;
+                entry.m_sampling_point = {-1, -1};
                 offset += row.m_entries[entry_index].m_width;
             }
             row_parameters.m_bits_per_macropixel = offset;
@@ -124,6 +123,59 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                 {
                     return sum + plane.m_bits_per_macropixel;
                 });
+    for(int iy = 0; iy < get_macropixel_size().y; iy++)
+    {
+        for(int ix = 0; ix < get_macropixel_size().x; ix++)
+        {
+            const Coordinates coordinates = {ix, iy};
+            const int pixel_index = iy * get_macropixel_size().y + ix;
+            for(
+                    int component_index = 0;
+                    component_index < get_components_count();
+                    component_index++)
+            {
+                const Component_coding &component_coding =
+                        pixel_format.m_macropixel_coding.m_pixels[
+                        pixel_index].m_components[
+                        component_index];
+                Entry_parameters &entry_parameters =
+                        m_planes[
+                        component_coding.m_plane_index].m_rows[
+                        component_coding.m_row_index].m_entries[
+                        component_coding.m_entry_index];
+                if(entry_parameters.m_sampling_point != Coordinates{-1, -1})
+                    entry_parameters.m_sampling_point = coordinates;
+            }
+        }
+    }
+
+    // m_is_expanded
+    if(planes_count == get_components_count())
+    {
+        for(int plane_index = 0; plane_index < planes_count; plane_index++)
+        {
+            for(const Coded_pixel &pixel : get_pixel_format(
+                    ).m_macropixel_coding.m_pixels)
+            {
+                const Component_coding &component =
+                        pixel.m_components[plane_index];
+                if(
+                        component.m_plane_index != plane_index
+                        || component.m_row_index != 0
+                        || component.m_entry_index != 0)
+                {
+                    m_is_expanded = false;
+                    goto is_not_expanded;
+                }
+            }
+        }
+        m_is_expanded = true;
+    }
+    else
+    {
+    is_not_expanded:
+        m_is_expanded = false;
+    }
 }
 //------------------------------------------------------------------------------
 Precalculated_buffer_parameters::Precalculated_buffer_parameters()
