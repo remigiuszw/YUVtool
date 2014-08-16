@@ -4,11 +4,19 @@
 #include <vector>
 #include <yuv/utils.h>
 #include <yuv/bit_position.h>
+#include <yuv/coordinates.h>
 
 struct Component
 {
-    double m_coeff[Rgba_component_rgb_count];
+    /*
+     * E'_X = K_XR * E'_R + K_XG * E'_G + K_XB * E'_B
+     */
+    double m_coeff[Rgba_component_rgb_count+1];
+    double m_valid_range[2];
+    double m_encoded_range[2];
 };
+
+typedef std::vector<Component> Color_space;
 
 struct Entry
 {
@@ -41,7 +49,7 @@ struct Coded_pixel
 struct Macropixel_coding
 {
     std::vector<Coded_pixel> m_pixels;
-    Coordinates m_size;
+    Vector<Unit::pixel> m_size;
 };
 
 // TODO: add support for big-endian storage
@@ -50,8 +58,109 @@ struct Macropixel_coding
 struct Pixel_format
 {
     std::vector<Plane> m_planes;
-    std::vector<Component> m_components;
+    Color_space m_components;
     Macropixel_coding m_macropixel_coding;
+};
+
+// full range RGB
+
+const Color_space sRGB_color_space
+{
+    { // R
+        {
+            1,
+            0,
+            0
+        },
+        { 0, 1 },
+        { 0, 1 }
+    },
+    { // G
+        {
+            0,
+            1,
+            0
+        },
+        { 0, 1 },
+        { 0, 1 }
+    },
+    { // B
+        {
+            0,
+            0,
+            1
+        },
+        { 0, 1 },
+        { 0, 1 }
+    }
+};
+
+// studio RGB
+
+const Color_space RGB_color_space
+{
+    { // R
+        {
+            1,
+            0,
+            0
+        },
+        { 0.0, 1.0 },
+        { 16.0/256, 235.0/256 }
+    },
+    { // G
+        {
+            0,
+            1,
+            0
+        },
+        { 0.0, 1.0 },
+        { 16.0/256, 235.0/256 }
+    },
+    { // B
+        {
+            0,
+            0,
+            1
+        },
+        { 0.0, 1.0 },
+        { 16.0/256, 235.0/256 }
+    }
+};
+
+// ITU 709 standard
+const double ITU709_K_R = 0.2126;
+const double ITU709_K_B = 0.0722;
+
+const Color_space ITU709_YCbCr_color_space
+{
+    { // Y
+        {
+            ITU709_K_R,
+            1 - ITU709_K_B - ITU709_K_R,
+            ITU709_K_B
+        },
+        { 0.0, 1.0 },
+        { 16.0/256, 235.0/256 }
+    },
+    { // Cb
+        {
+            -ITU709_K_R/(2*(1-ITU709_K_B)),
+            -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_B)),
+            0.5
+        },
+        { -0.5, 0.5 },
+        { 16.0/256, 240.0/256 }
+    },
+    { // Cr
+        {
+            0.5,
+            -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_R)),
+            -ITU709_K_B/(2*(1-ITU709_K_R))
+        },
+        { -0.5, 0.5 },
+        { 16.0/256, 240.0/256 }
+    }
 };
 
 const Pixel_format yuv_420p_8bit
@@ -74,13 +183,7 @@ const Pixel_format yuv_420p_8bit
             }
         },
     },
-    { // componenents
-        {
-            { { 1.000,  1.000, 1.000 } }, // Y
-            { { 0.000, -0.344, 1.770 } }, // U
-            { { 1.403, -0.714, 0.000 } }  // V
-        }
-    },
+    ITU709_YCbCr_color_space,
     { // macropixel coding
         { // coded pixels
             { // top left
@@ -102,6 +205,32 @@ const Pixel_format yuv_420p_8bit
 
 class Precalculated_pixel_format
 {
+private:
+    Pixel_format m_pixel_format;
+
+    struct Entry_parameters
+    {
+        Bit_position m_offset;
+        Coordinates<Unit::pixel, Reference_point::macropixel> m_sampling_point;
+    };
+
+    struct Entry_row_paramters
+    {
+        std::vector<Entry_parameters> m_entries;
+        Bit_position m_bits_per_macropixel;
+    };
+
+    struct Plane_parameters
+    {
+        std::vector<Entry_row_paramters> m_rows;
+        Bit_position m_bits_per_macropixel;
+    };
+
+    std::vector<Plane_parameters> m_planes;
+
+    Bit_position m_bits_per_macropixel;
+    bool m_is_expanded;
+
 public:
     Precalculated_pixel_format();
     void clear();
@@ -154,51 +283,37 @@ public:
                 entry_index].m_width;
     }
     Bit_position get_bits_per_entry(
-            const Coordinates &pixel_in_macropixel,
+            const Coordinates<Unit::pixel, Reference_point::macropixel>
+                &pixel_in_macropixel,
             const int component_index) const
     {
-        throw "TODO";
+        const Component_coding &coding =
+                m_pixel_format.m_macropixel_coding.m_pixels[
+                get_pixel_coding_index(pixel_in_macropixel)].m_components[
+                component_index];
+        return
+                m_pixel_format.m_planes[
+                    coding.m_plane_index].m_rows[
+                    coding.m_row_index].m_entries[
+                    coding.m_entry_index].m_width;
     }
-    Bit_position get_offset(
-            const Coordinates &pixel_in_macropixel,
-            const Component component) const
-    {
-        throw "TODO";
-    }
-    Coordinates get_macropixel_size() const
+    Vector<Unit::pixel> get_macropixel_size() const
     {
         return m_pixel_format.m_macropixel_coding.m_size;
     }
-    bool is_expanded()
+    bool is_expanded() const
     {
         return m_is_expanded;
     }
-
 private:
-    Pixel_format m_pixel_format;
-
-    struct Entry_parameters
+    int get_pixel_coding_index(
+            const Coordinates<Unit::pixel, Reference_point::macropixel>
+                &pixel_in_macropixel) const
     {
-        Bit_position m_offset;
-        Coordinates m_sampling_point;
-    };
-
-    struct Entry_row_paramters
-    {
-        std::vector<Entry_parameters> m_entries;
-        Bit_position m_bits_per_macropixel;
-    };
-
-    struct Plane_parameters
-    {
-        std::vector<Entry_row_paramters> m_rows;
-        Bit_position m_bits_per_macropixel;
-    };
-
-    std::vector<Plane_parameters> m_planes;
-
-    Bit_position m_bits_per_macropixel;
-    bool m_is_expanded;
+        return
+                pixel_in_macropixel.y() * get_macropixel_size().x()
+                + pixel_in_macropixel.x();
+    }
 };
 
 class Precalculated_buffer_parameters : public Precalculated_pixel_format
@@ -207,10 +322,10 @@ public:
     Precalculated_buffer_parameters();
     void recalculate(
             const Pixel_format &format,
-            const Coordinates &resolution);
+            const Vector<Unit::pixel> &resolution);
     void clear();
 
-    const Coordinates &get_resolution() const
+    const Vector<Unit::pixel> &get_resolution() const
     {
         return m_resolution;
     }
@@ -230,15 +345,36 @@ public:
     {
         return m_planes[plane_index].m_size_per_row_of_macropixels;
     }
-    Coordinates get_size_in_macropixels() const
+    Vector<Unit::macropixel> get_size_in_macropixels() const
     {
         return m_size_in_macropixels;
     }
-    bool is_expanded() const; // TODO
+    Bit_position get_entry_offset(
+            const Coordinates<Unit::pixel, Reference_point::picture>
+                &coordinates,
+            const int component_index) const
+    {
+        throw "TODO";
+        return Bit_position(0);
+    }
+    using Precalculated_pixel_format::get_bits_per_entry;
+    Bit_position get_bits_per_entry(
+            const Coordinates<Unit::pixel, Reference_point::picture>
+                &coordinates,
+            const int component_index) const
+    {
+        Coordinates<Unit::pixel, Reference_point::macropixel>
+                pixel_in_macropixel;
+        cast_to_macropixels(
+                coordinates,
+                get_macropixel_size(),
+                pixel_in_macropixel);
+        return get_bits_per_entry(pixel_in_macropixel, component_index);
+    }
 
 private:
-    Coordinates m_resolution;
-    Coordinates m_size_in_macropixels;
+    Vector<Unit::pixel> m_resolution;
+    Vector<Unit::macropixel> m_size_in_macropixels;
 
     struct Entry_row_parameters
     {

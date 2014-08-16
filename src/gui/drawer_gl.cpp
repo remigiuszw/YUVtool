@@ -18,71 +18,71 @@ Drawer_gl::~Drawer_gl()
 void Drawer_gl::draw( Yuv_file &yuv_file, int frame_number,
     Scroll_adapter &scroll_adapter )
 {
-    const Gdk::Rectangle visible_area = scroll_adapter.get_visible_area();
-    const Coordinates tiles_start
-    {
-        visible_area.get_x()/tile_size,
-        visible_area.get_y()/tile_size
-    };
-    const Coordinates tiles_end
-    {
-        round_up( visible_area.get_x()+visible_area.get_width(), tile_size ) /
-            tile_size,
-        round_up( visible_area.get_y()+visible_area.get_height(), tile_size ) /
-            tile_size
-    };
-    const Coordinates tiles_counts
-    {
-        tiles_end.x - tiles_start.x,
-        tiles_end.y - tiles_start.y
-    };
-    reallocate_buffers( tiles_counts.x );
+//    const Gdk::Rectangle visible_area = scroll_adapter.get_visible_area();
+//    const Coordinates tiles_start
+//    {
+//        visible_area.get_x()/tile_size,
+//        visible_area.get_y()/tile_size
+//    };
+//    const Coordinates tiles_end
+//    {
+//        round_up( visible_area.get_x()+visible_area.get_width(), tile_size ) /
+//            tile_size,
+//        round_up( visible_area.get_y()+visible_area.get_height(), tile_size ) /
+//            tile_size
+//    };
+//    const Coordinates tiles_counts
+//    {
+//        tiles_end.x - tiles_start.x,
+//        tiles_end.y - tiles_start.y
+//    };
+//    reallocate_buffers( tiles_counts.x );
 
-    for( int tile_y=tiles_start.y; tile_y<tiles_end.y; tile_y++ )
-    {
-        const Coordinates buffer_start { tiles_start.x*tile_size,
-                tile_y*tile_size };
-        const Coordinates buffer_end { tiles_end.x*tile_size,
-                (tile_y+1)*tile_size };
+//    for( int tile_y=tiles_start.y; tile_y<tiles_end.y; tile_y++ )
+//    {
+//        const Coordinates buffer_start { tiles_start.x*tile_size,
+//                tile_y*tile_size };
+//        const Coordinates buffer_end { tiles_end.x*tile_size,
+//                (tile_y+1)*tile_size };
 
-        const Picture_buffer coded_buffer =
-                yuv_file.extract_buffer(frame_number, buffer_start, buffer_end);
+//        const Picture_buffer coded_buffer =
+//                yuv_file.extract_buffer(frame_number, buffer_start, buffer_end);
 
-        for( int tile_x=tiles_start.x; tile_x<tiles_end.x; tile_x++ )
-        {
-            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_buffers[tile_x] );
-            // glBufferData - to be sure storage is assigned and operations on
-            // old data are not going to stall us
-            // reserve storage only for RGB, not RGBA
-            glBufferData( GL_PIXEL_UNPACK_BUFFER,
-                Rgba_component_rgb_count * tile_size *
-                tile_size, 0, GL_STREAM_DRAW );
-            Byte *mapped_buffer = static_cast<Byte *>(
-                glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY ) );
-            if( !mapped_buffer )
-                throw std::runtime_error( "mapping of an OpenGL buffer failed"
-                    );
-            const Coordinates tile_start
-            {
-                tile_x*tile_size,
-                tile_y*tile_size
-            };
-            const Coordinates tile_end
-            {
-                (tile_x+1)*tile_size,
-                (tile_y+1)*tile_size
-            };
-            coded_buffer.fill_tile_rgb(tile_start, tile_end, mapped_buffer);
-            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+//        for( int tile_x=tiles_start.x; tile_x<tiles_end.x; tile_x++ )
+//        {
+//            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_buffers[tile_x] );
+//            // glBufferData - to be sure storage is assigned and operations on
+//            // old data are not going to stall us
+//            // reserve storage only for RGB, not RGBA
+//            glBufferData( GL_PIXEL_UNPACK_BUFFER,
+//                Rgba_component_rgb_count * tile_size *
+//                tile_size, 0, GL_STREAM_DRAW );
+//            Byte *mapped_buffer = static_cast<Byte *>(
+//                glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY ) );
+//            if( !mapped_buffer )
+//                throw std::runtime_error( "mapping of an OpenGL buffer failed"
+//                    );
+//            const Coordinates tile_start
+//            {
+//                tile_x*tile_size,
+//                tile_y*tile_size
+//            };
+//            const Coordinates tile_end
+//            {
+//                (tile_x+1)*tile_size,
+//                (tile_y+1)*tile_size
+//            };
+//            coded_buffer.fill_tile_rgb(tile_start, tile_end, mapped_buffer);
+//            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
-            // TODO: draw square or triangle with m_buffer[tile_x] and
-            // m_texture[tile_x]
-            // glBindTexture, glTexSubImage2D, draw
+//            // TODO: draw square or triangle with m_buffer[tile_x] and
+//            // m_texture[tile_x]
+//            // glBindTexture, glTexSubImage2D, draw
 
-            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, 0 );
-        }
-    }
-    reallocate_buffers( 0 );
+//            glBindBuffer( GL_PIXEL_UNPACK_BUFFER, 0 );
+//        }
+//    }
+//    reallocate_buffers( 0 );
 }
 //------------------------------------------------------------------------------
 void Drawer_gl::reallocate_buffers( int buffers_count )

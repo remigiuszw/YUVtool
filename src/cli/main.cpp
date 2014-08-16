@@ -5,8 +5,9 @@
 
 void print_stream_info(Yuv_file &YUV_file)
 {
-    std::cout << "resolution: " << YUV_file.get_resolution().x << " " <<
-            YUV_file.get_resolution().y << '\n';
+    std::cout << "resolution: "
+            << YUV_file.get_resolution().x() << " "
+            << YUV_file.get_resolution().y() << '\n';
     std::cout << "frame size: " << YUV_file.get_frame_size() << '\n';
     std::cout << "frames count: " << YUV_file.get_frames_count() << '\n';
 }
@@ -18,9 +19,9 @@ int main(int argc, char *argv[]) try
 
     Yuv_file input_file(argv[3]);
 
-    Coordinates resolution;
-    resolution.x = std::atoi(argv[1]);
-    resolution.y = std::atoi(argv[2]);
+    Vector<Unit::pixel> resolution;
+    resolution.set_x(std::atoi(argv[1]));
+    resolution.set_y(std::atoi(argv[2]));
     input_file.set_resolution(resolution);
 
     input_file.set_pixel_format(yuv_420p_8bit);

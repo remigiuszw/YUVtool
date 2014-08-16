@@ -42,12 +42,12 @@ const Pixel_format &Yuv_file::get_pixel_format() const
     return m_pixel_format;
 }
 //------------------------------------------------------------------------------
-void Yuv_file::set_resolution(const Coordinates &resolution)
+void Yuv_file::set_resolution(const Vector<Unit::pixel> &resolution)
 {
     m_resolution = resolution;
 }
 //------------------------------------------------------------------------------
-Coordinates Yuv_file::get_resolution() const
+Vector<Unit::pixel> Yuv_file::get_resolution() const
 {
     return m_resolution;
 }
@@ -62,22 +62,24 @@ int Yuv_file::get_frames_count() const
     return Bit_position(m_file_size, 0) / get_frame_size();
 }
 //------------------------------------------------------------------------------
-Picture_buffer Yuv_file::extract_buffer(int picture_number, Coordinates start,
-        Coordinates end)
+Picture_buffer Yuv_file::extract_buffer(
+        int picture_number,
+        const Coordinates<Unit::pixel, Reference_point::picture> &start,
+        const Coordinates<Unit::pixel, Reference_point::picture> &end)
 {
     check_range(0, picture_number, get_frames_count());
     // TODO: check_range for start and end
 
     const Pixel_format &pixel_format = get_pixel_format();
-    const Coordinates buffer_size = end-start;
+    const Vector<Unit::pixel> buffer_size = end - start;
     Picture_buffer buffer;
     buffer.allocate(buffer_size, pixel_format);
-    const Coordinates macropixel_size =
+    const Vector<Unit::pixel> macropixel_size =
             m_buffer_parameters.get_macropixel_size();
-    const Coordinates buffer_size_in_macropixels =
-            buffer_size / macropixel_size;
-    const Coordinates picture_size_in_macropixels =
-            get_resolution() / macropixel_size;
+    const Vector<Unit::macropixel> buffer_size_in_macropixels =
+            buffer.get_parameters().get_size_in_macropixels();
+    const Vector<Unit::macropixel> picture_size_in_macropixels =
+            m_buffer_parameters.get_size_in_macropixels();
     const Bit_position picture_size = get_frame_size();
     const Bit_position picture_offset = picture_number * picture_size;
 
@@ -91,7 +93,7 @@ Picture_buffer Yuv_file::extract_buffer(int picture_number, Coordinates start,
         const Bit_position macropixel_row_in_plane_size_in_bits =
                 m_buffer_parameters.get_macropixel_row_in_plane_size(plane_idx);
         for(int macropixel_row = 0;
-            macropixel_row < buffer_size_in_macropixels.y;
+            macropixel_row < buffer_size_in_macropixels.y();
             macropixel_row++)
         {
             const Bit_position macropixel_row_offset =
@@ -105,10 +107,11 @@ Picture_buffer Yuv_file::extract_buffer(int picture_number, Coordinates start,
                         m_buffer_parameters.get_bits_per_entry_row_in_plane(
                             plane_idx, row_in_macropixel);
                 const Bit_position x_position_offset =
-                        start.x / macropixel_size.x
+                        start.x() / macropixel_size.x()
                         * bits_per_entry_row_in_plane;
-                const Bit_position read_length = buffer_size_in_macropixels.x *
-                        bits_per_entry_row_in_plane;
+                const Bit_position read_length =
+                        buffer_size_in_macropixels.x()
+                        * bits_per_entry_row_in_plane;
                 const Bit_position offset =
                         picture_offset +
                         plane_offset +
@@ -127,7 +130,7 @@ Picture_buffer Yuv_file::extract_buffer(int picture_number, Coordinates start,
 
                 row_in_macropixel_offset +=
                         bits_per_entry_row_in_plane *
-                        picture_size_in_macropixels.x;
+                        picture_size_in_macropixels.x();
             }
         }
     }

@@ -108,5 +108,31 @@ inline std::ostream &operator<<(std::ostream &stream, const Bit_position &a)
     stream << a.get_bytes() << "bytes, " << a.get_bits() << "bits";
     return stream;
 }
+//------------------------------------------------------------------------------
+inline Bit_position &operator++(Bit_position &a)
+{
+    a.set_position(a.get_position() + 1);
+    return a;
+}
+//------------------------------------------------------------------------------
+inline Bit_position operator++(Bit_position &a, const int)
+{
+    Bit_position tmp(a);
+    ++a;
+    return tmp;
+}
+//------------------------------------------------------------------------------
+inline Bit_position &operator--(Bit_position &a)
+{
+    a.set_position(a.get_position() - 1);
+    return a;
+}
+//------------------------------------------------------------------------------
+inline Bit_position operator--(Bit_position &a, const int)
+{
+    Bit_position tmp(a);
+    --a;
+    return tmp;
+}
 
 #endif // BIT_POSITION_H

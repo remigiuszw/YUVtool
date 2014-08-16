@@ -123,12 +123,13 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                 {
                     return sum + plane.m_bits_per_macropixel;
                 });
-    for(int iy = 0; iy < get_macropixel_size().y; iy++)
+    for(int iy = 0; iy < get_macropixel_size().y(); iy++)
     {
-        for(int ix = 0; ix < get_macropixel_size().x; ix++)
+        for(int ix = 0; ix < get_macropixel_size().x(); ix++)
         {
-            const Coordinates coordinates = {ix, iy};
-            const int pixel_index = iy * get_macropixel_size().y + ix;
+            const Coordinates<Unit::pixel, Reference_point::macropixel>
+                    coordinates(ix, iy);
+            const int pixel_index = iy * get_macropixel_size().y() + ix;
             for(
                     int component_index = 0;
                     component_index < get_components_count();
@@ -143,8 +144,13 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                         component_coding.m_plane_index].m_rows[
                         component_coding.m_row_index].m_entries[
                         component_coding.m_entry_index];
-                if(entry_parameters.m_sampling_point != Coordinates{-1, -1})
+                if(
+                        entry_parameters.m_sampling_point
+                        != Coordinates<Unit::pixel,
+                            Reference_point::macropixel>(-1, -1))
+                {
                     entry_parameters.m_sampling_point = coordinates;
+                }
             }
         }
     }
@@ -193,11 +199,13 @@ void Precalculated_buffer_parameters::clear()
 //------------------------------------------------------------------------------
 void Precalculated_buffer_parameters::recalculate(
         const Pixel_format &format,
-        const Coordinates &resolution)
+        const Vector<Unit::pixel> &resolution)
 {
     Precalculated_pixel_format::recalculate(format);
     m_resolution = resolution;
-    m_size_in_macropixels = resolution / get_macropixel_size();
+    m_size_in_macropixels.set(
+            resolution.x() / get_macropixel_size().x(),
+            resolution.y() / get_macropixel_size().y());
     m_planes.resize(get_planes_count());
     Bit_position plane_offset = 0;
     for(int plane_index = 0; plane_index < get_planes_count(); plane_index++)
@@ -209,13 +217,13 @@ void Precalculated_buffer_parameters::recalculate(
         for(int row_index = 0; row_index < rows_count; row_index++)
         {
             plane.m_rows[row_index].m_size =
-                    m_size_in_macropixels.x
+                    m_size_in_macropixels.x()
                     * get_bits_per_entry_row_in_plane(plane_index, row_index);
             bits_per_macropixel_row_in_plane += plane.m_rows[row_index].m_size;
         }
         plane.m_size_per_row_of_macropixels = bits_per_macropixel_row_in_plane;
         plane.m_size =
-                bits_per_macropixel_row_in_plane * m_size_in_macropixels.y;
+                bits_per_macropixel_row_in_plane * m_size_in_macropixels.y();
         plane_offset += plane.m_size;
     }
     m_buffer_size = plane_offset;

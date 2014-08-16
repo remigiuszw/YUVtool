@@ -23,12 +23,14 @@ public:
     void drawFrameGL() const;
     void set_pixel_format(const Pixel_format &pixel_format);
     const Pixel_format &get_pixel_format() const;
-    void set_resolution(const Coordinates &resolution);
-    Coordinates get_resolution() const;
+    void set_resolution(const Vector<Unit::pixel> &resolution);
+    Vector<Unit::pixel> get_resolution() const;
     Bit_position get_frame_size() const;
     int get_frames_count() const;
-    Picture_buffer extract_buffer(int picture_number, Coordinates start,
-            Coordinates end);
+    Picture_buffer extract_buffer(
+            int picture_number,
+            const Coordinates<Unit::pixel, Reference_point::picture> &start,
+            const Coordinates<Unit::pixel, Reference_point::picture> &end);
 
 private:
     void init_file_parameters();
@@ -38,7 +40,7 @@ private:
     size_t m_file_size;
     Pixel_format m_pixel_format;
     Precalculated_buffer_parameters m_buffer_parameters;
-    Coordinates m_resolution;
+    Vector<Unit::pixel> m_resolution;
 };
 
 #endif // TYUV_FILE_H
