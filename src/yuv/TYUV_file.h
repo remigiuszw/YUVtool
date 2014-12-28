@@ -19,14 +19,13 @@ public:
     bool is_open() const;
     void open(const boost::filesystem::path &path);
     void close();
-    void recalculate_parameters();
     void drawFrameGL() const;
     void set_pixel_format(const Pixel_format &pixel_format);
     const Pixel_format &get_pixel_format() const;
     void set_resolution(const Vector<Unit::pixel> &resolution);
     Vector<Unit::pixel> get_resolution() const;
-    Bit_position get_frame_size() const;
-    int get_frames_count() const;
+    Bit_position get_frame_size();
+    int get_frames_count();
     Picture_buffer extract_buffer(
             int picture_number,
             const Coordinates<Unit::pixel, Reference_point::picture> &start,
@@ -34,12 +33,14 @@ public:
 
 private:
     void init_file_parameters();
+    void recalculate_parameters();
 
     boost::filesystem::path m_path;
     boost::filesystem::ifstream m_file;
     size_t m_file_size;
     Pixel_format m_pixel_format;
     Precalculated_buffer_parameters m_buffer_parameters;
+    bool m_parameters_valid;
     Vector<Unit::pixel> m_resolution;
 };
 

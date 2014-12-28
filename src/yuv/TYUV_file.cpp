@@ -3,13 +3,15 @@
 
 #include <iostream>
 
-Yuv_file::Yuv_file()
+Yuv_file::Yuv_file() :
+    m_parameters_valid(false)
 {
     m_file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
 }
 //------------------------------------------------------------------------------
 Yuv_file::Yuv_file(const boost::filesystem::path &path) :
-        m_path(path)
+    m_path(path),
+    m_parameters_valid(false)
 {
     m_file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
     open(path);
@@ -34,6 +36,7 @@ void Yuv_file::close()
 //------------------------------------------------------------------------------
 void Yuv_file::set_pixel_format(const Pixel_format &pixel_format)
 {
+    m_parameters_valid = false;
     m_pixel_format = pixel_format;
 }
 //------------------------------------------------------------------------------
@@ -44,6 +47,7 @@ const Pixel_format &Yuv_file::get_pixel_format() const
 //------------------------------------------------------------------------------
 void Yuv_file::set_resolution(const Vector<Unit::pixel> &resolution)
 {
+    m_parameters_valid = false;
     m_resolution = resolution;
 }
 //------------------------------------------------------------------------------
@@ -52,12 +56,13 @@ Vector<Unit::pixel> Yuv_file::get_resolution() const
     return m_resolution;
 }
 //------------------------------------------------------------------------------
-Bit_position Yuv_file::get_frame_size() const
+Bit_position Yuv_file::get_frame_size()
 {
+    recalculate_parameters();
     return m_buffer_parameters.get_buffer_size();
 }
 //------------------------------------------------------------------------------
-int Yuv_file::get_frames_count() const
+int Yuv_file::get_frames_count()
 {
     return Bit_position(m_file_size, 0) / get_frame_size();
 }
@@ -67,15 +72,34 @@ Picture_buffer Yuv_file::extract_buffer(
         const Coordinates<Unit::pixel, Reference_point::picture> &start,
         const Coordinates<Unit::pixel, Reference_point::picture> &end)
 {
+    const Vector<Unit::pixel> macropixel_size =
+            m_buffer_parameters.get_macropixel_size();
     check_range(0, picture_number, get_frames_count());
-    // TODO: check_range for start and end
+    check_range(0, start.x(), end.x());
+    check_range(0, start.y(), end.y());
+    check_range(0, end.x(), m_resolution.x() + 1);
+    check_range(0, end.y(), m_resolution.y() + 1);
+    Coordinates<Unit::pixel, Reference_point::macropixel> dummy_vector;
+    my_assert(
+            start
+            == cast_to_pixels(
+                cast_to_macropixels(start, macropixel_size, dummy_vector),
+                macropixel_size),
+            "non-integer macropixel boundaries are not supported");
+    my_assert(
+            end
+            == cast_to_pixels(
+                cast_to_macropixels(end, macropixel_size, dummy_vector),
+                macropixel_size),
+            "non-integer macropixel boundaries are not supported");
+
+    recalculate_parameters();
 
     const Pixel_format &pixel_format = get_pixel_format();
     const Vector<Unit::pixel> buffer_size = end - start;
     Picture_buffer buffer;
     buffer.allocate(buffer_size, pixel_format);
-    const Vector<Unit::pixel> macropixel_size =
-            m_buffer_parameters.get_macropixel_size();
+    Bit_position offset_in_buffer = 0;
     const Vector<Unit::macropixel> buffer_size_in_macropixels =
             buffer.get_parameters().get_size_in_macropixels();
     const Vector<Unit::macropixel> picture_size_in_macropixels =
@@ -92,10 +116,16 @@ Picture_buffer Yuv_file::extract_buffer(
                 m_buffer_parameters.get_entry_rows_count_in_plane(plane_idx);
         const Bit_position macropixel_row_in_plane_size_in_bits =
                 m_buffer_parameters.get_macropixel_row_in_plane_size(plane_idx);
-        for(int macropixel_row = 0;
-            macropixel_row < buffer_size_in_macropixels.y();
-            macropixel_row++)
+        for(int buffer_macropixel_row = 0;
+            buffer_macropixel_row < buffer_size_in_macropixels.y();
+            buffer_macropixel_row++)
         {
+            const int macropixel_row =
+                    cast_to_macropixels(
+                        start,
+                        macropixel_size,
+                        dummy_vector).y()
+                    + buffer_macropixel_row;
             const Bit_position macropixel_row_offset =
                     macropixel_row_in_plane_size_in_bits * macropixel_row;
             Bit_position row_in_macropixel_offset = 0;
@@ -107,23 +137,27 @@ Picture_buffer Yuv_file::extract_buffer(
                         m_buffer_parameters.get_bits_per_entry_row_in_plane(
                             plane_idx, row_in_macropixel);
                 const Bit_position x_position_offset =
-                        start.x() / macropixel_size.x()
+                        cast_to_macropixels(
+                            start,
+                            macropixel_size,
+                            dummy_vector).x()
                         * bits_per_entry_row_in_plane;
                 const Bit_position read_length =
                         buffer_size_in_macropixels.x()
                         * bits_per_entry_row_in_plane;
                 const Bit_position offset =
-                        picture_offset +
-                        plane_offset +
-                        macropixel_row_offset +
-                        row_in_macropixel_offset +
-                        x_position_offset;
+                        picture_offset
+                        + plane_offset
+                        + macropixel_row_offset
+                        + row_in_macropixel_offset
+                        + x_position_offset;
+
+                my_assert(
+                        offset.get_bits() == 0
+                        && offset_in_buffer.get_bits() == 0,
+                        "TODO: handle non-byte boundary reads");
 
                 m_file.seekg(offset.get_bytes());
-                if(offset.get_bits() != 0)
-                    throw std::runtime_error(
-                            "TODO: handle non-byte boundary reads");
-                const Bit_position offset_in_buffer(0); // TODO
                 m_file.read(reinterpret_cast<char *>(buffer.get_data().data() +
                         offset_in_buffer.get_bytes()),
                         read_length.get_bytes());
@@ -131,13 +165,10 @@ Picture_buffer Yuv_file::extract_buffer(
                 row_in_macropixel_offset +=
                         bits_per_entry_row_in_plane *
                         picture_size_in_macropixels.x();
+                offset_in_buffer += read_length;
             }
         }
     }
-
-//    m_file.seekg( picture_number*get_frame_size() );
-//    m_file.read(reinterpret_cast<char *>( buffer.get_data().data() ),
-//        get_frame_size());
     return buffer;
 }
 //------------------------------------------------------------------------------
@@ -152,4 +183,12 @@ void Yuv_file::init_file_parameters()
         m_file_size = end - begin;
     }
     std::cout << "m_file_size = " << m_file_size << std::endl;
+    m_parameters_valid = false;
+}
+//------------------------------------------------------------------------------
+void Yuv_file::recalculate_parameters()
+{
+    if(!m_parameters_valid)
+        m_buffer_parameters.recalculate(m_pixel_format, m_resolution);
+    m_parameters_valid = true;
 }
