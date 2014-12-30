@@ -2,6 +2,7 @@
 #define TCOMPONENTS_H
 
 #include <vector>
+#include <algorithm>
 #include <yuv/utils.h>
 #include <yuv/bit_position.h>
 #include <yuv/coordinates.h>
@@ -15,6 +16,20 @@ struct Component
     double m_valid_range[2];
     double m_encoded_range[2];
 };
+
+inline bool operator==(const Component &a, const Component &b)
+{
+    return
+            std::equal(
+                a.m_coeff, a.m_coeff + Rgba_component_count + 1,
+                b.m_coeff)
+            && std::equal(
+                a.m_valid_range, a.m_valid_range + 2,
+                b.m_valid_range)
+            && std::equal(
+                a.m_encoded_range, a.m_encoded_range + 2,
+                b.m_encoded_range);
+}
 
 typedef std::vector<Component> Color_space;
 
@@ -370,6 +385,13 @@ public:
                 get_macropixel_size(),
                 pixel_in_macropixel);
         return get_bits_per_entry(pixel_in_macropixel, component_index);
+    }
+    Coordinate_range<Unit::pixel, Reference_point::picture> get_pixel_range(
+            ) const
+    {
+        return Coordinate_range<Unit::pixel, Reference_point::picture>(
+                Coordinates<Unit::pixel, Reference_point::picture>(0, 0),
+                m_resolution);
     }
 
 private:

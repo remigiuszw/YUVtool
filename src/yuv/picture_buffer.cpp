@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 #include "picture_buffer.h"
+#include "Errors.h"
 
 namespace
 {
@@ -157,6 +158,21 @@ void Picture_buffer::set_entry(
 void Picture_buffer::convert_color_space(
         const std::vector<Component> &components)
 {
+    my_assert(
+            m_parameters.is_expanded(),
+            "color space conversion not expanded pixel formats is not "
+            "supported");
+    if(components == m_parameters.get_pixel_format().m_components)
+        return;
+
+//    const int planes_count =  m_parameters.get_planes_count();
+//    const Vector<Unit::pixel> &resolution = m_parameters.get_resolution();
+
+    for(const auto &xy : m_parameters.get_pixel_range())
+    {
+        xy.x();
+    }
+
     throw std::runtime_error("TODO");
 }
 //------------------------------------------------------------------------------
@@ -252,14 +268,11 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
 
     const Vector<Unit::macropixel> size_in_macropixels =
             source_parameters.get_size_in_macropixels();
-    if(
-            size_in_macropixels.x() * macropixel_size.x()
-                != source.get_resolution().x()
-            || size_in_macropixels.y() * macropixel_size.y()
-                != source.get_resolution().y())
-    {
-        throw std::runtime_error("not supported yet");
-    }
+
+    my_assert(
+            cast_to_pixels(size_in_macropixels, macropixel_size)
+            != source.get_resolution(),
+            "not supported yet");
 
     for(int iy = 0; iy < size_in_macropixels.y(); iy++)
     {

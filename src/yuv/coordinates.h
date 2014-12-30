@@ -256,5 +256,66 @@ Coordinates<Unit::macropixel, reference_point> cast_to_macropixels(
             + (a - cast_to_pixels(result, macropixel_size));
     return result;
 }
+//------------------------------------------------------------------------------
+template<Unit Tunit, Reference_point Tpoint>
+class Coordinate_range
+{
+public:
+    static constexpr Unit unit = Tunit;
+    static constexpr Reference_point reference_point = Tpoint;
+
+private:
+    Coordinates<unit, reference_point> m_start;
+    Vector<unit> m_size;
+
+public:
+    class Iterator
+    {
+    private:
+        const Coordinate_range &m_range;
+        Coordinates<unit, reference_point> m_coordinates;
+
+    private:
+        Iterator(
+                const Coordinate_range &range,
+                const Coordinates<unit, reference_point> &coordinates) :
+            m_range(range),
+            m_coordinates(coordinates)
+        { }
+    public:
+        Coordinates<unit, reference_point> operator*() const
+        {
+            return m_coordinates;
+        }
+        Iterator operator++()
+        {
+            Iterator result = *this;
+            m_coordinates += Vector<unit>(1, 0);
+            if(m_coordinates.x() >= m_range.m_start.x() + m_range.m_size.x())
+                m_coordinates += Vector<unit>(-m_range.m_size.x(), 1);
+            return result;
+        }
+        bool operator!=(const Iterator &other) const
+        {
+            return m_coordinates != other.m_coordinates;
+        }
+        friend class Coordinate_range;
+    };
+
+    Coordinate_range(
+            const Coordinates<unit, reference_point> &start,
+            const Vector<unit> &size) :
+        m_start(start),
+        m_size(size)
+    { }
+    Iterator begin() const
+    {
+        return Iterator(*this, m_start);
+    }
+    Iterator end() const
+    {
+        return Iterator(*this, m_start + Vector<unit>(0, m_size.y()));
+    }
+};
 
 #endif // COORDINATES_H
