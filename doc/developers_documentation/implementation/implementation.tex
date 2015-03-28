@@ -42,31 +42,39 @@ Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of par
 \subsection{Conclusion.}
 Although the first choice has been made to use wxWidgets library, the choice has been changed in the course of further development thanks to discovery of SFML.
 
-\section{Pixel format representaion.}
+\section{Pixel format representation.}
 
 In order to provide a consistent method of describing and processing all the desired raw video formats the following format description has been proposed.
 
-Decoded picture is a two matrix of pixels. The two dimensions are called resolution. Pixels in the picture are grouped into rectangular groups called macropixels.
+Decoded picture is a two-dimensional matrix of pixels. The two dimensions are called resolution. Pixels in the picture are grouped into rectangular groups called macropixels.
 
-\subsection{Colorspace.}
+\subsection{Color representation.}
 
-Aim is to provide parameters to transform the three or four component intensity numbers ($x_0, x_1, x_2, x_4$) (e.g. Y-0, U-1, V-2, A-3) into RGB(A) representation ($y_0, y_1, y_2, y_4$) (R-0, G-1, B-2, A-3).
+\subsubsection{Colorspace.}
 
-\subsubsection{Linear transform.}
+The full description of light spectrum would be a function $\mathbb{R} \to \mathbb{R}$ assigning intensity to each light wave lenght. Such representation is both difficult to implement and unnecessary in terms of digital image processing. Human eye recognizes color by intensity, with which light stimulates three kinds of sensors. These sensors detect green, red and blue light. We choose the three intensities represented by real numbers in range $<0; 1>$ as canonical representation of color. In digital image prosessing it is common to additionaly keep transparency parameter with each pixel. Together with the three color parameters this constitutes an RGBA colorspace.
 
-\begin{displaymath}
-y_i = \sum_{j=0}^3 M_{ij} x_j + N_i
-\end{displaymath}
+For various reasons color spaces different to RGBA have been designed. Such colorspaces are wquivalent to RGBA in the sense color represented in those colorspaces can be transformed to RGBA and back. Most commonly such conversion cab be expressed in terms of linear transform:
+\begin{equation}
+X_i = \sum^3_{j=0} M_{ij} Y_j + N_i
+\end{equation}
+where: $X_i$ - intensities in RGBA representation, $Y_i$ - intensities in the other representation, $M_{ij}, N_{i}$ - transformation parameters.
 
-This is current implementation. It is easy to provide user with interface to specify the paramenters( 4*4+4 numbers of $M_{ij}$ and $N_i$ ). It is also relatively easy to calculate reverse, lossy transform. This implementation is capable to represent colorspace like YUV, but is unable to represent e.g. exponential luminance.
+\subsection{Quantization.}
 
-\subsubsection{Function.}
-
-A general way is to use a function $f:int^4 \rightarrow int^4$. Such representation provides only one-way transform and it is hard to provide interface to specify it.
+Real numbers have no direct digital representation. Instead they are coded using floating point, fixed point or even tabular codes. In digital image processing, color component intensity number is represented by an integer number of a fixed bit-width $x_i$.
+\begin{equation}
+x_i = x_{i,min} + round \left( \frac{X_i - X_{i,min}}{X_{i,max} - X_{i,min}} \dot (x_{i,max} - x_{i,min}) \right)
+\end{equation}
+This coding is, of course, lossy, i.e. reverse transform:
+\begin{equation}
+X_i = X_{i,min} + \frac{x_i - x_{i,min}}{x_{i,max} - x_{i,min}} \dot (X_{i,max} - X_{i,min})
+\end{equation}
+is not guaranteed to give original value.
 
 \subsection{Data layout.}
 
-Each frame can be decomposed into one or more planes. Plane is divided into rows. Row is a sequence of entries. Entry is a group of bits interpreted as a number. There can be more than one row of entries corresponding to one row of macropixels. For each row of entries corresponding to a row of macropixels there is a specification of cyclic structure of widths entries. The numeration of entries is common for both rows of entries.
+Each frame can be decomposed into one or more planes. Plane is divided into rows. Row is a sequence of entries. Entry is a group of bits interpreted as a number. There can be more than one row of entries corresponding to one row of macropixels. For each row of entries corresponding to a row of macropixels there is a specification of cyclic structure of widths of entries. The numeration of entries is common for all rows of entries corresponding to one row of macropixels.
 
 \begin{figure}[ht]
   \begin{center}
@@ -76,11 +84,11 @@ Each frame can be decomposed into one or more planes. Plane is divided into rows
   \end{center}
 \end{figure}
 
-Groups of bits are specified for each plane separately. Each group of bits in a plane corresponds to one macropixel.
+Groups of entries are specified for each plane separately. Each group of entries in a plane corresponds to one macropixel.
 
 \subsection{Macropixel.}
 
-Macropixel is a rectangular group of pixels coding of which can be specified in cyclic manner. Macropixel is described by widht, height (in pixels) and width times height pixel coding descriptions. Each pixel coding description consists of three (or four) component coding descriptions. Each component coding description spcifies in which plane and in which field the component intensity number is stored. Multiple component coding descriptions in macropixel might refer to the same intensity number. Not all fields have to be ever referred to (stuffing bits in unpacked formats).
+Macropixel is a rectangular group of pixels coding of which can be specified in cyclic manner. Macropixel is described by widht, height (in pixels) and width times height pixel coding descriptions. Each pixel coding description consists of three (or four) component coding descriptions. Each component coding description specifies in which plane and in which entry the component intensity number is stored. Multiple component coding descriptions in macropixel might refer to the same intensity number. Not all entries have to be ever referred to (stuffing bits in unpacked formats).
 
 \subsection{Examples.}
 
@@ -139,7 +147,7 @@ V: plane 2, entry 0 \\
 
 \subsubsection{uyvy}
 
-Colorspace is the same as for yuv422p. Macropixel is 2x1 pixels and there is just one plane with one row of entries per row of macropixels. 
+Colorspace is the same as for yuv420p. Macropixel is 2x1 pixels and there is just one plane with one row of entries per row of macropixels. 
 
 Entries for plane 0: \\
 row 0: entry 0: 8-bit, entry 1: 8-bit, entry 2: 8-bit, entry 3: 8-bit \\
@@ -158,7 +166,7 @@ V: plane 0, entry 2 \\
 
 Target picture size is 64*1024 x 64*1024 pixels at 16-bit color depth, four color components. There are two performance issues. Operating memory constraints and disk read performance.
 
-The target picture size corresponds to 32 GiB. While it is feasible to store such large data on disk it is inacceptable to store it in operating memory. One might ask, how and for what purpose should we process or display a picture if it cannot be stored in operating memory? After all, the common dispaly size usually does not exceed 1920*1080 pixels at 8-bit color depth. While demand for such pictures is rather foggy, there are two possible cases where such picture can be displayed on commonly availible devices. Either only part of the picture is displayed or the picture has to be scaled down. In both cases data volume which has to be held during display operation is at most of the size of the screen.
+The target picture size corresponds to 32 GiB. While it is feasible to store such large data on disk it is inacceptable to store it in operating memory. One might ask, how and for what purpose should we process or display a picture if it cannot be stored in operating memory? After all, the common dispaly size usually does not exceed 1920*1080 pixels at 8-bit color depth. While demand for such pictures is rather foggy, there are two possible cases where such picture can be displayed on commonly available devices. Either only part of the picture is displayed or the picture has to be scaled down. In both cases data volume which has to be held during display operation is at most of the size of the screen.
 
 Minimal volume of the data which has to be read from the disk is the volume of the data which will  contribute to what is displayed. Reads should be restricted to this data region. Disk reads are known to be optimal when done in sequential manner. This is not necessary the natural one. E.g. in case of planar formats derivation of RGB values for given pixel demands reads from three different planes. Acquiring data pixel by pixel is inefficient from the disk performance perspective in this case.
 
