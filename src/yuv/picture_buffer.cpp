@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdexcept>
+#include <Eigen/Dense>
 
 #include "picture_buffer.h"
 #include "Errors.h"
@@ -156,24 +157,88 @@ void Picture_buffer::set_entry(
 }
 //------------------------------------------------------------------------------
 void Picture_buffer::convert_color_space(
-        const std::vector<Component> &components)
+        const Color_space &color_space)
 {
     my_assert(
             m_parameters.is_expanded(),
-            "color space conversion not expanded pixel formats is not "
+            "color space conversion of not expanded pixel formats is not "
             "supported");
-    if(components == m_parameters.get_pixel_format().m_components)
+    if(color_space == m_parameters.get_pixel_format().m_color_space)
         return;
+    const auto &input_components =
+            m_parameters.get_pixel_format().m_color_space.m_components;
+    const auto &output_components =
+            color_space.m_components;
+    const int input_components_count = input_components.size();
+    const int output_components_count = output_components.size();
 
-//    const int planes_count =  m_parameters.get_planes_count();
-//    const Vector<Unit::pixel> &resolution = m_parameters.get_resolution();
+    Eigen::Matrix4d input_matrix;
+    Eigen::Matrix4d output_matrix;
+    for(int i = 0; i < Rgba_component_count; i++)
+    {
+        for(int j = 0; j < Rgba_component_count; j++)
+        {
+            if(i < input_components_count)
+                input_matrix(i, j) = input_components[i].m_coeff[j];
+            else
+                input_matrix(i, j) = (i == j) ? 1 : 0;
+            if(i < output_components_count)
+                output_matrix(i, j) = output_components[i].m_coeff[j];
+            else
+                output_matrix(i, j) = (i == j) ? 1 : 0;
+        }
+    }
+    Eigen::Matrix4d combined_matrix =
+            output_matrix * input_matrix.inverse();
+
+    /* TODO: combine all the operations into one matrix multiplication and one
+     * vector addition */
 
     for(const auto &xy : m_parameters.get_pixel_range())
     {
-        xy.x();
+        Eigen::Vector4d input;
+        for(int i = 0; i < Rgba_component_count; i++)
+        {
+            if(i >= input_components_count)
+            {
+                input(i) = 1;
+                continue;
+            }
+            const int quantized_input = get_entry(xy, i);
+            const int input_width =
+                    m_parameters.get_bits_per_entry(xy, i).get_position();
+            const Component &input_component = input_components[i];
+            const double (&valid_range)[2] = input_component.m_valid_range;
+            const double (&encoded_range)[2] = input_component.m_encoded_range;
+            const double input_in_encoded_range =
+                    static_cast<double>(quantized_input)
+                    / (1 << input_width);
+            const double input_in_0_to_1 =
+                    (input_in_encoded_range - encoded_range[0])
+                    / (encoded_range[1] - encoded_range[0]);
+            input[i] =
+                    input_in_0_to_1 * (valid_range[1] - valid_range[0])
+                    + valid_range[0];
+        }
+        Eigen::Vector4d output = combined_matrix * input;
+        for(int i = 0; i < output_components_count; i++)
+        {
+            const Component &output_component = output_components[i];
+            const double (&valid_range)[2] = output_component.m_valid_range;
+            const double (&encoded_range)[2] = output_component.m_encoded_range;
+            const int output_in_0_to_1 =
+                    (output[i] - valid_range[0])
+                    / (valid_range[1] - valid_range[0]);
+            const int output_in_encoded_range =
+                    output_in_0_to_1 * (encoded_range[1] - encoded_range[0])
+                    + encoded_range[0];
+            const int output_width =
+                    m_parameters.get_bits_per_entry(xy, i).get_position();
+            const int quantized_output =
+                    output_in_encoded_range * (1 << output_width);
+            set_entry(xy, i, quantized_output);
+        }
     }
-
-    throw std::runtime_error("TODO");
 }
 //------------------------------------------------------------------------------
 //void Picture_buffer::draw_pixel( Coordinates coordinates,
@@ -249,9 +314,8 @@ Picture_buffer convert(
         const Pixel_format &pixel_format)
 {
     Picture_buffer expanded = expand_sampling(source);
-    expanded.convert_color_space(pixel_format.m_components);
-    throw std::runtime_error("TODO");
-    return expanded;
+    expanded.convert_color_space(pixel_format.m_color_space);
+    return subsample(expanded, pixel_format);
 }
 //------------------------------------------------------------------------------
 Picture_buffer expand_sampling(const Picture_buffer &source)
@@ -271,13 +335,91 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
 
     my_assert(
             cast_to_pixels(size_in_macropixels, macropixel_size)
-            != source.get_resolution(),
+            == source.get_resolution(),
             "not supported yet");
 
     for(int iy = 0; iy < size_in_macropixels.y(); iy++)
     {
         for(int jy = 0; jy < macropixel_size.y(); jy++)
         {
+            for(int ix = 0; ix < size_in_macropixels.x(); ix++)
+            {
+                for(int jx = 0; jx < macropixel_size.x(); jx++)
+                {
+                    const Coordinates<Unit::pixel, Reference_point::picture>
+                            coordinates(
+                                ix * macropixel_size.x() + jx,
+                                iy * macropixel_size.y() + jy);
+                    const int components_count =
+                            source_parameters.get_components_count();
+                    for(
+                            int component_index = 0;
+                            component_index < components_count;
+                            component_index++)
+                    {
+                        const Bit_position input_bitdepth =
+                                source_parameters.get_bits_per_entry(
+                                    Coordinates<Unit::pixel,
+                                        Reference_point::macropixel>(jx, jy),
+                                    component_index);
+                        const Bit_position output_bitdepth =
+                                expanded_parameters.get_bits_per_entry(
+                                    Coordinates<Unit::pixel,
+                                        Reference_point::macropixel>(0, 0),
+                                    component_index);
+                        const int input_value =
+                                source.get_entry(coordinates, component_index);
+                        const int output_value =
+                                input_value
+                                << (
+                                    output_bitdepth.get_position()
+                                    - input_bitdepth.get_position());
+                        expanded.set_entry(
+                                coordinates,
+                                component_index,
+                                output_value);
+                    }
+                }
+            }
+        }
+    }
+    return expanded;
+}
+//------------------------------------------------------------------------------
+Picture_buffer subsample(
+        const Picture_buffer &source,
+        const Pixel_format &pixel_format)
+{
+    Picture_buffer subsampled(source.get_resolution(), pixel_format);
+    const Precalculated_buffer_parameters &source_parameters =
+            source.get_parameters();
+    const Precalculated_buffer_parameters &subsampled_parameters =
+            subsampled.get_parameters();
+    const Vector<Unit::pixel> macropixel_size =
+            subsampled_parameters.get_macropixel_size();
+    const Vector<Unit::macropixel> size_in_macropixels =
+            subsampled_parameters.get_size_in_macropixels();
+    my_assert(
+            source_parameters.is_expanded(),
+            "subsampling subsampled format is not supported");
+    my_assert(
+            cast_to_pixels(size_in_macropixels, macropixel_size)
+            != source.get_resolution(),
+            "not supported yet");
+    const int planes_count = subsampled_parameters.get_planes_count();
+
+    for(int iy = 0; iy < size_in_macropixels.y(); iy++)
+    {
+        for(int jy = 0; jy < macropixel_size.y(); jy++)
+        {
+            for(int ip = 0; ip < planes_count; ip++)
+            {
+                for()
+            }
+
+
+
+
             for(int ix = 0; ix < size_in_macropixels.x(); ix++)
             {
                 for(int jx = 0; jx < macropixel_size.x(); jx++)

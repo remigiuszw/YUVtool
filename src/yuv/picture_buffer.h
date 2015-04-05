@@ -32,7 +32,7 @@ public:
                 &coordinates,
             int component_index,
             int value);
-    void convert_color_space(const std::vector<Component> &components);
+    void convert_color_space(const Color_space &color_space);
 
 private:
 //    void draw_macropixel( Coordinates coordinates, Byte *data ) const;
@@ -47,5 +47,8 @@ Picture_buffer convert(
         const Picture_buffer &source,
         const Pixel_format &pixel_format);
 Picture_buffer expand_sampling(const Picture_buffer &source);
+Picture_buffer subsample(
+        const Picture_buffer &source,
+        const Pixel_format &pixel_format);
 
 #endif // PICTURE_BUFFER_H

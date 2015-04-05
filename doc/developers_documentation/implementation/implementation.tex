@@ -97,13 +97,18 @@ Macropixel is a rectangular group of pixels coding of which can be specified in 
 This is common 8-bit planar format. Colorspace is specified with:
 
 \begin{displaymath}
+x_{i,min} = (16, 16, 16, 0),
+x_{i,max} = (235, 240, 240, 255)
+\end{displaymath}
+
+\begin{displaymath}
 M =
   \left[ \begin{array}{ rrrr }
     1.000 & 1.000 & 1.000 & 0.000 \\
     0.000 & -0.344 & 1.770 & 0.000 \\
     1.403 & -0.714 & 0.000 & 0.000 \\
     0.000 & 0.000 & 0.000 & 1.000
-  \end{array} \right]
+  \end{array} \right]^{-1}
 \end{displaymath}
 \begin{displaymath}
 N =

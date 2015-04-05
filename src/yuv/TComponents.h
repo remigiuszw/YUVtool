@@ -10,9 +10,9 @@
 struct Component
 {
     /*
-     * E'_X = K_XR * E'_R + K_XG * E'_G + K_XB * E'_B
+     * E'_X = K_XR * E'_R + K_XG * E'_G + K_XB * E'_B + K_XA * E'_A
      */
-    double m_coeff[Rgba_component_rgb_count+1];
+    double m_coeff[Rgba_component_count];
     double m_valid_range[2];
     double m_encoded_range[2];
 };
@@ -21,7 +21,7 @@ inline bool operator==(const Component &a, const Component &b)
 {
     return
             std::equal(
-                a.m_coeff, a.m_coeff + Rgba_component_count + 1,
+                a.m_coeff, a.m_coeff + Rgba_component_count,
                 b.m_coeff)
             && std::equal(
                 a.m_valid_range, a.m_valid_range + 2,
@@ -31,7 +31,15 @@ inline bool operator==(const Component &a, const Component &b)
                 b.m_encoded_range);
 }
 
-typedef std::vector<Component> Color_space;
+struct Color_space
+{
+    std::vector<Component> m_components;
+};
+
+inline bool operator==(const Color_space &a, const Color_space &b)
+{
+    return a.m_components == b.m_components;
+}
 
 struct Entry
 {
@@ -73,73 +81,53 @@ struct Macropixel_coding
 struct Pixel_format
 {
     std::vector<Plane> m_planes;
-    Color_space m_components;
+    Color_space m_color_space;
     Macropixel_coding m_macropixel_coding;
 };
 
 // full range RGB
 
-const Color_space sRGB_color_space
+const Color_space RGB_color_space
 {
-    { // R
-        {
-            1,
-            0,
-            0
+    {
+        { // R
+            { 1, 0, 0, 0 },
+            { 0, 1 },
+            { 0, 1 }
         },
-        { 0, 1 },
-        { 0, 1 }
-    },
-    { // G
-        {
-            0,
-            1,
-            0
+        { // G
+            { 0, 1, 0, 0 },
+            { 0, 1 },
+            { 0, 1 }
         },
-        { 0, 1 },
-        { 0, 1 }
-    },
-    { // B
-        {
-            0,
-            0,
-            1
-        },
-        { 0, 1 },
-        { 0, 1 }
+        { // B
+            { 0, 0, 1, 0 },
+            { 0, 1 },
+            { 0, 1 }
+        }
     }
 };
 
 // studio RGB
 
-const Color_space RGB_color_space
+const Color_space sRGB_color_space
 {
-    { // R
-        {
-            1,
-            0,
-            0
+    {
+        { // R
+            { 1, 0, 0, 0 },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
         },
-        { 0.0, 1.0 },
-        { 16.0/256, 235.0/256 }
-    },
-    { // G
-        {
-            0,
-            1,
-            0
+        { // G
+            { 0, 1, 0, 0 },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
         },
-        { 0.0, 1.0 },
-        { 16.0/256, 235.0/256 }
-    },
-    { // B
-        {
-            0,
-            0,
-            1
-        },
-        { 0.0, 1.0 },
-        { 16.0/256, 235.0/256 }
+        { // B
+            { 0, 0, 1, 0 },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
+        }
     }
 };
 
@@ -149,32 +137,37 @@ const double ITU709_K_B = 0.0722;
 
 const Color_space ITU709_YCbCr_color_space
 {
-    { // Y
-        {
-            ITU709_K_R,
-            1 - ITU709_K_B - ITU709_K_R,
-            ITU709_K_B
+    {
+        { // Y
+            {
+                ITU709_K_R,
+                1 - ITU709_K_B - ITU709_K_R,
+                ITU709_K_B,
+                0
+            },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
         },
-        { 0.0, 1.0 },
-        { 16.0/256, 235.0/256 }
-    },
-    { // Cb
-        {
-            -ITU709_K_R/(2*(1-ITU709_K_B)),
-            -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_B)),
-            0.5
+        { // Cb
+            {
+                -ITU709_K_R/(2*(1-ITU709_K_B)),
+                -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_B)),
+                0.5,
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
         },
-        { -0.5, 0.5 },
-        { 16.0/256, 240.0/256 }
-    },
-    { // Cr
-        {
-            0.5,
-            -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_R)),
-            -ITU709_K_B/(2*(1-ITU709_K_R))
-        },
-        { -0.5, 0.5 },
-        { 16.0/256, 240.0/256 }
+        { // Cr
+            {
+                0.5,
+                -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_R)),
+                -ITU709_K_B/(2*(1-ITU709_K_R)),
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
+        }
     }
 };
 
@@ -257,7 +250,7 @@ public:
     }
     int get_components_count() const
     {
-        return get_pixel_format().m_components.size();
+        return m_pixel_format.m_color_space.m_components.size();
     }
     int get_planes_count() const
     {
@@ -416,8 +409,7 @@ private:
     Bit_position m_buffer_size;
 };
 
-Pixel_format get_expanded_pixel_format(
-        const std::vector<Component> &components,
+Pixel_format get_expanded_pixel_format(const Color_space &color_space,
         const std::vector<Entry> &entries);
 Pixel_format get_expanded_pixel_format(const Pixel_format &input);
 

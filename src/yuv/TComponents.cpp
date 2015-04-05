@@ -5,12 +5,12 @@
 
 //------------------------------------------------------------------------------
 Pixel_format get_expanded_pixel_format(
-        const std::vector<Component> &components,
+        const Color_space &color_space,
         const std::vector<Entry> &entries)
 {
-    const int components_count = components.size();
+    const int components_count = color_space.m_components.size();
     Pixel_format result;
-    result.m_components = components;
+    result.m_color_space = color_space;
     result.m_macropixel_coding.m_size = {1, 1};
     result.m_macropixel_coding.m_pixels.resize(1);
     Coded_pixel &target_pixel =
@@ -28,7 +28,7 @@ Pixel_format get_expanded_pixel_format(
 //------------------------------------------------------------------------------
 Pixel_format get_expanded_pixel_format(const Pixel_format &input)
 {
-    const int components_count = input.m_components.size();
+    const int components_count = input.m_color_space.m_components.size();
 
     std::vector<Entry> entries(components_count);
     const std::vector<Coded_pixel> &coded_pixels =
@@ -57,7 +57,7 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input)
                 max_depth.get_position(), bits_in_byte));
     }
 
-    return get_expanded_pixel_format(input.m_components, entries);
+    return get_expanded_pixel_format(input.m_color_space, entries);
 }
 //------------------------------------------------------------------------------
 Precalculated_pixel_format::Precalculated_pixel_format()
