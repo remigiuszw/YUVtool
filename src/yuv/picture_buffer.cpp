@@ -408,42 +408,60 @@ Picture_buffer subsample(
             "not supported yet");
     const int planes_count = subsampled_parameters.get_planes_count();
 
-    for(int iy = 0; iy < size_in_macropixels.y(); iy++)
+    for(int plane_index = 0; plane_index < planes_count; plane_index++)
     {
-        for(int jy = 0; jy < macropixel_size.y(); jy++)
+        for(int my = 0; my < size_in_macropixels.y(); my++)
         {
-            for(int ip = 0; ip < planes_count; ip++)
+            const int entry_rows_count_in_plane =
+                    subsampled_parameters.get_entry_rows_count_in_plane(
+                        plane_index);
+            for(
+                    int row_index = 0;
+                    row_index < entry_rows_count_in_plane;
+                    row_index++)
             {
-                for()
-            }
-
-
-
-
-            for(int ix = 0; ix < size_in_macropixels.x(); ix++)
-            {
-                for(int jx = 0; jx < macropixel_size.x(); jx++)
+                for(int mx = 0; mx < size_in_macropixels.x(); mx++)
                 {
-                    const Coordinates<Unit::pixel, Reference_point::picture>
-                            coordinates(
-                                ix * macropixel_size.x() + jx,
-                                iy * macropixel_size.y() + jy);
-                    const int components_count =
-                            source_parameters.get_components_count();
+                    const int entries_in_row_count =
+                        subsampled_parameters.get_entry_count_in_row_in_plane(
+                                plane_index,
+                                row_index);
+                    const Coordinates<
+                            Unit::macropixel,
+                            Reference_point::picture> macropixel(mx, my);
                     for(
-                            int component_index = 0;
-                            component_index < components_count;
-                            component_index++)
+                            int entry_index = 0;
+                            entry_index < entries_in_row_count;
+                            entry_index++)
                     {
+                        const Coordinates<
+                                Unit::pixel,
+                                Reference_point::macropixel> sampling_point =
+                                    subsampled_parameters.get_sampling_point(
+                                        plane_index,
+                                        row_index,
+                                        entry_index);
+                        const Coordinates<
+                                Unit::pixel,
+                                Reference_point::picture> coordinates =
+                                    cast_to_pixels(
+                                        macropixel,
+                                        macropixel_size,
+                                        sampling_point);
+                        const int component_index =
+                                subsampled_parameters.get_sampled_component(
+                                    plane_index,
+                                    row_index,
+                                    entry_index);
                         const Bit_position input_bitdepth =
                                 source_parameters.get_bits_per_entry(
-                                    Coordinates<Unit::pixel,
-                                        Reference_point::macropixel>(jx, jy),
+                                    Coordinates<
+                                        Unit::pixel,
+                                        Reference_point::macropixel>(0, 0),
                                     component_index);
                         const Bit_position output_bitdepth =
-                                expanded_parameters.get_bits_per_entry(
-                                    Coordinates<Unit::pixel,
-                                        Reference_point::macropixel>(0, 0),
+                                subsampled_parameters.get_bits_per_entry(
+                                    sampling_point,
                                     component_index);
                         const int input_value =
                                 source.get_entry(coordinates, component_index);
@@ -452,7 +470,7 @@ Picture_buffer subsample(
                                 << (
                                     output_bitdepth.get_position()
                                     - input_bitdepth.get_position());
-                        expanded.set_entry(
+                        subsampled.set_entry(
                                 coordinates,
                                 component_index,
                                 output_value);
@@ -461,5 +479,5 @@ Picture_buffer subsample(
             }
         }
     }
-    return expanded;
+    return subsampled;
 }

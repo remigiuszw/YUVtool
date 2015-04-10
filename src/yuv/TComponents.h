@@ -220,6 +220,7 @@ private:
     {
         Bit_position m_offset;
         Coordinates<Unit::pixel, Reference_point::macropixel> m_sampling_point;
+        int m_component_index;
     };
 
     struct Entry_row_paramters
@@ -312,6 +313,22 @@ public:
     bool is_expanded() const
     {
         return m_is_expanded;
+    }
+    Coordinates<Unit::pixel, Reference_point::macropixel> get_sampling_point(
+            const int plane_index,
+            const int row_index,
+            const int entry_index) const
+    {
+        return m_planes[plane_index].m_rows[row_index].m_entries[
+                entry_index].m_sampling_point;
+    }
+    int get_sampled_component(
+            const int plane_index,
+            const int row_index,
+            const int entry_index) const
+    {
+        return m_planes[plane_index].m_rows[row_index].m_entries[
+                entry_index].m_component_index;
     }
 private:
     int get_pixel_coding_index(

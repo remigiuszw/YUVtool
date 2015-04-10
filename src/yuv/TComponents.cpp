@@ -100,6 +100,7 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                 Entry_parameters &entry = row_parameters.m_entries[entry_index];
                 entry.m_offset = offset;
                 entry.m_sampling_point = {-1, -1};
+                entry.m_component_index = -1;
                 offset += row.m_entries[entry_index].m_width;
             }
             row_parameters.m_bits_per_macropixel = offset;
@@ -150,6 +151,7 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                             Reference_point::macropixel>(-1, -1))
                 {
                     entry_parameters.m_sampling_point = coordinates;
+                    entry_parameters.m_component_index = component_index;
                 }
             }
         }
