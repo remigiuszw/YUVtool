@@ -211,6 +211,28 @@ const Pixel_format yuv_420p_8bit
     }
 };
 
+const Pixel_format rgb_32bpp
+{
+    { // planes
+        { // plane RGB
+            { // rows
+                { {// entries
+                    { 8 }, { 8 }, { 8 }, { 8 }
+                } }
+            }
+        }
+    },
+    RGB_color_space,
+    { // macropixel coding
+        { // coded pixels
+            { // coded pixel
+                { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 0, 2 } }
+            }
+        },
+        { 1, 1 }
+    }
+};
+
 class Precalculated_pixel_format
 {
 private:
@@ -275,7 +297,7 @@ public:
     {
         return m_planes[plane_index].m_bits_per_macropixel;
     }
-    Bit_position get_bits_per_entry_row_in_plane(
+    Bit_position get_bits_per_macropixel_in_row_in_plane(
             const int plane_index,
             const int row_index) const
     {
@@ -305,6 +327,17 @@ public:
                     coding.m_plane_index].m_rows[
                     coding.m_row_index].m_entries[
                     coding.m_entry_index].m_width;
+    }
+    Bit_position get_entry_offset_in_macropixel_in_row_in_plane(
+            const int plane_index,
+            const int row_index,
+            const int entry_index) const
+    {
+        return
+                m_planes[
+                plane_index].m_rows[
+                row_index].m_entries[
+                entry_index].m_offset;
     }
     Vector<Unit::pixel> get_macropixel_size() const
     {
@@ -379,8 +412,42 @@ public:
                 &coordinates,
             const int component_index) const
     {
-        throw "TODO";
-        return Bit_position(0);
+        Coordinates<Unit::pixel, Reference_point::macropixel>
+                pixel_in_macropixel;
+        const Coordinates<Unit::macropixel, Reference_point::picture>
+                macropixel_coordintes =
+                    cast_to_macropixels(
+                        coordinates,
+                        get_macropixel_size(),
+                        pixel_in_macropixel);
+        const Macropixel_coding &macropixel_coding =
+                get_pixel_format().m_macropixel_coding;
+        const Coded_pixel &coded_pixel =
+                macropixel_coding.m_pixels[
+                    macropixel_coding.m_size.x() * pixel_in_macropixel.y()
+                    + pixel_in_macropixel.x()];
+        const Component_coding &component_coding =
+                coded_pixel.m_components[component_index];
+        const int plane_index = component_coding.m_plane_index;
+        const Plane_parameters &plane_parameters =
+                m_planes[component_coding.m_plane_index];
+        const Bit_position entry_offset_in_row_of_pixels_in_macropixel =
+                get_entry_offset_in_macropixel_in_row_in_plane(
+                    plane_index,
+                    component_coding.m_row_index,
+                    component_coding.m_entry_index);
+        return
+                plane_parameters.m_offset
+                + (
+                    plane_parameters.m_size_per_row_of_macropixels
+                    * macropixel_coordintes.y())
+                + plane_parameters.m_rows[pixel_in_macropixel.y()].m_offset
+                + (
+                    macropixel_coordintes.x()
+                    * get_bits_per_macropixel_in_row_in_plane(
+                        plane_index,
+                        component_coding.m_row_index))
+                + entry_offset_in_row_of_pixels_in_macropixel;
     }
     using Precalculated_pixel_format::get_bits_per_entry;
     Bit_position get_bits_per_entry(
@@ -411,6 +478,7 @@ private:
     struct Entry_row_parameters
     {
         Bit_position m_size;
+        Bit_position m_offset;
     };
 
     struct Plane_parameters

@@ -12,21 +12,80 @@ void print_stream_info(Yuv_file &YUV_file)
     std::cout << "frames count: " << YUV_file.get_frames_count() << '\n';
 }
 
+const char help_string[] =
+R"(Yuv tool commandline interface
+
+usage:
+yuvtool_cli COMMAND [ARGUMENTS]
+
+valid commands:
+
+stream_info RES_X RES_Y INPUT_YUV_FILE
+    shows some information about the yuv file
+
+convert RES_X RES_Y INPUT_420YUV_FILE OUTPUT_444RGB_FILE
+    convert input 420 planar yuv file into plain non-planar 32bpp RGB file
+)";
+
+
 int main(int argc, char *argv[]) try
 {
-    if(argc != 4)
-        throw GeneralError("usage: yuvtool_cli res_x res_y input_file.yuv");            ;
+    if(argc < 2)
+        throw GeneralError(help_string);
 
-    Yuv_file input_file(argv[3]);
+    std::string command = argv[1];
+    if(command == "stream_info")
+    {
+        if(argc != 5)
+            throw GeneralError(help_string);
 
-    Vector<Unit::pixel> resolution;
-    resolution.set_x(std::atoi(argv[1]));
-    resolution.set_y(std::atoi(argv[2]));
-    input_file.set_resolution(resolution);
+        Yuv_file input_file(argv[4]);
 
-    input_file.set_pixel_format(yuv_420p_8bit);
+        Vector<Unit::pixel> resolution;
+        resolution.set_x(std::atoi(argv[2]));
+        resolution.set_y(std::atoi(argv[3]));
+        input_file.set_resolution(resolution);
 
-    print_stream_info(input_file);
+        input_file.set_pixel_format(yuv_420p_8bit);
+
+        print_stream_info(input_file);
+    }
+    else if(command == "convert")
+    {
+        if(argc != 6)
+            throw GeneralError(help_string);
+
+        Yuv_file input_file(argv[4]);
+        Yuv_file output_file(argv[5], std::ios_base::out);
+
+        Vector<Unit::pixel> resolution;
+        resolution.set_x(std::atoi(argv[2]));
+        resolution.set_y(std::atoi(argv[3]));
+
+        input_file.set_resolution(resolution);
+        input_file.set_pixel_format(yuv_420p_8bit);
+        output_file.set_resolution(resolution);
+        output_file.set_pixel_format(rgb_32bpp);
+
+        Coordinates<Unit::pixel, Reference_point::picture>
+                zero_coordinate(0, 0);
+        Picture_buffer input_buffer =
+                input_file.extract_buffer(
+                    0,
+                    zero_coordinate,
+                    zero_coordinate + resolution);
+        Picture_buffer output_buffer =
+                convert(input_buffer, rgb_32bpp);
+        output_file.insert_buffer(
+                    output_buffer,
+                    0,
+                    zero_coordinate,
+                    zero_coordinate + resolution);
+    }
+    else
+    {
+        throw GeneralError(help_string);
+    }
 
     return 0;
 }

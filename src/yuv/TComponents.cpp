@@ -147,7 +147,7 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                         component_coding.m_entry_index];
                 if(
                         entry_parameters.m_sampling_point
-                        != Coordinates<Unit::pixel,
+                        == Coordinates<Unit::pixel,
                             Reference_point::macropixel>(-1, -1))
                 {
                     entry_parameters.m_sampling_point = coordinates;
@@ -215,12 +215,17 @@ void Precalculated_buffer_parameters::recalculate(
         Plane_parameters &plane = m_planes[plane_index];
         plane.m_offset = plane_offset;
         const int rows_count = get_entry_rows_count_in_plane(plane_index);
+        plane.m_rows.resize(rows_count);
         Bit_position bits_per_macropixel_row_in_plane = 0;
         for(int row_index = 0; row_index < rows_count; row_index++)
         {
             plane.m_rows[row_index].m_size =
                     m_size_in_macropixels.x()
-                    * get_bits_per_entry_row_in_plane(plane_index, row_index);
+                    * get_bits_per_macropixel_in_row_in_plane(
+                        plane_index,
+                        row_index);
+            plane.m_rows[row_index].m_offset =
+                    bits_per_macropixel_row_in_plane;
             bits_per_macropixel_row_in_plane += plane.m_rows[row_index].m_size;
         }
         plane.m_size_per_row_of_macropixels = bits_per_macropixel_row_in_plane;

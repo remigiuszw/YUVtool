@@ -404,7 +404,7 @@ Picture_buffer subsample(
             "subsampling subsampled format is not supported");
     my_assert(
             cast_to_pixels(size_in_macropixels, macropixel_size)
-            != source.get_resolution(),
+            == source.get_resolution(),
             "not supported yet");
     const int planes_count = subsampled_parameters.get_planes_count();
 

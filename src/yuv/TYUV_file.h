@@ -15,9 +15,13 @@ class Yuv_file
 {
 public:
     Yuv_file();
-    Yuv_file(const boost::filesystem::path &path);
+    Yuv_file(
+            const boost::filesystem::path &path,
+            const std::ios_base::openmode mode = std::ios_base::in);
     bool is_open() const;
-    void open(const boost::filesystem::path &path);
+    void open(
+            const boost::filesystem::path &path,
+            const std::ios_base::openmode mode = std::ios_base::in);
     void close();
     void drawFrameGL() const;
     void set_pixel_format(const Pixel_format &pixel_format);
@@ -30,13 +34,18 @@ public:
             int picture_number,
             const Coordinates<Unit::pixel, Reference_point::picture> &start,
             const Coordinates<Unit::pixel, Reference_point::picture> &end);
+    void insert_buffer(
+            const Picture_buffer &buffer,
+            int picture_number,
+            const Coordinates<Unit::pixel, Reference_point::picture> &start,
+            const Coordinates<Unit::pixel, Reference_point::picture> &end);
 
 private:
     void init_file_parameters();
     void recalculate_parameters();
 
     boost::filesystem::path m_path;
-    boost::filesystem::ifstream m_file;
+    boost::filesystem::fstream m_file;
     size_t m_file_size;
     Pixel_format m_pixel_format;
     Precalculated_buffer_parameters m_buffer_parameters;
