@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) try
             throw GeneralError(help_string);
 
         Yuv_file input_file(argv[4]);
-        Yuv_file output_file(argv[5], std::ios_base::out);
+        Yuv_file output_file(argv[5], std::ios::in|std::ios::out);
 
         Vector<Unit::pixel> resolution;
         resolution.set_x(std::atoi(argv[2]));
@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) try
         input_file.set_pixel_format(yuv_420p_8bit);
         output_file.set_resolution(resolution);
         output_file.set_pixel_format(rgb_32bpp);
+        output_file.set_frames_count(1);
 
         Coordinates<Unit::pixel, Reference_point::picture>
                 zero_coordinate(0, 0);

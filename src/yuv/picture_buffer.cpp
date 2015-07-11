@@ -14,7 +14,7 @@ int get_bits(const Byte *data, const Bit_position start, const Bit_position end)
     int mask = 1;
     for(Bit_position i = start; i < end; ++i)
     {
-        const int bit = (data[i.get_bytes()] >> i.get_bits()) & 1;
+        const Byte bit = (data[i.get_bytes()] >> i.get_bits()) & 1;
         result |= bit ? mask : 0;
         mask <<= 1;
     }
@@ -29,7 +29,10 @@ void set_bits(Byte *data, const Bit_position start, const Bit_position end,
     for(Bit_position i = start; i < end; ++i)
     {
         const int bit = value & mask ? 1 : 0;
-        data[i.get_bytes()] |= bit << i.get_bits();
+        const Byte output_mask = 1 << i.get_bits();
+        data[i.get_bytes()] =
+                (data[i.get_bytes()] & ~output_mask)
+                | (bit << i.get_bits());
         mask <<= 1;
     }
 }
@@ -153,7 +156,7 @@ void Picture_buffer::set_entry(
             get_parameters().get_entry_offset(coordinates, component_index);
     Bit_position width =
             get_parameters().get_bits_per_entry(coordinates, component_index);
-    return set_bits(get_data().data(), start, start+width, value);
+    set_bits(get_data().data(), start, start + width, value);
 }
 //------------------------------------------------------------------------------
 void Picture_buffer::convert_color_space(
@@ -226,10 +229,10 @@ void Picture_buffer::convert_color_space(
             const Component &output_component = output_components[i];
             const double (&valid_range)[2] = output_component.m_valid_range;
             const double (&encoded_range)[2] = output_component.m_encoded_range;
-            const int output_in_0_to_1 =
+            const double output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);
-            const int output_in_encoded_range =
+            const double output_in_encoded_range =
                     output_in_0_to_1 * (encoded_range[1] - encoded_range[0])
                     + encoded_range[0];
             const int output_width =
@@ -453,6 +456,11 @@ Picture_buffer subsample(
                                     plane_index,
                                     row_index,
                                     entry_index);
+                        if(component_index == -1)
+                        {
+                            /* stuffing bits entry */
+                            continue;
+                        }
                         const Bit_position input_bitdepth =
                                 source_parameters.get_bits_per_entry(
                                     Coordinates<

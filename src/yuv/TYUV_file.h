@@ -30,6 +30,7 @@ public:
     Vector<Unit::pixel> get_resolution() const;
     Bit_position get_frame_size();
     int get_frames_count();
+    void set_frames_count(const int i);
     Picture_buffer extract_buffer(
             int picture_number,
             const Coordinates<Unit::pixel, Reference_point::picture> &start,

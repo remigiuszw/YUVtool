@@ -71,6 +71,19 @@ int Yuv_file::get_frames_count()
     return Bit_position(m_file_size, 0) / get_frame_size();
 }
 //------------------------------------------------------------------------------
+void Yuv_file::set_frames_count(const int i)
+{
+    my_assert(get_frames_count() <= i, "file truncation not yet supported");
+    while(get_frames_count() < i)
+    {
+        m_file.seekp(0, std::ios::end);
+        std::vector<char> input(get_frame_size().get_bytes());
+        std::fill(input.begin(), input.end(), 0);
+        m_file.write(input.data(), input.size());
+        init_file_parameters();
+    }
+}
+//------------------------------------------------------------------------------
 Picture_buffer Yuv_file::extract_buffer(
         int picture_number,
         const Coordinates<Unit::pixel, Reference_point::picture> &start,
@@ -271,7 +284,7 @@ void Yuv_file::insert_buffer(
                         && offset_in_buffer.get_bits() == 0,
                         "TODO: handle non-byte boundary reads");
 
-                m_file.seekg(offset.get_bytes());
+                m_file.seekp(offset.get_bytes());
                 m_file.write(
                         reinterpret_cast<const char *>(
                             buffer.get_data().data()

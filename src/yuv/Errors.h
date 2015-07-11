@@ -25,7 +25,7 @@ inline void check_range(int begin, int value, int end)
 {
     my_assert<std::out_of_range>(
             begin <= value && value < end,
-            "YUVtool variable");
+            "YUVtool variable out of range");
 }
 
 #endif // ERRORS_H
