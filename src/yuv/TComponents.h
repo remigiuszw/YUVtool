@@ -131,7 +131,47 @@ const Color_space sRGB_color_space
     }
 };
 
-// ITU 709 standard
+// ITU BT.601 standard
+const double ITU601_K_R = 0.299;
+const double ITU601_K_B = 0.114;
+
+const Color_space ITU601_YCbCr_color_space
+{
+    {
+        { // Y
+            {
+                ITU601_K_R,
+                1 - ITU601_K_B - ITU601_K_R,
+                ITU601_K_B,
+                0
+            },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
+        },
+        { // Cb
+            {
+                -ITU601_K_R/(2*(1-ITU601_K_B)),
+                -(1-ITU601_K_B-ITU601_K_R)/(2*(1-ITU601_K_B)),
+                0.5,
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
+        },
+        { // Cr
+            {
+                0.5,
+                -(1-ITU601_K_B-ITU601_K_R)/(2*(1-ITU601_K_R)),
+                -ITU601_K_B/(2*(1-ITU601_K_R)),
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
+        }
+    }
+};
+
+// ITU BT.709 standard
 const double ITU709_K_R = 0.2126;
 const double ITU709_K_B = 0.0722;
 
@@ -171,6 +211,46 @@ const Color_space ITU709_YCbCr_color_space
     }
 };
 
+// ITU BT.2020 standard
+const double ITU2020_K_R = 0.2627;
+const double ITU2020_K_B = 0.0593;
+
+const Color_space ITU2020_YCbCr_color_space
+{
+    {
+        { // Y
+            {
+                ITU2020_K_R,
+                1 - ITU2020_K_B - ITU2020_K_R,
+                ITU2020_K_B,
+                0
+            },
+            { 0.0, 1.0 },
+            { 16.0/256, 235.0/256 }
+        },
+        { // Cb
+            {
+                -ITU2020_K_R/(2*(1-ITU2020_K_B)),
+                -(1-ITU2020_K_B-ITU2020_K_R)/(2*(1-ITU2020_K_B)),
+                0.5,
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
+        },
+        { // Cr
+            {
+                0.5,
+                -(1-ITU2020_K_B-ITU2020_K_R)/(2*(1-ITU2020_K_R)),
+                -ITU2020_K_B/(2*(1-ITU2020_K_R)),
+                0
+            },
+            { -0.5, 0.5 },
+            { 16.0/256, 240.0/256 }
+        }
+    }
+};
+
 const Pixel_format yuv_420p_8bit
 {
     { // planes
@@ -191,7 +271,7 @@ const Pixel_format yuv_420p_8bit
             }
         },
     },
-    ITU709_YCbCr_color_space,
+    ITU601_YCbCr_color_space,
     { // macropixel coding
         { // coded pixels
             { // top left

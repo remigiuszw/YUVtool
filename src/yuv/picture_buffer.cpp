@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdexcept>
+#include <cmath>
 #include <Eigen/Dense>
 
 #include "picture_buffer.h"
@@ -213,9 +214,10 @@ void Picture_buffer::convert_color_space(
             const Component &input_component = input_components[i];
             const double (&valid_range)[2] = input_component.m_valid_range;
             const double (&encoded_range)[2] = input_component.m_encoded_range;
+            /* the maximal value ((1 << input_width) - 1) represents 1 */
             const double input_in_encoded_range =
                     static_cast<double>(quantized_input)
-                    / (1 << input_width);
+                    / ((1 << input_width) - 1);
             const double input_in_0_to_1 =
                     (input_in_encoded_range - encoded_range[0])
                     / (encoded_range[1] - encoded_range[0]);
@@ -238,7 +240,8 @@ void Picture_buffer::convert_color_space(
             const int output_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
             const int quantized_output =
-                    output_in_encoded_range * (1 << output_width);
+                    std::round(
+                        output_in_encoded_range * ((1 << output_width) - 1));
             set_entry(xy, i, quantized_output);
         }
     }
