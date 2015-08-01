@@ -3,11 +3,10 @@
 
 int main( int argc, char *argv[] )
 {
-    Gtk::Main kit( argc, argv );
+    Glib::RefPtr<Gtk::Application> app =
+            Gtk::Application::create(argc, argv, "org.yuvtool");
 
     Viewer_frame viewer_frame;
 
-    Gtk::Main::run( viewer_frame );
-
-    return 0;
+    return app->run(viewer_frame);
 }

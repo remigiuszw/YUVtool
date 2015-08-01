@@ -58,13 +58,13 @@ Viewer_frame::Viewer_frame() :
     Gtk::Widget *tool_bar = m_ui_manager->get_widget("/tool_bar");
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
-    m_drawing_area.signal_configure_event().connect(
-        sigc::mem_fun( *this, &Viewer_frame::on_action_configure_event ) );
     m_drawing_area.signal_size_allocate().connect(
         sigc::mem_fun( *this, &Viewer_frame::on_action_size_allocation ) );
     m_drawing_area.signal_draw().connect(
         sigc::mem_fun( *this, &Viewer_frame::on_action_draw_event ) );
-    m_scroll_adapter.add( m_drawing_area );
+
+    //m_scroll_adapter.add(m_dummy_button );
+    m_scroll_adapter.add(m_drawing_area);
     m_scroll_adapter.set_internal_size( 300, 300 );
     m_box.pack_start( m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET );
 
@@ -86,14 +86,27 @@ void Viewer_frame::on_action_show_size()
     Gtk::MessageDialog dialog( *this, "Size of the drawing area." );
 
     std::stringstream ss;
-    ss << "The size of the drawing area is " <<
-        m_drawing_area.get_width() << 'x' <<
-        m_drawing_area.get_height() << '\n';
+
+    const Gtk::Allocation allocation =
+            m_drawing_area.get_allocation();
+    ss
+        << "The drawing area allocation is "
+        << allocation.get_x() << 'x' << allocation.get_y() << " + "
+        << allocation.get_width() << 'x' << allocation.get_height() << '\n';
+
     int internal_width, internal_height;
     m_scroll_adapter.get_internal_size( internal_width, internal_height );
     ss << "The internal size of the scrolled area is " <<
         internal_width << 'x' <<
         internal_height << '\n';
+
+    const Gdk::Rectangle visible_area =
+            m_scroll_adapter.get_visible_area();
+    ss
+        << "The visible area rectangle is "
+        << visible_area.get_x() << 'x' << visible_area.get_y() << " + "
+        << visible_area.get_width() << 'x' << visible_area.get_height() << '\n';
+
     dialog.set_secondary_text( ss.str() );
 
     dialog.run();
@@ -141,35 +154,33 @@ void Viewer_frame::on_action_file_close()
     }
 }
 //------------------------------------------------------------------------------
-bool Viewer_frame::on_action_configure_event( GdkEventConfigure* event )
+void Viewer_frame::on_action_size_allocation(
+    Gtk::Allocation &allocation )
 {
-    const int width = m_drawing_area.get_width();
-    const int height = m_drawing_area.get_height();
-    const int x0 = m_scroll_adapter.get_hadjustment()->get_value();
-    const int y0 = m_scroll_adapter.get_vadjustment()->get_value();
+    const Gdk::Rectangle visible_area =
+            m_scroll_adapter.get_visible_area();
+    const int width = visible_area.get_width();
+    const int height = visible_area.get_height();
+    const int x0 = visible_area.get_x();
+    const int y0 = visible_area.get_y();
+    int total_width;
+    int total_height;
+    m_scroll_adapter.get_internal_size(total_width, total_height);
 
     if( !m_drawing_area.renderWindow.setActive( true ) )
-        return true;
+        return;
 
-    glViewport( 0, 0, width, height );
+    glViewport(0, 0, width, height);
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
     glOrtho( x0, x0+width, y0+height, y0, -1, 1 );
 
-    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+    glClearColor( 0.0f, 0.5f, 0.0f, 0.0f );
     glDisable( GL_DEPTH_TEST );
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
-        return true;
-
-    return true;
-}
-//------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation(
-    Gtk::Allocation &allocation )
-{
-    on_action_configure_event( 0 );
+        return;
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_triangle()
@@ -177,14 +188,21 @@ void Viewer_frame::draw_triangle()
     if( !m_drawing_area.renderWindow.setActive( true ) )
         return;
 
-    glClearColor( 0.0, 0.0, 0.0, 0.0 );
+    glClearColor( 0.0, 0.0, 0.5, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT );
 
     glColor3f( 1.0, 1.0, 1.0 );
     glBegin( GL_TRIANGLES );
-    glVertex3f(  0.0,  0.0, 0.0 );
-    glVertex3f( 20.0, 40.0, 0.0 );
-    glVertex3f( 40.0,  0.0, 0.0 );
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 300.0, 0.0);
+    glVertex3f(300.0, 0.0, 0.0);
+    glEnd();
+
+    glColor3f( 0.0, 1.0, 0.0 );
+    glBegin( GL_TRIANGLES );
+    glVertex3f(0.0, 300.0, 0.0);
+    glVertex3f(300.0, 300.0, 0.0);
+    glVertex3f(300.0, 0.0, 0.0);
     glEnd();
 
     glFlush();
@@ -211,10 +229,17 @@ void Viewer_frame::draw_frame()
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
         return;
+
+    on_action_draw_event2();
 }
 //------------------------------------------------------------------------------
-bool Viewer_frame::on_action_draw_event( const::Cairo::RefPtr<Cairo::Context>
+bool Viewer_frame::on_action_draw_event( const ::Cairo::RefPtr<Cairo::Context>
   &cr )
+{
+    return on_action_draw_event2();
+}
+//------------------------------------------------------------------------------
+bool Viewer_frame::on_action_draw_event2()
 {
     draw_triangle();
     //draw_frame();

@@ -19,9 +19,9 @@ private:
     void on_action_show_size();
     void on_action_file_open();
     void on_action_file_close();
-    bool on_action_configure_event( GdkEventConfigure *event );
-    void on_action_size_allocation( Gtk::Allocation &allocation );
-    bool on_action_draw_event( const ::Cairo::RefPtr< ::Cairo::Context>& cr );
+    void on_action_size_allocation(Gtk::Allocation &allocation);
+    bool on_action_draw_event(const ::Cairo::RefPtr< ::Cairo::Context>& cr);
+    bool on_action_draw_event2();
     void draw_triangle();
     void draw_frame();
 
@@ -31,6 +31,8 @@ private:
     SFMLWidget m_drawing_area;
     Scroll_adapter m_scroll_adapter;
     Drawer_gl m_drawer_gl;
+
+    Gtk::Button m_dummy_button;
 
     Yuv_file m_yuv_file;
 };
