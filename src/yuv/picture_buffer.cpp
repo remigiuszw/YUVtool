@@ -6,8 +6,9 @@
 #include "picture_buffer.h"
 #include "Errors.h"
 
-namespace
-{
+namespace YUV_tool {
+
+namespace {
 int get_bits(const Byte *data, const Bit_position start, const Bit_position end)
 {
     // TODO: optimize!!!
@@ -37,7 +38,7 @@ void set_bits(Byte *data, const Bit_position start, const Bit_position end,
         mask <<= 1;
     }
 }
-}
+} /* anonymous namespace */
 //------------------------------------------------------------------------------
 Picture_buffer::Picture_buffer(
         const Vector<Unit::pixel> &resolution,
@@ -492,3 +493,5 @@ Picture_buffer subsample(
     }
     return subsampled;
 }
+
+} /* namespace YUV_tool */

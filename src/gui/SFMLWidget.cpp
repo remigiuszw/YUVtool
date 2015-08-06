@@ -1,7 +1,8 @@
 /* copied from https://github.com/LaurentGomila/SFML/wiki/Source%3A-GTK-SFMLWidget#wiki-sfmlwidgeth
  * public domain */
 
-#include "SFMLWidget.h"
+#include <gui/SFMLWidget.h>
+
 #include <iostream>
 
 // Tested on Linux Mint 12.4 and Windows 7
@@ -25,6 +26,7 @@
 
 #endif
 
+namespace YUV_tool {
 
 SFMLWidget::SFMLWidget(sf::VideoMode mode, int size_request)
 {
@@ -37,8 +39,7 @@ SFMLWidget::SFMLWidget(sf::VideoMode mode, int size_request)
 }
 
 SFMLWidget::~SFMLWidget()
-{
-}
+{ }
 
 void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
 {
@@ -54,8 +55,12 @@ void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
                                     allocation.get_y(),
                                     allocation.get_width(),
                                     allocation.get_height() );
-        renderWindow.setSize(sf::Vector2u(allocation.get_width(),
-                                          allocation.get_height()));
+//        renderWindow.setSize(sf::Vector2u(allocation.get_width(),
+//                                          allocation.get_height()));
+
+        renderWindow.create(GET_WINDOW_HANDLE_FROM_GDK(m_refGdkWindow->gobj()));
+
+        signal_post_size_allocate()(allocation);
     }
 }
 
@@ -63,6 +68,11 @@ void SFMLWidget::on_realize()
 {
     Gtk::Widget::on_realize();
 
+    on_realize_internal();
+}
+
+void SFMLWidget::on_realize_internal()
+{
     if(!m_refGdkWindow)
     {
         //Create the GdkWindow:
@@ -81,9 +91,10 @@ void SFMLWidget::on_realize()
         attributes.window_type = GDK_WINDOW_CHILD;
         attributes.wclass = GDK_INPUT_OUTPUT;
 
-
         m_refGdkWindow = Gdk::Window::create(get_window(), &attributes,
                 GDK_WA_X | GDK_WA_Y);
+        const bool z = get_has_window();
+        std::cerr << z << std::endl;
         set_has_window(true);
         set_window(m_refGdkWindow);
 
@@ -105,10 +116,20 @@ void SFMLWidget::on_realize()
 
 void SFMLWidget::on_unrealize()
 {
-  m_refGdkWindow.clear();
+    on_unrealize_internal();
 
-  //Call base class:
-  Gtk::Widget::on_unrealize();
+    //Call base class:
+    Gtk::Widget::on_unrealize();
+}
+
+void SFMLWidget::on_unrealize_internal()
+{
+    m_refGdkWindow.clear();
+}
+
+sigc::signal<void, Gtk::Allocation &> &SFMLWidget::signal_post_size_allocate()
+{
+    return m_signal_post_size_allocate;
 }
 
 void SFMLWidget::display()
@@ -126,3 +147,5 @@ void SFMLWidget::invalidate()
         m_refGdkWindow->invalidate(true);
     }
 }
+
+} /* namespace YUV_tool */

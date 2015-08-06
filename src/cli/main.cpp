@@ -3,7 +3,7 @@
 
 #include "TYUV_file.h"
 
-void print_stream_info(Yuv_file &YUV_file)
+void print_stream_info(YUV_tool::Yuv_file &YUV_file)
 {
     std::cout << "resolution: "
             << YUV_file.get_resolution().x() << " "
@@ -30,6 +30,8 @@ convert RES_X RES_Y INPUT_420YUV_FILE OUTPUT_444RGB_FILE
 
 int main(int argc, char *argv[]) try
 {
+    using namespace YUV_tool;
+
     if(argc < 2)
         throw GeneralError(help_string);
 

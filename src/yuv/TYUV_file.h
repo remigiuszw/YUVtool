@@ -4,12 +4,13 @@
 #include <string>
 #include <fstream>
 #include <array>
-#include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
 #include <yuv/utils.h>
 #include <yuv/TComponents.h>
 #include <yuv/picture_buffer.h>
+
+namespace YUV_tool {
 
 class Yuv_file
 {
@@ -53,5 +54,7 @@ private:
     bool m_parameters_valid;
     Vector<Unit::pixel> m_resolution;
 };
+
+} /* namespace YUV_tool */
 
 #endif // TYUV_FILE_H

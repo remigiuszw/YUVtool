@@ -4,6 +4,8 @@
 #include <yuv/utils.h>
 #include <ostream>
 
+namespace YUV_tool {
+
 class Bit_position
 {
 private:
@@ -134,5 +136,7 @@ inline Bit_position operator--(Bit_position &a, const int)
     --a;
     return tmp;
 }
+
+} /* namespace YUV_tool */
 
 #endif // BIT_POSITION_H

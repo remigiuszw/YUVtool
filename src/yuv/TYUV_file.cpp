@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+namespace YUV_tool {
+
 Yuv_file::Yuv_file() :
     m_parameters_valid(false)
 {
@@ -320,3 +322,5 @@ void Yuv_file::recalculate_parameters()
         m_buffer_parameters.recalculate(m_pixel_format, m_resolution);
     m_parameters_valid = true;
 }
+
+} /* namespace YUV_tool */

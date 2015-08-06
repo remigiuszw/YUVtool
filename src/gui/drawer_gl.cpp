@@ -4,6 +4,8 @@
 #include <yuv/utils.h>
 #include <yuv/picture_buffer.h>
 
+namespace YUV_tool {
+
 const int tile_size = 64;
 
 Drawer_gl::Drawer_gl()
@@ -109,3 +111,5 @@ void Drawer_gl::reallocate_buffers( int buffers_count )
         }
     }
 }
+
+} /* namespace YUV_tool */

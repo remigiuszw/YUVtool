@@ -1,23 +1,27 @@
-#include "scroll_adapter.h"
+#include <gui/scroll_adapter.h>
+
+#include <gtkmm/adjustment.h>
 #include <iostream>
+
+namespace YUV_tool {
 
 Scroll_adapter::Scroll_adapter()
 {
-    get_hadjustment()->signal_changed().connect( sigc::mem_fun( *this,
-        &Scroll_adapter::on_scroll ) );
-    get_hadjustment()->signal_value_changed().connect( sigc::mem_fun( *this,
-        &Scroll_adapter::on_scroll ) );
-    get_vadjustment()->signal_changed().connect( sigc::mem_fun( *this,
-        &Scroll_adapter::on_scroll ) );
-    get_vadjustment()->signal_value_changed().connect( sigc::mem_fun( *this,
-        &Scroll_adapter::on_scroll ) );
+    get_hadjustment()->signal_changed().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
+    get_hadjustment()->signal_value_changed().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
+    get_vadjustment()->signal_changed().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
+    get_vadjustment()->signal_value_changed().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
 
-    Gtk::ScrolledWindow::add( m_fixed );
+    Gtk::ScrolledWindow::add(m_fixed);
 }
 //------------------------------------------------------------------------------
-void Scroll_adapter::add( Gtk::Widget &widget )
+void Scroll_adapter::add(Gtk::Widget &widget)
 {
-    m_fixed.put( widget, 0, 0 );
+    m_fixed.put(widget, 0, 0);
 }
 //------------------------------------------------------------------------------
 void Scroll_adapter::remove()
@@ -60,12 +64,21 @@ Gdk::Rectangle Scroll_adapter::get_visible_area()
 //------------------------------------------------------------------------------
 void Scroll_adapter::on_scroll()
 {
-    if( m_fixed.get_children().size() > 0 )
+    if(!m_fixed.get_children().empty())
     {
         Gtk::Widget &adapted = *m_fixed.get_children().front();
-        Gdk::Rectangle visible_area = get_visible_area();
-        m_fixed.move( adapted, visible_area.get_x(), visible_area.get_y() );
-        adapted.set_size_request( visible_area.get_width(),
-            visible_area.get_height() );
+        const Gdk::Rectangle visible_area = get_visible_area();
+        m_fixed.move(adapted, visible_area.get_x(), visible_area.get_y());
+        adapted.set_size_request(
+                visible_area.get_width(),
+                visible_area.get_height());
     }
 }
+//------------------------------------------------------------------------------
+void Scroll_adapter::on_size_allocate(Gtk::Allocation &allocation)
+{
+    Gtk::ScrolledWindow::on_size_allocate(allocation);
+    on_scroll();
+}
+
+} /* YUV_tool */

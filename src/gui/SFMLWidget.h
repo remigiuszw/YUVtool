@@ -7,24 +7,32 @@
 #include <SFML/Graphics.hpp>
 #include <gtkmm/widget.h>
 
+namespace YUV_tool {
+
 class SFMLWidget : public Gtk::Widget
 {
 protected:
     sf::VideoMode m_vMode;
 
     virtual void on_size_allocate(Gtk::Allocation& allocation);
-    virtual void on_realize();
-    virtual void on_unrealize();
+    void on_realize() override;
+    void on_realize_internal();
+    void on_unrealize() override;
+    void on_unrealize_internal();
 
     Glib::RefPtr<Gdk::Window> m_refGdkWindow;
+    sigc::signal<void, Gtk::Allocation &> m_signal_post_size_allocate;
 public:
     sf::RenderWindow renderWindow;
 
     SFMLWidget(sf::VideoMode mode, int size_request=-1);
     virtual ~SFMLWidget();
 
+    sigc::signal<void, Gtk::Allocation &> &signal_post_size_allocate();
     void invalidate();
     void display();
 };
+
+} /* YUV_tool */
 
 #endif

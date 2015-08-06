@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace YUV_tool {
+
 typedef std::uint8_t Byte;
 const int bits_in_byte = 8;
 //------------------------------------------------------------------------------
@@ -27,5 +29,7 @@ TNumber round_up(TNumber value, TNumber divisor)
 {
     return round_down(value + divisor - static_cast<TNumber>(1), divisor);
 }
+
+} /* YUV_tool */
 
 #endif // UTILS_H

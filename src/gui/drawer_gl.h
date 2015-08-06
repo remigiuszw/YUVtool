@@ -3,7 +3,9 @@
 
 #include <yuv/TYUV_file.h>
 #include <gui/scroll_adapter.h>
-#include <GL/gl.h>
+#include <SFML/OpenGL.hpp>
+
+namespace YUV_tool {
 
 class Drawer_gl
 {
@@ -20,5 +22,7 @@ private:
     std::vector<GLuint> m_buffers;
     std::vector<GLuint> m_textures;
 };
+
+} /* namespace YUV_tool */
 
 #endif // DRAWER_GL_H

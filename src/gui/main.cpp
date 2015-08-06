@@ -3,6 +3,8 @@
 
 int main( int argc, char *argv[] )
 {
+    using namespace YUV_tool;
+
     Glib::RefPtr<Gtk::Application> app =
             Gtk::Application::create(argc, argv, "org.yuvtool");
 

@@ -2,11 +2,16 @@
 #define VIEWER_FRAME_H
 
 #include <gui/SFMLWidget.h>
-#include <gtkmm.h>
-#include <gtkmm/socket.h>
-#include <yuv/TYUV_file.h>
 #include <gui/scroll_adapter.h>
 #include <gui/drawer_gl.h>
+#include <yuv/TYUV_file.h>
+
+#include <gtkmm/window.h>
+#include <gtkmm/uimanager.h>
+#include <gtkmm/box.h>
+#include <gtkmm/button.h>
+
+namespace YUV_tool {
 
 class Viewer_frame : public Gtk::Window
 {
@@ -32,9 +37,9 @@ private:
     Scroll_adapter m_scroll_adapter;
     Drawer_gl m_drawer_gl;
 
-    Gtk::Button m_dummy_button;
-
     Yuv_file m_yuv_file;
 };
+
+} /* namespace YUV_tool */
 
 #endif // VIEWER_FRAME_H

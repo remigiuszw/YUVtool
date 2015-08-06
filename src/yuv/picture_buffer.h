@@ -4,6 +4,8 @@
 #include <yuv/utils.h>
 #include <yuv/TComponents.h>
 
+namespace YUV_tool {
+
 class Picture_buffer
 {
 public:
@@ -50,5 +52,7 @@ Picture_buffer expand_sampling(const Picture_buffer &source);
 Picture_buffer subsample(
         const Picture_buffer &source,
         const Pixel_format &pixel_format);
+
+} /* namespace YUV_tool */
 
 #endif // PICTURE_BUFFER_H

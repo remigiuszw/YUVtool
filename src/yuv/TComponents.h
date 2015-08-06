@@ -7,6 +7,8 @@
 #include <yuv/bit_position.h>
 #include <yuv/coordinates.h>
 
+namespace YUV_tool {
+
 struct Component
 {
     /*
@@ -577,5 +579,7 @@ private:
 Pixel_format get_expanded_pixel_format(const Color_space &color_space,
         const std::vector<Entry> &entries);
 Pixel_format get_expanded_pixel_format(const Pixel_format &input);
+
+} /* namespace YUV_tool */
 
 #endif // TCOMPONENTS_H

@@ -3,7 +3,8 @@
 #include <stdexcept>
 #include <algorithm>
 
-//------------------------------------------------------------------------------
+namespace YUV_tool {
+
 Pixel_format get_expanded_pixel_format(
         const Color_space &color_space,
         const std::vector<Entry> &entries)
@@ -235,3 +236,5 @@ void Precalculated_buffer_parameters::recalculate(
     }
     m_buffer_size = plane_offset;
 }
+
+} /* namespace YUV_tool */

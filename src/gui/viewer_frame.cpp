@@ -1,7 +1,14 @@
-#include "viewer_frame.h"
+#include <gui/viewer_frame.h>
+
+#include <SFML/OpenGL.hpp>
+#include <gtkmm/stock.h>
+#include <gtkmm/messagedialog.h>
+#include <gtkmm/socket.h>
+#include <gtkmm/filechooserdialog.h>
 #include <iostream>
 #include <cstdlib>
-#include <SFML/OpenGL.hpp>
+
+namespace YUV_tool {
 
 Viewer_frame::Viewer_frame() :
     m_box( Gtk::ORIENTATION_VERTICAL ),
@@ -58,14 +65,14 @@ Viewer_frame::Viewer_frame() :
     Gtk::Widget *tool_bar = m_ui_manager->get_widget("/tool_bar");
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
-    m_drawing_area.signal_size_allocate().connect(
-        sigc::mem_fun( *this, &Viewer_frame::on_action_size_allocation ) );
+    m_drawing_area.signal_post_size_allocate().connect(
+        sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
     m_drawing_area.signal_draw().connect(
         sigc::mem_fun( *this, &Viewer_frame::on_action_draw_event ) );
 
     //m_scroll_adapter.add(m_dummy_button );
     m_scroll_adapter.add(m_drawing_area);
-    m_scroll_adapter.set_internal_size( 300, 300 );
+    m_scroll_adapter.set_internal_size(60000, 60000);
     m_box.pack_start( m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET );
 
     add(m_box);
@@ -81,31 +88,82 @@ void Viewer_frame::on_action_file_quit()
     hide();
 }
 //------------------------------------------------------------------------------
+namespace {
+void print_gdk_window(std::ostream &os, const std::string &name, const Glib::RefPtr<Gdk::Window> window)
+{
+    int x, y;
+    window->get_position(x, y);
+    os
+            << name << " : "
+            << x << 'x' << y << " + "
+            << window->get_width() << 'x' << window->get_height() << '\n';
+}
+void check_parent_child(
+        std::ostream &os,
+        const Glib::RefPtr<Gdk::Window> parent,
+        const Glib::RefPtr<Gdk::Window> child)
+{
+    bool result =
+            parent == child->get_parent();
+    os << (result ? "is parent" : "is not parent") << '\n';
+}
+}
+//------------------------------------------------------------------------------
 void Viewer_frame::on_action_show_size()
 {
     Gtk::MessageDialog dialog( *this, "Size of the drawing area." );
 
     std::stringstream ss;
 
-    const Gtk::Allocation allocation =
-            m_drawing_area.get_allocation();
-    ss
-        << "The drawing area allocation is "
-        << allocation.get_x() << 'x' << allocation.get_y() << " + "
-        << allocation.get_width() << 'x' << allocation.get_height() << '\n';
+//    const Gtk::Allocation allocation =
+//            m_drawing_area.get_allocation();
+//    ss
+//        << "The drawing area allocation is "
+//        << allocation.get_x() << 'x' << allocation.get_y() << " + "
+//        << allocation.get_width() << 'x' << allocation.get_height() << '\n';
 
-    int internal_width, internal_height;
-    m_scroll_adapter.get_internal_size( internal_width, internal_height );
-    ss << "The internal size of the scrolled area is " <<
-        internal_width << 'x' <<
-        internal_height << '\n';
+//    int internal_width, internal_height;
+//    m_scroll_adapter.get_internal_size( internal_width, internal_height );
+//    ss << "The internal size of the scrolled area is " <<
+//        internal_width << 'x' <<
+//        internal_height << '\n';
 
-    const Gdk::Rectangle visible_area =
-            m_scroll_adapter.get_visible_area();
-    ss
-        << "The visible area rectangle is "
-        << visible_area.get_x() << 'x' << visible_area.get_y() << " + "
-        << visible_area.get_width() << 'x' << visible_area.get_height() << '\n';
+//    const Gdk::Rectangle visible_area =
+//            m_scroll_adapter.get_visible_area();
+//    ss
+//        << "The visible area rectangle is "
+//        << visible_area.get_x() << 'x' << visible_area.get_y() << " + "
+//        << visible_area.get_width() << 'x' << visible_area.get_height() << '\n';
+
+    print_gdk_window(ss, "frame", get_window());
+    check_parent_child(ss, get_window(), m_scroll_adapter.get_window());
+//    check_parent_child(ss, get_window(), m_scrolled_window.get_window());
+//    print_gdk_window(ss, "scrolled_window", m_scrolled_window.get_window());
+//    check_parent_child(ss, m_scrolled_window.get_window(), m_viewport.get_window());
+//    print_gdk_window(ss, "viewport", m_viewport.get_window());
+//    check_parent_child(ss, m_viewport.get_window(), m_viewport.get_view_window());
+//    print_gdk_window(ss, "viewport_view_window", m_viewport.get_view_window());
+//    check_parent_child(ss, m_viewport.get_view_window(), m_refGdkWindow);
+//    ss << (m_viewport.get_view_window() == m_refGdkWindow ? "are equal\n" : "are different\n");
+//    print_gdk_window(ss, "m_refGdkWindow", m_refGdkWindow);
+
+
+//    check_parent_child(ss, m_scroll_adapter.m_viewport.get_window(), m_scroll_adapter.m_viewport.get_view_window());
+//    print_gdk_window(ss, "viewport.view", m_scroll_adapter.m_viewport.get_view_window());
+//    check_parent_child(ss, m_scroll_adapter.m_viewport.get_view_window(), m_scroll_adapter.m_fixed.get_window());
+//    print_gdk_window(ss, "fixed", m_scroll_adapter.m_fixed.get_window());
+//    check_parent_child(ss, m_scroll_adapter.m_fixed.get_window(), m_drawing_area.get_window());
+//    print_gdk_window(ss, "sfml_widget", m_drawing_area.get_window());
+//    check_parent_child(ss, m_drawing_area.get_window(), m_drawing_area.m_refGdkWindow);
+//    ss << (m_drawing_area.get_window() == m_drawing_area.m_refGdkWindow ? "are equal\n" : "are different\n");
+//    print_gdk_window(ss, "render_area", m_drawing_area.m_refGdkWindow);
+
+//    print_gdk_window(ss, "viewport.bin", m_scroll_adapter.m_viewport.get_bin_window());
+
+//    ss
+//            << "renderwindow.getPosition() : "
+//            << m_sfml_window.getPosition().x << 'x'
+//            << m_sfml_window.getPosition().y << '\n';
 
     dialog.set_secondary_text( ss.str() );
 
@@ -229,8 +287,6 @@ void Viewer_frame::draw_frame()
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
         return;
-
-    on_action_draw_event2();
 }
 //------------------------------------------------------------------------------
 bool Viewer_frame::on_action_draw_event( const ::Cairo::RefPtr<Cairo::Context>
@@ -246,3 +302,4 @@ bool Viewer_frame::on_action_draw_event2()
     return true;
 }
 
+} /* namespace YUV_tool */
