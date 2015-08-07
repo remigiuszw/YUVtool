@@ -1,6 +1,8 @@
 #ifndef COORDINATES_H
 #define COORDINATES_H
 
+namespace YUV_tool {
+
 class Coordinate_pair
 {
 public:
@@ -317,5 +319,7 @@ public:
         return Iterator(*this, m_start + Vector<unit>(0, m_size.y()));
     }
 };
+
+} /* namespace YUV_tool */
 
 #endif // COORDINATES_H

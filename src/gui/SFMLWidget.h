@@ -12,8 +12,6 @@ namespace YUV_tool {
 class SFMLWidget : public Gtk::Widget
 {
 protected:
-    sf::VideoMode m_vMode;
-
     virtual void on_size_allocate(Gtk::Allocation& allocation);
     void on_realize() override;
     void on_realize_internal();

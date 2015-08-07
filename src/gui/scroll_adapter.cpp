@@ -1,84 +1,109 @@
 #include <gui/scroll_adapter.h>
 
-#include <gtkmm/adjustment.h>
 #include <iostream>
 
 namespace YUV_tool {
 
-Scroll_adapter::Scroll_adapter()
+Scroll_adapter::Scroll_adapter() :
+    m_x_adjustment(Gtk::Adjustment::create(0, 0, 1, 1, 10, 1)),
+    m_y_adjustment(Gtk::Adjustment::create(0, 0, 1, 1, 10, 1)),
+    m_x_scrollbar(m_x_adjustment, Gtk::ORIENTATION_HORIZONTAL),
+    m_y_scrollbar(m_y_adjustment, Gtk::ORIENTATION_VERTICAL),
+    m_internal_size(1, 1)
 {
-    get_hadjustment()->signal_changed().connect(
+    m_x_adjustment->signal_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
-    get_hadjustment()->signal_value_changed().connect(
+    m_x_adjustment->signal_value_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
-    get_vadjustment()->signal_changed().connect(
+    m_y_adjustment->signal_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
-    get_vadjustment()->signal_value_changed().connect(
+    m_y_adjustment->signal_value_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
+    signal_size_allocate().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::on_signal_size_allocate));
 
-    Gtk::ScrolledWindow::add(m_fixed);
+    attach(m_x_scrollbar, 0, 1, 1, 1);
+    attach(m_y_scrollbar, 1, 0, 1, 1);
 }
 //------------------------------------------------------------------------------
-void Scroll_adapter::add(Gtk::Widget &widget)
+void Scroll_adapter::set_internal_size(const Vector<Unit::pixel> &size)
 {
-    m_fixed.put(widget, 0, 0);
+    m_internal_size = size;
+    update_allocation();
 }
 //------------------------------------------------------------------------------
-void Scroll_adapter::remove()
+const Vector<Unit::pixel> &Scroll_adapter::get_internal_size() const
 {
-    if(!m_fixed.get_children().empty())
-        m_fixed.remove(*m_fixed.get_children().front());
-    else
-        std::cerr << "trying to remove child from scroll adapter, when none "
-                "present\n";
-}
-//------------------------------------------------------------------------------
-void Scroll_adapter::remove( Gtk::Widget &widget )
-{
-    m_fixed.remove( widget );
-}
-//------------------------------------------------------------------------------
-void Scroll_adapter::set_internal_size( int width, int height )
-{
-    m_fixed.set_size_request( width, height );
-}
-//------------------------------------------------------------------------------
-void Scroll_adapter::get_internal_size( int &width, int &height ) const
-{
-    m_fixed.get_size_request( width, height );
+    return m_internal_size;
 }
 //------------------------------------------------------------------------------
 Gdk::Rectangle Scroll_adapter::get_visible_area()
 {
-    int max_width, max_height;
-    m_fixed.get_size_request( max_width, max_height );
     Gtk::Allocation result;
-    result.set_x( get_hadjustment()->get_value() );
-    result.set_y( get_vadjustment()->get_value() );
-    result.set_width( std::min( max_width,
-        static_cast<int>( get_hadjustment()->get_page_size() ) ) );
-    result.set_height( std::min( max_height,
-        static_cast<int>( get_vadjustment()->get_page_size() ) ) );
+    result.set_x(m_x_adjustment->get_value());
+    result.set_y(m_y_adjustment->get_value());
+    result.set_width(
+            std::min<int>(
+                m_internal_size.x(),
+                m_x_adjustment->get_page_size()));
+    result.set_height(
+            std::min<int>(
+                m_internal_size.y(),
+                m_y_adjustment->get_page_size()));
     return result;
+}
+//------------------------------------------------------------------------------
+sigc::signal<void> &Scroll_adapter::signal_post_scroll()
+{
+    return m_signal_post_scroll;
 }
 //------------------------------------------------------------------------------
 void Scroll_adapter::on_scroll()
 {
-    if(!m_fixed.get_children().empty())
-    {
-        Gtk::Widget &adapted = *m_fixed.get_children().front();
-        const Gdk::Rectangle visible_area = get_visible_area();
-        m_fixed.move(adapted, visible_area.get_x(), visible_area.get_y());
-        adapted.set_size_request(
-                visible_area.get_width(),
-                visible_area.get_height());
-    }
+    signal_post_scroll()();
 }
 //------------------------------------------------------------------------------
-void Scroll_adapter::on_size_allocate(Gtk::Allocation &allocation)
+void Scroll_adapter::on_signal_size_allocate(Gtk::Allocation &allocation)
 {
-    Gtk::ScrolledWindow::on_size_allocate(allocation);
-    on_scroll();
+    update_allocation();
+}
+//------------------------------------------------------------------------------
+void Scroll_adapter::update_allocation()
+{
+    Gtk::Widget *child = get_child_at(0, 0);
+    if(child)
+    {
+        m_x_adjustment->freeze_notify();
+        m_y_adjustment->freeze_notify();
+        const Gtk::Allocation inner_allocation = child->get_allocation();
+
+        if(m_internal_size.x() > inner_allocation.get_width())
+        {
+            m_x_adjustment->set_page_size(inner_allocation.get_width());
+            m_x_adjustment->set_upper(m_internal_size.x());
+
+        }
+        else
+        {
+            m_x_adjustment->set_page_size(inner_allocation.get_width());
+            m_x_adjustment->set_upper(inner_allocation.get_width());
+        }
+
+        if(m_internal_size.y() > inner_allocation.get_height())
+        {
+            m_y_adjustment->set_page_size(inner_allocation.get_height());
+            m_y_adjustment->set_upper(m_internal_size.y());
+
+        }
+        else
+        {
+            m_y_adjustment->set_page_size(inner_allocation.get_height());
+            m_y_adjustment->set_upper(inner_allocation.get_height());
+        }
+
+        m_x_adjustment->thaw_notify();
+        m_y_adjustment->thaw_notify();
+    }
 }
 
 } /* YUV_tool */

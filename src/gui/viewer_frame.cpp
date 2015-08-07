@@ -12,7 +12,7 @@ namespace YUV_tool {
 
 Viewer_frame::Viewer_frame() :
     m_box( Gtk::ORIENTATION_VERTICAL ),
-    m_drawing_area( sf::VideoMode( 50, 50 ) )
+    m_drawing_area( sf::VideoMode( 100, 100 ) )
 {
     m_action_group = Gtk::ActionGroup::create();
     m_action_group->add(
@@ -66,18 +66,23 @@ Viewer_frame::Viewer_frame() :
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
     m_drawing_area.signal_post_size_allocate().connect(
-        sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
+            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
+    m_scroll_adapter.signal_post_scroll().connect(
+            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation2));
     m_drawing_area.signal_draw().connect(
-        sigc::mem_fun( *this, &Viewer_frame::on_action_draw_event ) );
+            sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
 
     //m_scroll_adapter.add(m_dummy_button );
-    m_scroll_adapter.add(m_drawing_area);
-    m_scroll_adapter.set_internal_size(60000, 60000);
-    m_box.pack_start( m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET );
+    m_drawing_area.set_hexpand();
+    m_drawing_area.set_vexpand();
+    m_scroll_adapter.attach(m_drawing_area, 0, 0, 1, 1);
+    m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(300, 300));
+    m_box.pack_start(m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET);
 
     add(m_box);
 
     show_all();
+    on_action_size_allocation2();
 }
 //------------------------------------------------------------------------------
 Viewer_frame::~Viewer_frame()
@@ -212,8 +217,12 @@ void Viewer_frame::on_action_file_close()
     }
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation(
-    Gtk::Allocation &allocation )
+void Viewer_frame::on_action_size_allocation(Gtk::Allocation &allocation)
+{
+    on_action_size_allocation2();
+}
+//------------------------------------------------------------------------------
+void Viewer_frame::on_action_size_allocation2()
 {
     const Gdk::Rectangle visible_area =
             m_scroll_adapter.get_visible_area();
@@ -221,9 +230,10 @@ void Viewer_frame::on_action_size_allocation(
     const int height = visible_area.get_height();
     const int x0 = visible_area.get_x();
     const int y0 = visible_area.get_y();
-    int total_width;
-    int total_height;
-    m_scroll_adapter.get_internal_size(total_width, total_height);
+//    const Vector<Unit::pixel> internal_size =
+//            m_scroll_adapter.get_internal_size();
+//    const int total_width = internal_size.x();
+//    const int total_height = internal_size.y();
 
     if( !m_drawing_area.renderWindow.setActive( true ) )
         return;
@@ -239,6 +249,8 @@ void Viewer_frame::on_action_size_allocation(
 
     if( !m_drawing_area.renderWindow.setActive( false ) )
         return;
+
+    on_action_draw_event2();
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_triangle()
