@@ -1,4 +1,4 @@
-/* copied from https://github.com/LaurentGomila/SFML/wiki/Source%3A-GTK-SFMLWidget#wiki-sfmlwidgeth
+/* copied from https://github.com/LaurentGomila/SFML/wiki/Source%3A-GTK-SFML_widget#wiki-SFML_widgeth
  * public domain */
 
 #include <gui/SFMLWidget.h>
@@ -28,7 +28,7 @@
 
 namespace YUV_tool {
 
-SFMLWidget::SFMLWidget(sf::VideoMode mode, int size_request)
+SFML_widget::SFML_widget(sf::VideoMode mode, int size_request)
 {
     if(size_request<=0)
         size_request = std::max<int>(1, std::min<int>(mode.width, mode.height) / 2);
@@ -38,10 +38,10 @@ SFMLWidget::SFMLWidget(sf::VideoMode mode, int size_request)
     set_has_window(false); // Makes this behave like an interal object rather then a parent window.
 }
 
-SFMLWidget::~SFMLWidget()
+SFML_widget::~SFML_widget()
 { }
 
-void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
+void SFML_widget::on_size_allocate(Gtk::Allocation& allocation)
 {
     //Do something with the space that we have actually been given:
     //(We will not be given heights or widths less than we have requested, though
@@ -49,31 +49,37 @@ void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
 
     this->set_allocation(allocation);
 
-    if(m_refGdkWindow)
+    if(m_ref_gdk_window)
     {
-        m_refGdkWindow->move_resize(allocation.get_x(),
+        m_ref_gdk_window->move_resize(allocation.get_x(),
                                     allocation.get_y(),
                                     allocation.get_width(),
                                     allocation.get_height() );
 //        renderWindow.setSize(sf::Vector2u(allocation.get_width(),
 //                                          allocation.get_height()));
 
-        renderWindow.create(GET_WINDOW_HANDLE_FROM_GDK(m_refGdkWindow->gobj()));
-
-        signal_post_size_allocate()(allocation);
+        if(m_timeout_source)
+        {
+            m_timeout_source->destroy();
+            m_timeout_source.clear();
+        }
+        m_timeout_source = Glib::TimeoutSource::create(500);
+        m_timeout_source->connect(
+                sigc::mem_fun(*this, &SFML_widget::on_timeout));
+        m_timeout_source->attach(Glib::MainContext::get_default());
     }
 }
 
-void SFMLWidget::on_realize()
+void SFML_widget::on_realize()
 {
     Gtk::Widget::on_realize();
 
     on_realize_internal();
 }
 
-void SFMLWidget::on_realize_internal()
+void SFML_widget::on_realize_internal()
 {
-    if(!m_refGdkWindow)
+    if(!m_ref_gdk_window)
     {
         //Create the GdkWindow:
         GdkWindowAttr attributes;
@@ -91,12 +97,10 @@ void SFMLWidget::on_realize_internal()
         attributes.window_type = GDK_WINDOW_CHILD;
         attributes.wclass = GDK_INPUT_OUTPUT;
 
-        m_refGdkWindow = Gdk::Window::create(get_window(), &attributes,
+        m_ref_gdk_window = Gdk::Window::create(get_window(), &attributes,
                 GDK_WA_X | GDK_WA_Y);
-        const bool z = get_has_window();
-        std::cerr << z << std::endl;
         set_has_window(true);
-        set_window(m_refGdkWindow);
+        set_window(m_ref_gdk_window);
 
         // transparent background
 #if GTK_VERSION_GE(3, 0)
@@ -108,13 +112,16 @@ void SFMLWidget::on_realize_internal()
         this->set_double_buffered(false);
 
         //make the widget receive expose events
-        m_refGdkWindow->set_user_data(gobj());
+        m_ref_gdk_window->set_user_data(gobj());
 
-        renderWindow.create(GET_WINDOW_HANDLE_FROM_GDK(m_refGdkWindow->gobj()));
+        m_render_window.create(
+                GET_WINDOW_HANDLE_FROM_GDK(m_ref_gdk_window->gobj()));
+
+        signal_post_size_allocate()();
     }
 }
 
-void SFMLWidget::on_unrealize()
+void SFML_widget::on_unrealize()
 {
     on_unrealize_internal();
 
@@ -122,29 +129,47 @@ void SFMLWidget::on_unrealize()
     Gtk::Widget::on_unrealize();
 }
 
-void SFMLWidget::on_unrealize_internal()
+void SFML_widget::on_unrealize_internal()
 {
-    m_refGdkWindow.clear();
+    m_ref_gdk_window.clear();
 }
 
-sigc::signal<void, Gtk::Allocation &> &SFMLWidget::signal_post_size_allocate()
+bool SFML_widget::on_timeout()
+{
+    m_timeout_source->destroy();
+    m_timeout_source.clear();
+
+    m_render_window.create(
+            GET_WINDOW_HANDLE_FROM_GDK(m_ref_gdk_window->gobj()));
+
+    signal_post_size_allocate()();
+
+    return true;
+}
+
+sigc::signal<void> &SFML_widget::signal_post_size_allocate()
 {
     return m_signal_post_size_allocate;
 }
 
-void SFMLWidget::display()
+sf::RenderWindow &SFML_widget::render_window()
 {
-    if(m_refGdkWindow)
+    return m_render_window;
+}
+
+void SFML_widget::display()
+{
+    if(m_ref_gdk_window)
     {
-        renderWindow.display();
+        m_render_window.display();
     }
 }
 
-void SFMLWidget::invalidate()
+void SFML_widget::invalidate()
 {
-    if(m_refGdkWindow)
+    if(m_ref_gdk_window)
     {
-        m_refGdkWindow->invalidate(true);
+        m_ref_gdk_window->invalidate(true);
     }
 }
 

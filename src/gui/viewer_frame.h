@@ -34,7 +34,7 @@ private:
     Glib::RefPtr<Gtk::ActionGroup> m_action_group;
     Glib::RefPtr<Gtk::UIManager> m_ui_manager;
     Gtk::Box m_box;
-    SFMLWidget m_drawing_area;
+    SFML_widget m_drawing_area;
     Scroll_adapter m_scroll_adapter;
     Drawer_gl m_drawer_gl;
 

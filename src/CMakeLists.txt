@@ -12,6 +12,11 @@ endif()
 
 include_directories( "." )
 
-add_subdirectory( cli )
-add_subdirectory( gui )
-add_subdirectory( yuv )
+option(BUILD_GTKMM_GUI "build Gtkmm gui" ON)
+
+add_subdirectory(cli)
+add_subdirectory(yuv)
+
+if(BUILD_GTKMM_GUI)
+	add_subdirectory(gui)
+endif()

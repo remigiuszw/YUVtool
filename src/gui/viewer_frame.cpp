@@ -66,13 +66,14 @@ Viewer_frame::Viewer_frame() :
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
     m_drawing_area.signal_post_size_allocate().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
+            sigc::mem_fun(
+                m_scroll_adapter,
+                &Scroll_adapter::update_allocation));
     m_scroll_adapter.signal_post_scroll().connect(
             sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation2));
     m_drawing_area.signal_draw().connect(
             sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
 
-    //m_scroll_adapter.add(m_dummy_button );
     m_drawing_area.set_hexpand();
     m_drawing_area.set_vexpand();
     m_scroll_adapter.attach(m_drawing_area, 0, 0, 1, 1);
@@ -82,7 +83,6 @@ Viewer_frame::Viewer_frame() :
     add(m_box);
 
     show_all();
-    on_action_size_allocation2();
 }
 //------------------------------------------------------------------------------
 Viewer_frame::~Viewer_frame()
@@ -230,15 +230,14 @@ void Viewer_frame::on_action_size_allocation2()
     const int height = visible_area.get_height();
     const int x0 = visible_area.get_x();
     const int y0 = visible_area.get_y();
-//    const Vector<Unit::pixel> internal_size =
-//            m_scroll_adapter.get_internal_size();
-//    const int total_width = internal_size.x();
-//    const int total_height = internal_size.y();
+    const Gtk::Allocation allocation = m_drawing_area.get_allocation();
+    const int bottom_margin = allocation.get_height() - height;
+    sf::RenderWindow &render_window = m_drawing_area.render_window();
 
-    if( !m_drawing_area.renderWindow.setActive( true ) )
+    if( !render_window.setActive( true ) )
         return;
 
-    glViewport(0, 0, width, height);
+    glViewport(0, bottom_margin, width, height);
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
@@ -247,7 +246,7 @@ void Viewer_frame::on_action_size_allocation2()
     glClearColor( 0.0f, 0.5f, 0.0f, 0.0f );
     glDisable( GL_DEPTH_TEST );
 
-    if( !m_drawing_area.renderWindow.setActive( false ) )
+    if(!render_window.setActive(false))
         return;
 
     on_action_draw_event2();
@@ -255,7 +254,9 @@ void Viewer_frame::on_action_size_allocation2()
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_triangle()
 {
-    if( !m_drawing_area.renderWindow.setActive( true ) )
+    sf::RenderWindow &render_window = m_drawing_area.render_window();
+
+    if(!render_window.setActive(true))
         return;
 
     glClearColor( 0.0, 0.0, 0.5, 0.0 );
@@ -278,13 +279,15 @@ void Viewer_frame::draw_triangle()
     glFlush();
     m_drawing_area.display();
 
-    if( !m_drawing_area.renderWindow.setActive( false ) )
+    if(!render_window.setActive(false))
         return;
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_frame()
 {
-    if( !m_drawing_area.renderWindow.setActive( true ) )
+    sf::RenderWindow &render_window = m_drawing_area.render_window();
+
+    if(!render_window.setActive(true))
         return;
 
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
@@ -297,7 +300,7 @@ void Viewer_frame::draw_frame()
     glFlush();
     m_drawing_area.display();
 
-    if( !m_drawing_area.renderWindow.setActive( false ) )
+    if(!render_window.setActive(false))
         return;
 }
 //------------------------------------------------------------------------------

@@ -27,11 +27,11 @@ public:
     const Vector<Unit::pixel> &get_internal_size() const;
     Gdk::Rectangle get_visible_area();
     sigc::signal<void> &signal_post_scroll();
+    void update_allocation();
 
 private:
     void on_scroll();
     void on_signal_size_allocate(Gtk::Allocation &allocation);
-    void update_allocation();
 };
 
 } /* namespace YUV_tool */

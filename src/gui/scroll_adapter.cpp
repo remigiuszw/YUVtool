@@ -87,13 +87,14 @@ void Scroll_adapter::update_allocation()
         {
             m_x_adjustment->set_page_size(inner_allocation.get_width());
             m_x_adjustment->set_upper(inner_allocation.get_width());
+            m_x_adjustment->set_value(0);
         }
 
         if(m_internal_size.y() > inner_allocation.get_height())
         {
             m_y_adjustment->set_page_size(inner_allocation.get_height());
             m_y_adjustment->set_upper(m_internal_size.y());
-
+            m_y_adjustment->set_value(0);
         }
         else
         {
@@ -103,6 +104,8 @@ void Scroll_adapter::update_allocation()
 
         m_x_adjustment->thaw_notify();
         m_y_adjustment->thaw_notify();
+
+        on_scroll();
     }
 }
 
