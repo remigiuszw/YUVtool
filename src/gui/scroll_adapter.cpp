@@ -19,9 +19,18 @@ Scroll_adapter::Scroll_adapter() :
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
     m_y_adjustment->signal_value_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
-    signal_size_allocate().connect(
-            sigc::mem_fun(*this, &Scroll_adapter::on_signal_size_allocate));
 
+    signal_size_allocate().connect_notify(
+            std::bind(
+                sigc::mem_fun(*this, &Scroll_adapter::update_allocation)));
+    m_drawing_area.signal_post_size_allocate().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::update_allocation));
+    m_drawing_area.signal_draw().connect(
+            sigc::mem_fun(*this, &Scroll_adapter::kick_signal_update_drawing));
+
+    m_drawing_area.set_hexpand();
+    m_drawing_area.set_vexpand();
+    attach(m_drawing_area, 0, 0, 1, 1);
     attach(m_x_scrollbar, 0, 1, 1, 1);
     attach(m_y_scrollbar, 1, 0, 1, 1);
 }
@@ -42,30 +51,35 @@ Gdk::Rectangle Scroll_adapter::get_visible_area()
     Gtk::Allocation result;
     result.set_x(m_x_adjustment->get_value());
     result.set_y(m_y_adjustment->get_value());
-    result.set_width(
-            std::min<int>(
-                m_internal_size.x(),
-                m_x_adjustment->get_page_size()));
-    result.set_height(
-            std::min<int>(
-                m_internal_size.y(),
-                m_y_adjustment->get_page_size()));
+    result.set_width(m_x_adjustment->get_page_size());
+    result.set_height(m_y_adjustment->get_page_size());
     return result;
 }
 //------------------------------------------------------------------------------
-sigc::signal<void> &Scroll_adapter::signal_post_scroll()
+sigc::signal<void> &Scroll_adapter::signal_update_viewport()
 {
-    return m_signal_post_scroll;
+    return m_signal_update_viewport;
+}
+//------------------------------------------------------------------------------
+sigc::signal<void> &Scroll_adapter::signal_update_drawing()
+{
+    return m_signal_update_drawing;
+}
+//------------------------------------------------------------------------------
+bool Scroll_adapter::set_active(bool active)
+{
+    return m_drawing_area.set_active(active);
+}
+//------------------------------------------------------------------------------
+void Scroll_adapter::display()
+{
+    m_drawing_area.display();
 }
 //------------------------------------------------------------------------------
 void Scroll_adapter::on_scroll()
 {
-    signal_post_scroll()();
-}
-//------------------------------------------------------------------------------
-void Scroll_adapter::on_signal_size_allocate(Gtk::Allocation &allocation)
-{
-    update_allocation();
+    signal_update_viewport()();
+    signal_update_drawing()();
 }
 //------------------------------------------------------------------------------
 void Scroll_adapter::update_allocation()
@@ -105,8 +119,16 @@ void Scroll_adapter::update_allocation()
         m_x_adjustment->thaw_notify();
         m_y_adjustment->thaw_notify();
 
+//        std::cerr << "Scroll_adapter::update_allocation()" << std::endl;
         on_scroll();
     }
+}
+//------------------------------------------------------------------------------
+bool Scroll_adapter::kick_signal_update_drawing(
+        const Cairo::RefPtr<Cairo::Context>)
+{
+    m_signal_update_drawing();
+    return true;
 }
 
 } /* YUV_tool */

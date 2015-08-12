@@ -28,13 +28,8 @@
 
 namespace YUV_tool {
 
-SFML_widget::SFML_widget(sf::VideoMode mode, int size_request)
+SFML_widget::SFML_widget()
 {
-    if(size_request<=0)
-        size_request = std::max<int>(1, std::min<int>(mode.width, mode.height) / 2);
-
-    set_size_request(size_request, size_request);
-
     set_has_window(false); // Makes this behave like an interal object rather then a parent window.
 }
 
@@ -43,10 +38,6 @@ SFML_widget::~SFML_widget()
 
 void SFML_widget::on_size_allocate(Gtk::Allocation& allocation)
 {
-    //Do something with the space that we have actually been given:
-    //(We will not be given heights or widths less than we have requested, though
-    //we might get more)
-
     this->set_allocation(allocation);
 
     if(m_ref_gdk_window)
@@ -55,8 +46,6 @@ void SFML_widget::on_size_allocate(Gtk::Allocation& allocation)
                                     allocation.get_y(),
                                     allocation.get_width(),
                                     allocation.get_height() );
-//        renderWindow.setSize(sf::Vector2u(allocation.get_width(),
-//                                          allocation.get_height()));
 
         if(m_timeout_source)
         {
@@ -139,10 +128,14 @@ bool SFML_widget::on_timeout()
     m_timeout_source->destroy();
     m_timeout_source.clear();
 
-    m_render_window.create(
-            GET_WINDOW_HANDLE_FROM_GDK(m_ref_gdk_window->gobj()));
+    if(m_ref_gdk_window)
+    {
+        m_render_window.create(
+                    GET_WINDOW_HANDLE_FROM_GDK(m_ref_gdk_window->gobj()));
+//        std::cerr << "SFML_widget::on_timeout()" << std::endl;
+        signal_post_size_allocate()();
+    }
 
-    signal_post_size_allocate()();
 
     return true;
 }
@@ -152,9 +145,9 @@ sigc::signal<void> &SFML_widget::signal_post_size_allocate()
     return m_signal_post_size_allocate;
 }
 
-sf::RenderWindow &SFML_widget::render_window()
+bool SFML_widget::set_active(bool active)
 {
-    return m_render_window;
+    return m_render_window.setActive(active);
 }
 
 void SFML_widget::display()
@@ -162,14 +155,6 @@ void SFML_widget::display()
     if(m_ref_gdk_window)
     {
         m_render_window.display();
-    }
-}
-
-void SFML_widget::invalidate()
-{
-    if(m_ref_gdk_window)
-    {
-        m_ref_gdk_window->invalidate(true);
     }
 }
 

@@ -11,8 +11,7 @@
 namespace YUV_tool {
 
 Viewer_frame::Viewer_frame() :
-    m_box( Gtk::ORIENTATION_VERTICAL ),
-    m_drawing_area( sf::VideoMode( 100, 100 ) )
+    m_box(Gtk::ORIENTATION_VERTICAL)
 {
     m_action_group = Gtk::ActionGroup::create();
     m_action_group->add(
@@ -65,18 +64,11 @@ Viewer_frame::Viewer_frame() :
     Gtk::Widget *tool_bar = m_ui_manager->get_widget("/tool_bar");
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
-    m_drawing_area.signal_post_size_allocate().connect(
-            sigc::mem_fun(
-                m_scroll_adapter,
-                &Scroll_adapter::update_allocation));
-    m_scroll_adapter.signal_post_scroll().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation2));
-    m_drawing_area.signal_draw().connect(
+    m_scroll_adapter.signal_update_viewport().connect(
+            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
+    m_scroll_adapter.signal_update_drawing().connect(
             sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
 
-    m_drawing_area.set_hexpand();
-    m_drawing_area.set_vexpand();
-    m_scroll_adapter.attach(m_drawing_area, 0, 0, 1, 1);
     m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(300, 300));
     m_box.pack_start(m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET);
 
@@ -207,7 +199,7 @@ void Viewer_frame::on_action_file_open()
 //------------------------------------------------------------------------------
 void Viewer_frame::on_action_file_close()
 {
-    if( m_yuv_file.is_open() )
+    if(m_yuv_file.is_open())
     {
         m_yuv_file.close();
     }
@@ -217,46 +209,38 @@ void Viewer_frame::on_action_file_close()
     }
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation(Gtk::Allocation &allocation)
+void Viewer_frame::on_action_size_allocation()
 {
-    on_action_size_allocation2();
-}
-//------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation2()
-{
+//    std::cerr << "Viewer_frame::on_action_size_allocation()" << std::endl;
     const Gdk::Rectangle visible_area =
             m_scroll_adapter.get_visible_area();
-    const int width = visible_area.get_width();
-    const int height = visible_area.get_height();
+    const Vector<Unit::pixel> internal_size =
+            m_scroll_adapter.get_internal_size();
+    const int width = std::min(visible_area.get_width(), internal_size.x());
+    const int height = std::min(visible_area.get_height(), internal_size.y());
     const int x0 = visible_area.get_x();
     const int y0 = visible_area.get_y();
-    const Gtk::Allocation allocation = m_drawing_area.get_allocation();
-    const int bottom_margin = allocation.get_height() - height;
-    sf::RenderWindow &render_window = m_drawing_area.render_window();
+    const int bottom_margin = visible_area.get_height() - height;
 
-    if( !render_window.setActive( true ) )
+    if(!m_scroll_adapter.set_active(true))
         return;
 
     glViewport(0, bottom_margin, width, height);
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    glOrtho( x0, x0+width, y0+height, y0, -1, 1 );
+    glOrtho(x0, x0 + width, y0 + height, y0, -1, 1);
 
-    glClearColor( 0.0f, 0.5f, 0.0f, 0.0f );
-    glDisable( GL_DEPTH_TEST );
+    glClearColor(0.0f, 0.5f, 0.0f, 0.0f);
+    glDisable(GL_DEPTH_TEST);
 
-    if(!render_window.setActive(false))
+    if(!m_scroll_adapter.set_active(false))
         return;
-
-    on_action_draw_event2();
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_triangle()
 {
-    sf::RenderWindow &render_window = m_drawing_area.render_window();
-
-    if(!render_window.setActive(true))
+    if(!m_scroll_adapter.set_active(true))
         return;
 
     glClearColor( 0.0, 0.0, 0.5, 0.0 );
@@ -277,17 +261,15 @@ void Viewer_frame::draw_triangle()
     glEnd();
 
     glFlush();
-    m_drawing_area.display();
+    m_scroll_adapter.display();
 
-    if(!render_window.setActive(false))
+    if(!m_scroll_adapter.set_active(false))
         return;
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_frame()
 {
-    sf::RenderWindow &render_window = m_drawing_area.render_window();
-
-    if(!render_window.setActive(true))
+    if(!m_scroll_adapter.set_active(true))
         return;
 
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
@@ -298,23 +280,17 @@ void Viewer_frame::draw_frame()
     m_drawer_gl.draw( m_yuv_file, 0, m_scroll_adapter );
 
     glFlush();
-    m_drawing_area.display();
+    m_scroll_adapter.display();
 
-    if(!render_window.setActive(false))
+    if(!m_scroll_adapter.set_active(false))
         return;
 }
 //------------------------------------------------------------------------------
-bool Viewer_frame::on_action_draw_event( const ::Cairo::RefPtr<Cairo::Context>
-  &cr )
+void Viewer_frame::on_action_draw_event()
 {
-    return on_action_draw_event2();
-}
-//------------------------------------------------------------------------------
-bool Viewer_frame::on_action_draw_event2()
-{
+//    std::cerr << "Viewer_frame::on_action_draw_event()" << std::endl;
     draw_triangle();
     //draw_frame();
-    return true;
 }
 
 } /* namespace YUV_tool */

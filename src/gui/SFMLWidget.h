@@ -13,14 +13,13 @@ namespace YUV_tool {
 class SFML_widget : public Gtk::Widget
 {
 private:
-    sigc::connection m_timeout_connection;
     Glib::RefPtr<Gdk::Window> m_ref_gdk_window;
-    sigc::signal<void> m_signal_post_size_allocate;
     sf::RenderWindow m_render_window;
+    sigc::signal<void> m_signal_post_size_allocate;
     Glib::RefPtr<Glib::TimeoutSource> m_timeout_source;
 
 protected:
-    virtual void on_size_allocate(Gtk::Allocation& allocation);
+    void on_size_allocate(Gtk::Allocation& allocation) override;
     void on_realize() override;
     void on_realize_internal();
     void on_unrealize() override;
@@ -28,12 +27,11 @@ protected:
     bool on_timeout();
 
 public:
-    SFML_widget(sf::VideoMode mode, int size_request=-1);
-    virtual ~SFML_widget();
+    SFML_widget();
+    ~SFML_widget() override;
 
     sigc::signal<void> &signal_post_size_allocate();
-    sf::RenderWindow &render_window();
-    void invalidate();
+    bool set_active(bool active);
     void display();
 };
 
