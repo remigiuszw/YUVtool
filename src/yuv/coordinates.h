@@ -91,7 +91,8 @@ inline bool operator!=(
 enum class Unit
 {
     pixel,
-    macropixel
+    macropixel,
+    tile
 };
 //------------------------------------------------------------------------------
 enum class Reference_point

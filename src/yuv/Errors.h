@@ -28,4 +28,10 @@ inline void check_range(int begin, int value, int end)
             "YUVtool variable out of range");
 }
 
+#define MY_ASSERT(test) \
+    my_assert( \
+        test, \
+        "Assertion failed: (" # test \
+        "), but the programmer was to lazy to explain what it means");
+
 #endif // ERRORS_H
