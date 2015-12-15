@@ -13,6 +13,7 @@ public:
     Drawer_gl();
     ~Drawer_gl();
     void initialize();
+    void deinitialize();
     void draw(
             Yuv_file &yuv_file,
             int frame_number,
@@ -31,6 +32,8 @@ private:
     GLuint m_vertex_shader;
     GLuint m_fragment_shader;
     GLuint m_shader_program;
+
+    bool m_initialized;
 };
 
 } /* namespace YUV_tool */

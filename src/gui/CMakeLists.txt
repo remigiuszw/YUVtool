@@ -21,6 +21,7 @@ set( CPP_SOURCE_FILES
     drawer_gl.cpp
     main.cpp
     SFMLWidget.cpp
+    format_chooser_dialog.cpp
 )
 
 set( HEADER_FILES
@@ -29,6 +30,7 @@ set( HEADER_FILES
     scroll_adapter.h
     drawer_gl.h
     SFMLWidget.h
+    format_chooser_dialog.h
 )
 
 add_executable( yuvtool ${CPP_SOURCE_FILES} ${HEADER_FILES} )

@@ -13,23 +13,13 @@ const int buffer_count = 8;
 Drawer_gl::Drawer_gl() :
     m_vertex_shader(0),
     m_fragment_shader(0),
-    m_shader_program(0)
+    m_shader_program(0),
+    m_initialized(false)
 { }
 //------------------------------------------------------------------------------
 Drawer_gl::~Drawer_gl()
 {
     reallocate_buffers(0);
-}
-//------------------------------------------------------------------------------
-namespace {
-void fill_tile_GL_RGB32F(
-        const Picture_buffer &buffer,
-        const Coordinates<Unit::pixel, Reference_point::picture> &tile_start,
-        const Coordinates<Unit::pixel, Reference_point::picture> &tile_end,
-        GLfloat *output)
-{
-    /* TODO */
-}
 }
 //------------------------------------------------------------------------------
 void Drawer_gl::initialize()
@@ -78,11 +68,10 @@ R"(
 #version 330 core
 in vec2 texture_sampling2;
 out vec4 color;
-out vec2 texture_sampling3;
+uniform sampler2D my_texture;
 void main()
 {
-    color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    texture_sampling3 = texture_sampling2;
+    color = texture(my_texture, texture_sampling2);
 }
 )";
     glShaderSource(m_fragment_shader, 1, &fragment_shader_source, 0);
@@ -112,6 +101,17 @@ void main()
                     std::string("could not link shader program: ")
                     + info_log);
     }
+    m_initialized = true;
+}
+//------------------------------------------------------------------------------
+void Drawer_gl::deinitialize()
+{
+    my_assert(m_initialized, "trying to deinitialize uninitialized Drawer_gl");
+    reallocate_buffers(0);
+    glDeleteProgram(m_shader_program);
+    glDeleteShader(m_vertex_shader);
+    glDeleteShader(m_fragment_shader);
+    m_initialized = false;
 }
 //------------------------------------------------------------------------------
 void Drawer_gl::draw(
@@ -155,6 +155,8 @@ void Drawer_gl::draw(
 
         const Picture_buffer coded_buffer =
                 yuv_file.extract_buffer(frame_number, buffer_start, buffer_end);
+        const Picture_buffer rgb_buffer =
+                convert(coded_buffer, rgb_32bpp);
         const int bytes_in_GLfloat = 4;
 
         for(int tile_x = tiles_start.x(); tile_x < tiles_end.x(); tile_x++)
@@ -178,27 +180,15 @@ void Drawer_gl::draw(
                 // old data are not going to stall us
                 // reserve storage only for RGB, not RGBA
                 const int pixel_buffer_size =
-                        bytes_in_GLfloat
-                        * Rgba_component_rgb_count
+                        Rgba_component_count
                         * tile_size
                         * tile_size;
+
                 glBufferData(
                             GL_PIXEL_UNPACK_BUFFER,
                             pixel_buffer_size,
-                            0,
+                            rgb_buffer.get_data().data(),
                             GL_STREAM_DRAW);
-                GLfloat *mapped_buffer =
-                        static_cast<GLfloat *>(
-                            glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
-                if(!mapped_buffer)
-                    throw std::runtime_error(
-                            "mapping of an OpenGL buffer failed");
-                fill_tile_GL_RGB32F(
-                            coded_buffer,
-                            tile_start,
-                            tile_end,
-                            mapped_buffer);
-                glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
             }
 
             /* bind texture and provide it with data from the currently bound
@@ -309,29 +299,45 @@ void Drawer_gl::reallocate_buffers(const int buffers_count)
     {
         if(old_size < buffers_count)
         {
+            m_vertex_arrays.resize(buffers_count);
+            m_coordinate_buffers.resize(buffers_count);
+            m_sampling_buffers.resize(buffers_count);
             m_pixel_buffers.resize(buffers_count);
             m_textures.resize(buffers_count);
-            m_vertex_arrays.resize(buffers_count);
-            glGenBuffers(buffers_count - old_size, &m_pixel_buffers[old_size]);
-            glGenTextures(buffers_count - old_size, &m_textures[old_size]);
             glGenVertexArrays(
-                    buffers_count - old_size,
-                    &m_vertex_arrays[old_size]);
+                        buffers_count - old_size,
+                        &m_vertex_arrays[old_size]);
+            glGenBuffers(
+                        buffers_count - old_size,
+                        &m_coordinate_buffers[old_size]);
+            glGenBuffers(
+                        buffers_count - old_size,
+                        &m_sampling_buffers[old_size]);
+            glGenTextures(buffers_count - old_size, &m_textures[old_size]);
+            glGenBuffers(buffers_count - old_size, &m_pixel_buffers[old_size]);
         }
         else
         {
-            glDeleteBuffers(
-                    old_size - buffers_count,
-                    &m_pixel_buffers[buffers_count]);
-            glDeleteTextures(
-                    old_size - buffers_count,
-                    &m_textures[buffers_count]);
             glDeleteVertexArrays(
                     old_size - buffers_count,
                     &m_vertex_arrays[buffers_count]);
+            glDeleteBuffers(
+                    old_size - buffers_count,
+                    &m_coordinate_buffers[buffers_count]);
+            glDeleteBuffers(
+                    old_size - buffers_count,
+                    &m_sampling_buffers[buffers_count]);
+            glDeleteTextures(
+                    old_size - buffers_count,
+                    &m_textures[buffers_count]);
+            glDeleteBuffers(
+                    old_size - buffers_count,
+                    &m_pixel_buffers[buffers_count]);
+            m_vertex_arrays.resize(buffers_count);
+            m_coordinate_buffers.resize(buffers_count);
+            m_sampling_buffers.resize(buffers_count);
             m_pixel_buffers.resize(buffers_count);
             m_textures.resize(buffers_count);
-            m_vertex_arrays.resize(buffers_count);
         }
     }
 }

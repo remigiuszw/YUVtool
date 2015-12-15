@@ -186,7 +186,8 @@ void Viewer_frame::on_action_file_open()
         }
         catch( std::runtime_error & )
         {
-            std::cerr << "failed to open file: " << dialog.get_filename();
+            std::cerr
+                    << "failed to open file: " << dialog.get_filename() << '\n';
         }
         break;
     case Gtk::RESPONSE_CANCEL:
