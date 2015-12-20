@@ -7,6 +7,7 @@
 #include <gtkmm/frame.h>
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/grid.h>
+#include <gtkmm/liststore.h>
 
 namespace YUV_tool {
 
@@ -40,6 +41,8 @@ private:
     struct Row_in_plane_configurator : Gtk::Box
     {
         Row_in_plane_configurator();
+        void add_entry(Format_chooser_dialog &parent);
+        void remove_entry(Format_chooser_dialog &parent);
 
         Gtk::Box m_entry_count_box;
         Gtk::Label m_row_label;
@@ -51,6 +54,8 @@ private:
     struct Plane_configurator : Gtk::Frame
     {
         Plane_configurator();
+        void add_row(Format_chooser_dialog &parent);
+        void remove_row(Format_chooser_dialog &parent);
 
         Gtk::Box m_box;
 
@@ -64,6 +69,8 @@ private:
     struct Plane_frame : Gtk::Frame
     {
         Plane_frame();
+        void add_plane(Format_chooser_dialog &parent);
+        void remove_plane(Format_chooser_dialog &parent);
 
         Gtk::Box m_box;
         std::vector<std::unique_ptr<Plane_configurator> > m_planes;
@@ -147,11 +154,30 @@ private:
         std::vector<std::unique_ptr<Pixel_configurator> > m_pixels;
     };
 
+    struct Pixel_format_column_record : Gtk::TreeModel::ColumnRecord
+    {
+        Gtk::TreeModelColumn<Glib::ustring> m_label;
+        Gtk::TreeModelColumn<const Pixel_format *> m_pointer;
+
+        Pixel_format_column_record()
+        {
+            add(m_label);
+            add(m_pointer);
+        }
+    };
+
+    void import_format();
+    void update_format();
+
     Gtk::ComboBox m_predefined_choice;
     Import_box m_import_box;
     Plane_frame m_plane_frame;
     Colorspace_frame m_colorspace_frame;
     Macropixel_frame m_macropixel_frame;
+
+    Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
+    Glib::RefPtr<Gtk::ListStore> m_import_list_store;
+    Pixel_format_column_record m_pixel_format_column_record;
 
     Pixel_format m_pixel_format;
 };

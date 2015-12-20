@@ -1,4 +1,5 @@
 #include <gui/viewer_frame.h>
+#include <gui/format_chooser_dialog.h>
 
 #include <SFML/OpenGL.hpp>
 #include <gtkmm/stock.h>
@@ -169,32 +170,58 @@ void Viewer_frame::on_action_show_size()
 //------------------------------------------------------------------------------
 void Viewer_frame::on_action_file_open()
 {
-    Gtk::FileChooserDialog dialog( *this, "Choose YUV file.",
-        Gtk::FILE_CHOOSER_ACTION_OPEN );
-
-    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-    dialog.add_button("Select", Gtk::RESPONSE_OK);
-
-    const int result = dialog.run();
-
-    switch( result )
+    std::string file_name;
     {
-    case Gtk::RESPONSE_OK:
-        try
+        Gtk::FileChooserDialog file_dialog(
+                    *this,
+                    "Choose YUV file.",
+                    Gtk::FILE_CHOOSER_ACTION_OPEN);
+
+        file_dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+        file_dialog.add_button("Select", Gtk::RESPONSE_OK);
+
+        const int result = file_dialog.run();
+
+        switch(result)
         {
-            m_yuv_file.open( dialog.get_filename() );
+        case Gtk::RESPONSE_OK:
+            file_name = file_dialog.get_filename();
+            break;
+        case Gtk::RESPONSE_CANCEL:
+            return;
+        default:
+            std::cerr << "unknown responce of file chooser dialog\n";
+            return;
         }
-        catch( std::runtime_error & )
+    }
+
+    try
+    {
+        m_yuv_file.open(file_name);
+    }
+    catch(std::runtime_error &)
+    {
+        std::cerr << "failed to open file: " << file_name << '\n';
+    }
+
+    {
+        Format_chooser_dialog format_dialog(
+                    *this,
+                    m_yuv_file.get_pixel_format());
+
+        const int result = format_dialog.run();
+
+        switch(result)
         {
-            std::cerr
-                    << "failed to open file: " << dialog.get_filename() << '\n';
+        case Gtk::RESPONSE_OK:
+            m_yuv_file.set_pixel_format(format_dialog.get_pixel_format());
+            break;
+        case Gtk::RESPONSE_CANCEL:
+            return;
+        default:
+            std::cerr << "unknown responce of format chooser dialog\n";
+            return;
         }
-        break;
-    case Gtk::RESPONSE_CANCEL:
-        break;
-    default:
-        std::cerr << "unknown responce of file chooser dialog\n";
-        break;
     }
 }
 //------------------------------------------------------------------------------

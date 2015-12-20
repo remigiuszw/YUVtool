@@ -9,6 +9,7 @@ Format_chooser_dialog::Format_chooser_dialog(
     m_pixel_format(default_pixel_format)
 {
     add_button("OK", Gtk::RESPONSE_OK);
+    add_button("Cancel", Gtk::RESPONSE_CANCEL);
     /* TODO: add preview button */
 
     Gtk::Box &content_area = *get_content_area();
@@ -17,6 +18,54 @@ Format_chooser_dialog::Format_chooser_dialog(
     content_area.pack_start(m_plane_frame);
     content_area.pack_start(m_colorspace_frame);
     content_area.pack_start(m_macropixel_frame);
+
+    /* predefined choice */
+    {
+        m_predefined_list_store =
+                Gtk::ListStore::create(m_pixel_format_column_record);
+        Gtk::ListStore::iterator iter;
+        iter = m_predefined_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "yuv420p";
+        (*iter)[m_pixel_format_column_record.m_pointer] = &yuv_420p_8bit;
+        iter = m_predefined_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "rgb32bpp";
+        (*iter)[m_pixel_format_column_record.m_pointer] = &rgb_32bpp;
+        iter = m_predefined_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "custom";
+        (*iter)[m_pixel_format_column_record.m_pointer] = nullptr;
+        m_predefined_choice.set_model(m_predefined_list_store);
+        m_predefined_choice.pack_start(m_pixel_format_column_record.m_label);
+        m_predefined_choice.set_active(iter);
+    }
+
+    /* import choice */
+    {
+        m_import_list_store =
+                Gtk::ListStore::create(m_pixel_format_column_record);
+        Gtk::ListStore::iterator iter;
+        iter = m_import_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "yuv420p";
+        (*iter)[m_pixel_format_column_record.m_pointer] = &yuv_420p_8bit;
+        iter = m_import_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "rgb32bpp";
+        (*iter)[m_pixel_format_column_record.m_pointer] = &rgb_32bpp;
+        iter = m_import_list_store->append();
+        (*iter)[m_pixel_format_column_record.m_label] = "...";
+        (*iter)[m_pixel_format_column_record.m_pointer] = nullptr;
+        m_import_box.m_import_choice.set_model(m_import_list_store);
+        m_import_box.m_import_choice.pack_start(
+                    m_pixel_format_column_record.m_label);
+        m_import_box.m_import_choice.set_active(iter);
+    }
+
+    m_predefined_choice.signal_changed().connect(
+                sigc::mem_fun(*this, &Format_chooser_dialog::update_format));
+    m_import_box.m_import_button.signal_clicked().connect(
+                sigc::mem_fun(*this, &Format_chooser_dialog::import_format));
+
+    update_format();
+
+    show_all();
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::~Format_chooser_dialog()
@@ -149,6 +198,43 @@ Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
     m_parameters_box.pack_start(m_columns_entry);
     m_box.pack_start(m_pixel_grid);
 }
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::import_format()
+{
+    const Pixel_format *imported_pixel_format =
+            (*m_import_box.m_import_choice.get_active())[
+                m_pixel_format_column_record.m_pointer];
 
+    if(imported_pixel_format != nullptr)
+    {
+        m_pixel_format = *imported_pixel_format;
+        update_format();
+    }
+    auto options_end = m_import_list_store->children().end();
+    options_end--;
+    m_import_box.m_import_choice.set_active(options_end);
+}
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::update_format()
+{
+    const Pixel_format *predefined_format =
+            (*m_predefined_choice.get_active())[
+                m_pixel_format_column_record.m_pointer];
+    if(predefined_format != nullptr)
+    {
+        m_pixel_format = *predefined_format;
+        m_import_box.hide();
+        m_plane_frame.hide();
+        m_colorspace_frame.hide();
+        m_macropixel_frame.hide();
+    }
+    else
+    {
+        m_import_box.show_all();
+        m_plane_frame.show_all();
+        m_colorspace_frame.show_all();
+        m_macropixel_frame.show_all();
+    }
+}
 /*----------------------------------------------------------------------------*/
 }
