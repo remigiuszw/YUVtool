@@ -14,6 +14,7 @@ namespace YUV_tool {
 Viewer_frame::Viewer_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL)
 {
+    /* File menu action group */
     m_action_group = Gtk::ActionGroup::create();
     m_action_group->add(
         Gtk::Action::create( "menu_file", "_File" ) );
@@ -31,6 +32,15 @@ Viewer_frame::Viewer_frame() :
             "Show size of the drowing area" ),
         sigc::mem_fun( *this, &Viewer_frame::on_action_show_size ) );
 
+    /* Help menu action group */
+    m_action_group->add(
+        Gtk::Action::create( "menu_help", "_Help" ) );
+    m_action_group->add(
+        Gtk::Action::create( "help_info", Gtk::Stock::HELP ) );
+    m_action_group->add(
+        Gtk::Action::create( "about_info", Gtk::Stock::ABOUT ) );
+
+
     m_ui_manager = Gtk::UIManager::create();
     m_ui_manager->insert_action_group( m_action_group );
     add_accel_group( m_ui_manager->get_accel_group() );
@@ -45,6 +55,11 @@ Viewer_frame::Viewer_frame() :
                     <menuitem action='show_size'/>
                     <separator/>
                     <menuitem action='quit'/>
+                </menu>
+                <menu action='menu_help'>
+                    <menuitem action='help_info'/>
+                    <separator/>
+                    <menuitem action='about_info'/>
                 </menu>
             </menubar>
             <toolbar name='tool_bar'>
