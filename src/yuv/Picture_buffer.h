@@ -2,7 +2,7 @@
 #define PICTURE_BUFFER_H
 
 #include <yuv/utils.h>
-#include <yuv/TComponents.h>
+#include <yuv/Pixel_format.h>
 
 namespace YUV_tool {
 

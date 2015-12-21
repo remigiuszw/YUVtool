@@ -1,15 +1,15 @@
 #include <iostream>
 #include "Errors.h"
 
-#include "TYUV_file.h"
+#include "Yuv_file.h"
 
-void print_stream_info(YUV_tool::Yuv_file &YUV_file)
+void print_stream_info(YUV_tool::Yuv_file &yuv_file)
 {
     std::cout << "resolution: "
-            << YUV_file.get_resolution().x() << " "
-            << YUV_file.get_resolution().y() << '\n';
-    std::cout << "frame size: " << YUV_file.get_frame_size() << '\n';
-    std::cout << "frames count: " << YUV_file.get_frames_count() << '\n';
+            << yuv_file.get_resolution().x() << " "
+            << yuv_file.get_resolution().y() << '\n';
+    std::cout << "frame size: " << yuv_file.get_frame_size() << '\n';
+    std::cout << "frames count: " << yuv_file.get_frames_count() << '\n';
 }
 
 const char help_string[] =

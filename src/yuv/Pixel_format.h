@@ -1,11 +1,12 @@
-#ifndef TCOMPONENTS_H
-#define TCOMPONENTS_H
+#ifndef PIXEL_FORMAT_H
+#define PIXEL_FORMAT_H
+
+#include <yuv/utils.h>
+#include <yuv/Bit_position.h>
+#include <yuv/Coordinates.h>
 
 #include <vector>
 #include <algorithm>
-#include <yuv/utils.h>
-#include <yuv/bit_position.h>
-#include <yuv/coordinates.h>
 
 namespace YUV_tool {
 
@@ -582,4 +583,4 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input);
 
 } /* namespace YUV_tool */
 
-#endif // TCOMPONENTS_H
+#endif /* PIXEL_FORMAT_H */

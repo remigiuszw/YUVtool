@@ -1,17 +1,17 @@
-#ifndef TYUV_FILE_H
-#define TYUV_FILE_H
+#ifndef YUV_FILE_H
+#define YUV_FILE_H
 
+#include <yuv/Pixel_format.h>
+#include <yuv/Picture_buffer.h>
+#include <yuv/utils.h>
+
+#include <boost/filesystem/fstream.hpp>
 #include <string>
 #include <fstream>
 #include <array>
-#include <boost/filesystem/fstream.hpp>
-
-#include <yuv/utils.h>
-#include <yuv/TComponents.h>
-#include <yuv/picture_buffer.h>
 
 namespace YUV_tool {
-
+/*--------------------------------------------------------------------*/
 class Yuv_file
 {
 public:
@@ -54,7 +54,7 @@ private:
     bool m_parameters_valid;
     Vector<Unit::pixel> m_resolution;
 };
-
+/*--------------------------------------------------------------------*/
 } /* namespace YUV_tool */
 
-#endif // TYUV_FILE_H
+#endif /* YUV_FILE_H */

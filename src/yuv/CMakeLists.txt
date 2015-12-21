@@ -1,6 +1,7 @@
 set(Boost_USE_STATIC_LIBS        ON)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
+
 find_package(
     Boost
     REQUIRED
@@ -13,19 +14,19 @@ find_package(
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 set(CPP_SOURCE_FILES
-    TYUV_file.cpp
-    TComponents.cpp
     Errors.cpp
-    picture_buffer.cpp
+    Picture_buffer.cpp
+    Pixel_format.cpp
+    Yuv_file.cpp
 )
 
 set(HEADER_FILES
-    TYUV_file.h
-    TComponents.h
+    Coordinates.h
     Errors.h
+    Picture_buffer.h
+    Pixel_format.h
     utils.h
-    picture_buffer.h
-    coordinates.h
+    Yuv_file.h
 )
 
 add_library(yuv ${CPP_SOURCE_FILES} ${HEADER_FILES})

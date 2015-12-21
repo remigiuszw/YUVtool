@@ -1,8 +1,6 @@
-#include <cassert>
-
 #include <gui/drawer_gl.h>
 #include <yuv/utils.h>
-#include <yuv/picture_buffer.h>
+#include <yuv/Picture_buffer.h>
 #include <yuv/Errors.h>
 
 namespace YUV_tool {

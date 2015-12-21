@@ -1,7 +1,8 @@
 #ifndef FORMAT_CHOOSER_DIALOG_H
 #define FORMAT_CHOOSER_DIALOG_H
 
-#include <yuv/TComponents.h>
+#include <yuv/Pixel_format.h>
+
 #include <gtkmm/dialog.h>
 #include <gtkmm/combobox.h>
 #include <gtkmm/frame.h>
