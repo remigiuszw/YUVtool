@@ -23,6 +23,8 @@ private:
     void on_action_show_size();
     void on_action_file_open();
     void on_action_file_close();
+    void on_action_help_info();
+    void on_action_help_about();
     void on_action_size_allocation();
     void on_action_draw_event();
     void draw_triangle();
