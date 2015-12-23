@@ -36,9 +36,11 @@ Viewer_frame::Viewer_frame() :
     m_action_group->add(
         Gtk::Action::create( "menu_help", "_Help" ) );
     m_action_group->add(
-        Gtk::Action::create( "help_info", Gtk::Stock::HELP ) );
+        Gtk::Action::create( "help_info", Gtk::Stock::HELP ),
+        sigc::mem_fun( *this, &Viewer_frame::on_action_help_info ) );
     m_action_group->add(
-        Gtk::Action::create( "about_info", Gtk::Stock::ABOUT ) );
+        Gtk::Action::create( "about_info", Gtk::Stock::ABOUT ),
+        sigc::mem_fun( *this, &Viewer_frame::on_action_help_about ) );
 
 
     m_ui_manager = Gtk::UIManager::create();
@@ -250,6 +252,51 @@ void Viewer_frame::on_action_file_close()
     {
         std::cerr << "tried to close file, while none is open\n";
     }
+}
+//------------------------------------------------------------------------------
+void Viewer_frame::on_action_help_info()
+{
+    std::cerr << "Not implemented yet. Sorry.\n";
+    Gtk::MessageDialog dialog( *this, "Help" );
+
+    std::stringstream ss;
+
+    ss << "Not implemented yet. Sorry";
+
+    dialog.set_secondary_text( ss.str() );
+    int result = dialog.run();
+
+    switch(result)
+    {
+        case(Gtk::RESPONSE_OK):
+        {
+          std::cout << "DEBUG: OK clicked." << std::endl;
+          break;
+        }
+        case(Gtk::RESPONSE_CANCEL):
+        {
+          std::cout << "DEBUG: Cancel clicked." << std::endl;
+          break;
+        }
+        default:
+        {
+          std::cout << "DEBUG: Unexpected button clicked." << std::endl;
+          break;
+        }
+    }
+}
+//------------------------------------------------------------------------------
+void Viewer_frame::on_action_help_about()
+{
+    std::cerr << "Not implemented yet. Sorry.\n";
+    Gtk::MessageDialog dialog( *this, "About..." );
+
+    std::stringstream ss;
+
+    ss << "Not implemented yet. Sorry";
+
+    dialog.set_secondary_text( ss.str() );
+    dialog.run();
 }
 //------------------------------------------------------------------------------
 void Viewer_frame::on_action_size_allocation()
