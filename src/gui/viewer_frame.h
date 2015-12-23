@@ -3,7 +3,7 @@
 
 #include <gui/scroll_adapter.h>
 #include <gui/drawer_gl.h>
-#include <yuv/TYUV_file.h>
+#include <yuv/Yuv_file.h>
 
 #include <gtkmm/window.h>
 #include <gtkmm/uimanager.h>

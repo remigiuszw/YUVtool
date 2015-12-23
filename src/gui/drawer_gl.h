@@ -1,8 +1,9 @@
 #ifndef DRAWER_GL_H
 #define DRAWER_GL_H
 
-#include <yuv/TYUV_file.h>
+#include <yuv/Yuv_file.h>
 #include <gui/scroll_adapter.h>
+
 #include <SFML/OpenGL.hpp>
 
 namespace YUV_tool {

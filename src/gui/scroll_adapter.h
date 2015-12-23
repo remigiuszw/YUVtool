@@ -1,7 +1,7 @@
 #ifndef SCROLL_ADAPTER_H
 #define SCROLL_ADAPTER_H
 
-#include <yuv/coordinates.h>
+#include <yuv/Coordinates.h>
 #include <gui/SFMLWidget.h>
 
 #include <gtkmm/grid.h>
