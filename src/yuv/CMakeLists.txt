@@ -1,3 +1,5 @@
+project(yuv)
+
 set(Boost_USE_STATIC_LIBS        ON)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
@@ -21,10 +23,12 @@ set(CPP_SOURCE_FILES
 )
 
 set(HEADER_FILES
+    Cache.h
     Coordinates.h
     Errors.h
     Picture_buffer.h
     Pixel_format.h
+    trees_and_heaps.h
     utils.h
     Yuv_file.h
 )

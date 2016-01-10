@@ -1,3 +1,5 @@
+project(cli)
+
 include_directories( ${YUVtool_SOURCE_DIR}/src/yuv )
 link_directories( ${YUVtool_BINARY_DIR}/src/yuv )
 

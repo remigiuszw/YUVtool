@@ -5,8 +5,9 @@
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
-typedef std::uint8_t Byte;
+using Byte = std::uint8_t;
 const int bits_in_byte = 8;
+using Index = std::int_fast64_t;
 /*----------------------------------------------------------------------------*/
 enum Rgba_component
 {
@@ -29,6 +30,13 @@ TNumber round_up(TNumber value, TNumber divisor)
 {
     return round_down(value + divisor - static_cast<TNumber>(1), divisor);
 }
+/*----------------------------------------------------------------------------*/
+template<typename TRatio>
+struct Ratio_to_double
+{
+    using Ratio = TRatio;
+    static constexpr double value = double(Ratio::num) / Ratio::den;
+};
 /*----------------------------------------------------------------------------*/
 } /* YUV_tool */
 
