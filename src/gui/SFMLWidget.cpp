@@ -1,5 +1,6 @@
-/* copied from https://github.com/LaurentGomila/SFML/wiki/Source%3A-GTK-SFML_widget#wiki-SFML_widgeth
- * public domain */
+/* copied from https://github.com/SFML/SFML/wiki/Source%3A-GTK-SFMLWidget
+ * public domain
+ * see: https://github.com/SFML/SFML/wiki */
 
 #include <gui/SFMLWidget.h>
 

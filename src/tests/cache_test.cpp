@@ -1,3 +1,22 @@
+/* 
+ * Copyright 2016 Dominik Wójt
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <yuv/Cache.h>
 
 #include <iostream>
@@ -372,9 +391,14 @@ int main() try
             }
             else
             {
+                /* resource not found in the cache */
+                /* need to produce the resource, fortunately we can reuse memory
+                 * allocated for the resource which is now removed from the
+                 * cache */
                 sought_resource = cache_test.pop();
                 cache_test.push(test.first, sought_resource);
             }
+            /* use the resource */
         }
 
         bool test_passed = false;
