@@ -28,20 +28,32 @@
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
-template<int n, typename Iterator>
-Iterator get_child_in_n_tree(Iterator begin, Iterator parent, int child_index)
+template<Index n, typename Iterator>
+Iterator get_child_in_n_tree(Iterator begin, Iterator parent, Index child_index)
 {
     return begin + 1 + (parent - begin) * n + child_index;
 }
 /*----------------------------------------------------------------------------*/
-template<int n, typename Iterator>
+template<Index n, typename Iterator>
 Iterator get_parent_in_n_tree(Iterator begin, Iterator child)
 {
     return begin + (child - begin - 1) / n;
 }
 /*----------------------------------------------------------------------------*/
+template<Index n>
+Index get_children_count_in_n_tree_at_level(const Index level)
+{
+    return cached_power<n>(level);
+}
+/*----------------------------------------------------------------------------*/
+template<Index n, typename Iterator>
+Index get_first_child_in_n_tree_at_level(Iterator begin, const Index level)
+{
+    return begin + (cached_power<n>(level) - 1) / (n - 1);
+}
+/*----------------------------------------------------------------------------*/
 template<typename Iterator>
-Iterator get_child_in_heap(Iterator begin, Iterator parent, int child_index)
+Iterator get_child_in_heap(Iterator begin, Iterator parent, Index child_index)
 {
     return get_child_in_n_tree<2>(begin, parent, child_index);
 }
@@ -205,6 +217,11 @@ public:
     void reserve(const Index size)
     {
         m_array.reserve(size);
+    }
+
+    bool is_empty() const
+    {
+        return m_array.empty();
     }
 };
 /*----------------------------------------------------------------------------*/

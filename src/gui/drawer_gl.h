@@ -21,28 +21,51 @@
 #define DRAWER_GL_H
 
 #include <yuv/Yuv_file.h>
+#include <yuv/Cache.h>
 #include <gui/scroll_adapter.h>
 
 #include <SFML/OpenGL.hpp>
+#include <memory>
 
 namespace YUV_tool {
-
+/*----------------------------------------------------------------------------*/
 class Drawer_gl
 {
 public:
     Drawer_gl();
     ~Drawer_gl();
-    void initialize();
+    void initialize(Index cache_size);
     void deinitialize();
+    bool is_initialized() const;
+    void attach_yuv_file(Yuv_file *yuv_file);
     void draw(
-            Yuv_file &yuv_file,
-            int frame_number,
-            Scroll_adapter &scroll_adapter);
+            Index frame_number,
+            Gdk::Rectangle visible_area);
 
 private:
-    void reallocate_buffers(int buffers_count);
+    void reallocate_buffers(Index buffers_count);
 
-    //const int m_tile_size = 64;
+    struct Resource_id
+    {
+        Index m_id;
+
+        Resource_id(
+                const Coordinate_pair coordinates,
+                const Index zoom_level)
+        {
+            const Index stride = cached_power<2>(zoom_level);
+            m_id =
+                    get_first_child_in_n_tree_at_level<4>(0, zoom_level)
+                    + coordinates.y() * stride
+                    + coordinates.x();
+        }
+
+        bool operator<(const Resource_id rhs) const
+        {
+            return m_id < rhs.m_id;
+        }
+    };
+
     std::vector<GLuint> m_vertex_arrays;
     std::vector<GLuint> m_coordinate_buffers;
     std::vector<GLuint> m_sampling_buffers;
@@ -53,9 +76,13 @@ private:
     GLuint m_fragment_shader;
     GLuint m_shader_program;
 
+    std::unique_ptr<Cache<Resource_id, GLuint> > m_cache;
+
+    Yuv_file *m_yuv_file;
+
     bool m_initialized;
 };
-
+/*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */
 
 #endif // DRAWER_GL_H

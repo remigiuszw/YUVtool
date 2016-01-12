@@ -20,12 +20,14 @@
 #ifndef COORDINATES_H
 #define COORDINATES_H
 
+#include <yuv/utils.h>
+
 namespace YUV_tool {
 
 class Coordinate_pair
 {
 public:
-    typedef int Scalar;
+    using Scalar = Length;
 private:
     Scalar m_x;
     Scalar m_y;
@@ -102,7 +104,7 @@ inline bool operator==(
 //------------------------------------------------------------------------------
 inline bool operator!=(
         const Coordinate_pair &a,
-        const Coordinate_pair &b )
+        const Coordinate_pair &b)
 {
     return !(a == b);
 }

@@ -49,15 +49,15 @@ public:
     void set_resolution(const Vector<Unit::pixel> &resolution);
     Vector<Unit::pixel> get_resolution() const;
     Bit_position get_frame_size();
-    int get_frames_count();
-    void set_frames_count(const int i);
+    Index get_frames_count();
+    void set_frames_count(const Index i);
     Picture_buffer extract_buffer(
-            int picture_number,
+            Index picture_number,
             const Coordinates<Unit::pixel, Reference_point::picture> &start,
             const Coordinates<Unit::pixel, Reference_point::picture> &end);
     void insert_buffer(
             const Picture_buffer &buffer,
-            int picture_number,
+            Index picture_number,
             const Coordinates<Unit::pixel, Reference_point::picture> &start,
             const Coordinates<Unit::pixel, Reference_point::picture> &end);
 

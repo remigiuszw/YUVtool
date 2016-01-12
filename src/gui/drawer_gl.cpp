@@ -24,22 +24,30 @@
 
 namespace YUV_tool {
 
-const int tile_size = 64;
-const int buffer_count = 8;
+const Index tile_size = 64;
+const Index buffer_count = 8;
+const Index tile_size_in_bytes =
+        tile_size * tile_size * Rgba_component_count * 2;
 
 Drawer_gl::Drawer_gl() :
     m_vertex_shader(0),
     m_fragment_shader(0),
     m_shader_program(0),
+    m_yuv_file(nullptr),
     m_initialized(false)
 { }
 //------------------------------------------------------------------------------
 Drawer_gl::~Drawer_gl()
 {
-    reallocate_buffers(0);
+    if(m_initialized)
+        deinitialize();
 }
-//------------------------------------------------------------------------------
-void Drawer_gl::initialize()
+/*----------------------------------------------------------------------------*/
+/* This function is required to be called after OpenGL context is ready
+ * and before any drawing is done using the drawer.
+ * cache_size is expressed in number of 64x64 pixel tiles. Each tile occupies
+ * 32 KB of video memory. */
+void Drawer_gl::initialize(const Index cache_size)
 {
     GLint success;
     const int max_log_length = 512;
@@ -120,7 +128,8 @@ void main()
     }
     m_initialized = true;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
+/* This function should be called when no more drawing is expected to be done */
 void Drawer_gl::deinitialize()
 {
     my_assert(m_initialized, "trying to deinitialize uninitialized Drawer_gl");
@@ -130,24 +139,39 @@ void Drawer_gl::deinitialize()
     glDeleteShader(m_fragment_shader);
     m_initialized = false;
 }
-//------------------------------------------------------------------------------
-void Drawer_gl::draw(
-        Yuv_file &yuv_file,
-        int frame_number,
-        Scroll_adapter &scroll_adapter)
+/*----------------------------------------------------------------------------*/
+bool Drawer_gl::is_initialized() const
 {
-    const Gdk::Rectangle visible_area = scroll_adapter.get_visible_area();
+    return m_initialized;
+}
+/*----------------------------------------------------------------------------*/
+/* yuv_file might be nullptr in no yuv_file is to be attached */
+void Drawer_gl::attach_yuv_file(Yuv_file *yuv_file)
+{
+    m_yuv_file = yuv_file;
+}
+/*----------------------------------------------------------------------------*/
+void Drawer_gl::draw(
+        Index frame_number,
+        const Gdk::Rectangle visible_area)
+{
+    my_assert(is_initialized(), "drawer cannot draw before initialization");
+    my_assert(m_yuv_file, "cannot draw when no YUV file is attached to drawer");
+    const Coordinates<Unit::pixel, Reference_point::picture>
+            visible_area_begin(visible_area.get_x(), visible_area.get_y());
+    const Coordinates<Unit::pixel, Reference_point::picture>
+            visible_area_end(
+                visible_area.get_x() + visible_area.get_width(),
+                visible_area.get_y() + visible_area.get_height());
     const Coordinates<Unit::tile, Reference_point::picture> tiles_start
     {
-        visible_area.get_x() / tile_size,
-        visible_area.get_y() / tile_size
+        visible_area_begin.x() / tile_size,
+        visible_area_begin.y() / tile_size
     };
     const Coordinates<Unit::tile, Reference_point::picture> tiles_end
     {
-        round_up(visible_area.get_x() + visible_area.get_width(), tile_size)
-                / tile_size,
-        round_up(visible_area.get_y() + visible_area.get_height(), tile_size)
-                / tile_size
+        round_up(visible_area_end.x(), tile_size) / tile_size,
+        round_up(visible_area_end.y(), tile_size) / tile_size
     };
     const Vector<Unit::tile> tiles_counts
     {
@@ -159,9 +183,9 @@ void Drawer_gl::draw(
     const GLuint viewport_size_location =
             glGetUniformLocation(m_shader_program, "vieport_size");
 
-    int buffer_index = 0;
+    Index buffer_index = 0;
 
-    for(int tile_y = tiles_start.y(); tile_y < tiles_end.y(); tile_y++)
+    for(Index tile_y = tiles_start.y(); tile_y < tiles_end.y(); tile_y++)
     {
         const Coordinates<Unit::pixel, Reference_point::picture> buffer_start{
             tiles_start.x() * tile_size,
@@ -171,12 +195,15 @@ void Drawer_gl::draw(
             (tile_y + 1) * tile_size};
 
         const Picture_buffer coded_buffer =
-                yuv_file.extract_buffer(frame_number, buffer_start, buffer_end);
+                m_yuv_file->extract_buffer(
+                    frame_number,
+                    buffer_start,
+                    buffer_end);
         const Picture_buffer rgb_buffer =
                 convert(coded_buffer, rgb_32bpp);
-        const int bytes_in_GLfloat = 4;
+        const Index bytes_in_GLfloat = 4;
 
-        for(int tile_x = tiles_start.x(); tile_x < tiles_end.x(); tile_x++)
+        for(Index tile_x = tiles_start.x(); tile_x < tiles_end.x(); tile_x++)
         {
             const int vertex_count = 4;
             const Coordinates<Unit::pixel, Reference_point::picture>
@@ -195,8 +222,8 @@ void Drawer_gl::draw(
                             m_pixel_buffers[buffer_index]);
                 // glBufferData - to be sure storage is assigned and operations on
                 // old data are not going to stall us
-                // reserve storage only for RGB, not RGBA
-                const int pixel_buffer_size =
+                // reserve storage for RGBA
+                const Index pixel_buffer_size =
                         Rgba_component_count
                         * tile_size
                         * tile_size;
@@ -215,12 +242,12 @@ void Drawer_gl::draw(
                 glTexImage2D(
                             GL_TEXTURE_2D,
                             0,
-                            GL_RGB32F,
+                            GL_RGBA16F,
                             tile_size,
                             tile_size,
                             0,
                             GL_RGB,
-                            GL_FLOAT,
+                            GL_UNSIGNED_BYTE,
                             0);
             }
 
@@ -239,7 +266,7 @@ void Drawer_gl::draw(
                             m_coordinate_buffers[buffer_index]);
 
                 /* triangle strip, see OpenGL 3.3, section ?? */
-                const int vertex_buffer_size = vertex_count * 2;
+                const Index vertex_buffer_size = vertex_count * 2;
                 GLfloat vertex_array[vertex_buffer_size] =
                 {
                     x0, y0,
@@ -263,7 +290,7 @@ void Drawer_gl::draw(
             {
                 glBindBuffer(GL_ARRAY_BUFFER, m_sampling_buffers[buffer_index]);
 
-                const int texture_sampling_array_size = vertex_count * 2;
+                const Index texture_sampling_array_size = vertex_count * 2;
                 GLfloat texture_sampling_array[texture_sampling_array_size] =
                 {
                     0.0, 0.0,
@@ -305,13 +332,13 @@ void Drawer_gl::draw(
     reallocate_buffers( 0 );
 }
 //------------------------------------------------------------------------------
-void Drawer_gl::reallocate_buffers(const int buffers_count)
+void Drawer_gl::reallocate_buffers(const Index buffers_count)
 {
     MY_ASSERT(m_vertex_arrays.size() == m_coordinate_buffers.size());
     MY_ASSERT(m_vertex_arrays.size() == m_sampling_buffers.size());
     MY_ASSERT(m_vertex_arrays.size() == m_textures.size());
     MY_ASSERT(m_vertex_arrays.size() == m_pixel_buffers.size());
-    const int old_size = m_vertex_arrays.size();
+    const Index old_size = m_vertex_arrays.size();
     if(old_size != buffers_count)
     {
         if(old_size < buffers_count)

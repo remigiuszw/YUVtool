@@ -47,11 +47,11 @@ public:
     int get_entry(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            int component_index) const;
+            Index component_index) const;
     void set_entry(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            int component_index,
+            Index component_index,
             int value);
     void convert_color_space(const Color_space &color_space);
 

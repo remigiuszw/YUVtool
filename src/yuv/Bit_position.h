@@ -28,7 +28,7 @@ namespace YUV_tool {
 class Bit_position
 {
 private:
-    typedef int Position_type;
+    typedef Index Position_type;
     Position_type m_position;
 public:
     Bit_position(Position_type position = 0) :

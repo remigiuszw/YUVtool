@@ -81,9 +81,9 @@ struct Plane
 
 struct Component_coding
 {
-    int m_plane_index;
-    int m_row_index;
-    int m_entry_index;
+    Index m_plane_index;
+    Index m_row_index;
+    Index m_entry_index;
 };
 
 struct Coded_pixel
@@ -344,7 +344,7 @@ private:
     {
         Bit_position m_offset;
         Coordinates<Unit::pixel, Reference_point::macropixel> m_sampling_point;
-        int m_component_index;
+        Index m_component_index;
     };
 
     struct Entry_row_paramters
@@ -373,21 +373,21 @@ public:
     {
         return m_pixel_format;
     }
-    int get_components_count() const
+    Index get_components_count() const
     {
         return m_pixel_format.m_color_space.m_components.size();
     }
-    int get_planes_count() const
+    Index get_planes_count() const
     {
         return m_planes.size();
     }
-    int get_entry_rows_count_in_plane(const int plane_index) const
+    Index get_entry_rows_count_in_plane(const Index plane_index) const
     {
         return m_planes[plane_index].m_rows.size();
     }
-    int get_entry_count_in_row_in_plane(
-            const int plane_index,
-            const int row_index) const
+    Index get_entry_count_in_row_in_plane(
+            const Index plane_index,
+            const Index row_index) const
     {
         return m_planes[plane_index].m_rows[row_index].m_entries.size();
     }
@@ -395,20 +395,20 @@ public:
     {
         return m_bits_per_macropixel;
     }
-    Bit_position get_bits_per_macropixel_in_plane(const int plane_index) const
+    Bit_position get_bits_per_macropixel_in_plane(const Index plane_index) const
     {
         return m_planes[plane_index].m_bits_per_macropixel;
     }
     Bit_position get_bits_per_macropixel_in_row_in_plane(
-            const int plane_index,
-            const int row_index) const
+            const Index plane_index,
+            const Index row_index) const
     {
         return m_planes[plane_index].m_rows[row_index].m_bits_per_macropixel;
     }
     Bit_position get_bits_per_entry(
-            const int plane_index,
-            const int row_index,
-            const int entry_index) const
+            const Index plane_index,
+            const Index row_index,
+            const Index entry_index) const
     {
         return m_pixel_format.m_planes[
                 plane_index].m_rows[
@@ -418,7 +418,7 @@ public:
     Bit_position get_bits_per_entry(
             const Coordinates<Unit::pixel, Reference_point::macropixel>
                 &pixel_in_macropixel,
-            const int component_index) const
+            const Index component_index) const
     {
         const Component_coding &coding =
                 m_pixel_format.m_macropixel_coding.m_pixels[
@@ -431,9 +431,9 @@ public:
                     coding.m_entry_index].m_width;
     }
     Bit_position get_entry_offset_in_macropixel_in_row_in_plane(
-            const int plane_index,
-            const int row_index,
-            const int entry_index) const
+            const Index plane_index,
+            const Index row_index,
+            const Index entry_index) const
     {
         return
                 m_planes[
@@ -450,23 +450,23 @@ public:
         return m_is_expanded;
     }
     Coordinates<Unit::pixel, Reference_point::macropixel> get_sampling_point(
-            const int plane_index,
-            const int row_index,
-            const int entry_index) const
+            const Index plane_index,
+            const Index row_index,
+            const Index entry_index) const
     {
         return m_planes[plane_index].m_rows[row_index].m_entries[
                 entry_index].m_sampling_point;
     }
-    int get_sampled_component(
-            const int plane_index,
-            const int row_index,
-            const int entry_index) const
+    Index get_sampled_component(
+            const Index plane_index,
+            const Index row_index,
+            const Index entry_index) const
     {
         return m_planes[plane_index].m_rows[row_index].m_entries[
                 entry_index].m_component_index;
     }
 private:
-    int get_pixel_coding_index(
+    Index get_pixel_coding_index(
             const Coordinates<Unit::pixel, Reference_point::macropixel>
                 &pixel_in_macropixel) const
     {
@@ -493,15 +493,15 @@ public:
     {
         return m_buffer_size;
     }
-    Bit_position get_plane_size(int plane_index) const
+    Bit_position get_plane_size(Index plane_index) const
     {
         return m_planes[plane_index].m_size;
     }
-    Bit_position get_plane_offset(int plane_index) const
+    Bit_position get_plane_offset(Index plane_index) const
     {
         return m_planes[plane_index].m_offset;
     }
-    Bit_position get_macropixel_row_in_plane_size(int plane_index) const
+    Bit_position get_macropixel_row_in_plane_size(Index plane_index) const
     {
         return m_planes[plane_index].m_size_per_row_of_macropixels;
     }
@@ -512,7 +512,7 @@ public:
     Bit_position get_entry_offset(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            const int component_index) const
+            const Index component_index) const
     {
         Coordinates<Unit::pixel, Reference_point::macropixel>
                 pixel_in_macropixel;
@@ -530,7 +530,7 @@ public:
                     + pixel_in_macropixel.x()];
         const Component_coding &component_coding =
                 coded_pixel.m_components[component_index];
-        const int plane_index = component_coding.m_plane_index;
+        const Index plane_index = component_coding.m_plane_index;
         const Plane_parameters &plane_parameters =
                 m_planes[component_coding.m_plane_index];
         const Bit_position entry_offset_in_row_of_pixels_in_macropixel =
@@ -555,7 +555,7 @@ public:
     Bit_position get_bits_per_entry(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            const int component_index) const
+            const Index component_index) const
     {
         Coordinates<Unit::pixel, Reference_point::macropixel>
                 pixel_in_macropixel;

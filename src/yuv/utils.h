@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Dominik Wójt
+ * Copyright 2015, 2016 Dominik Wójt
  * 
  * This file is part of YUVtool.
  * 
@@ -25,8 +25,9 @@
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
 using Byte = std::uint8_t;
-const int bits_in_byte = 8;
-using Index = std::int_fast64_t;
+using Index = std::int_fast32_t;
+const Index bits_in_byte = 8;
+using Length = std::int_fast32_t;
 /*----------------------------------------------------------------------------*/
 enum Rgba_component
 {
@@ -48,6 +49,45 @@ template<typename TNumber>
 TNumber round_up(TNumber value, TNumber divisor)
 {
     return round_down(value + divisor - static_cast<TNumber>(1), divisor);
+}
+/*----------------------------------------------------------------------------*/
+template<typename TNumber>
+TNumber power(const TNumber base, TNumber exponent)
+{
+    TNumber result = 1;
+    TNumber current_power = base;
+    while(exponent)
+    {
+        if(exponent & 1)
+            result *= current_power;
+        current_power *= current_power;
+        exponent >>= 1;
+    }
+    return result;
+}
+/*----------------------------------------------------------------------------*/
+template<Index base, typename TNumber>
+TNumber cached_power(TNumber exponent)
+{
+    constexpr TNumber b = base;
+    static const TNumber cache[] =
+    {
+        1,
+        b,
+        b * b,
+        b * b * b,
+        b * b * b * b,
+        b * b * b * b * b,
+        b * b * b * b * b * b,
+        b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b
+    };
+
+    const TNumber cache_size = sizeof(cache)/sizeof(cache[0]);
+    if(exponent < cache_size)
+        return cache[exponent];
+    else
+        return power(b, exponent);
 }
 /*----------------------------------------------------------------------------*/
 template<typename TRatio>

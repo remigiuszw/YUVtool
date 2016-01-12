@@ -90,6 +90,11 @@ public:
         return m_slots.size();
     }
 
+    Index get_used_slots_count() const
+    {
+        return m_heap.get_size();
+    }
+
     Data *get(const Key key)
     {
         return get_or_update(key, false);
@@ -162,15 +167,14 @@ public:
         }
     }
 
-    bool full() const
+    bool is_full() const
     {
         return m_free_slots.empty();
     }
 
-    bool empty() const
+    bool is_empty() const
     {
-        const Index free_slots_count = m_free_slots.size();
-        return free_slots_count == get_cache_size();
+        return m_heap.is_empty();
     }
 
 private:
@@ -199,18 +203,16 @@ private:
 
     void increment_time()
     {
-        if(m_time < std::numeric_limits<Time>::max())
-        {
-            m_time++;
-        }
-        else
+        if(m_time == std::numeric_limits<Time>::max())
         {
             Time span = m_map.size();
             Time oldest_reference = m_time - span + 1;
             for(Slot &slot : m_slots)
                 if(slot.m_data)
                     slot.m_last_reference -= oldest_reference;
+            m_time -= oldest_reference;
         }
+        m_time++;
     }
 };
 /*----------------------------------------------------------------------------*/

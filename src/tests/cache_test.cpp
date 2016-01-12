@@ -321,7 +321,7 @@ int main() try
                 }
                 else
                 {
-                    if(advanced_cache.full())
+                    if(advanced_cache.is_full())
                         sought_resource = advanced_cache.pop();
                     else
                         sought_resource = &resources[test % cache_size];

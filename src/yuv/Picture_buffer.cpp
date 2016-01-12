@@ -159,7 +159,7 @@ const std::vector< Byte > &Picture_buffer::get_data() const
 //------------------------------------------------------------------------------
 int Picture_buffer::get_entry(
         const Coordinates<Unit::pixel, Reference_point::picture> &coordinates,
-        const int component_index) const
+        const Index component_index) const
 {
     Bit_position start =
             get_parameters().get_entry_offset(coordinates, component_index);
@@ -170,7 +170,7 @@ int Picture_buffer::get_entry(
 //------------------------------------------------------------------------------
 void Picture_buffer::set_entry(
         const Coordinates<Unit::pixel, Reference_point::picture> &coordinates,
-        const int component_index,
+        const Index component_index,
         const int value)
 {
     Bit_position start =
@@ -193,14 +193,14 @@ void Picture_buffer::convert_color_space(
             m_parameters.get_pixel_format().m_color_space.m_components;
     const auto &output_components =
             color_space.m_components;
-    const int input_components_count = input_components.size();
-    const int output_components_count = output_components.size();
+    const Index input_components_count = input_components.size();
+    const Index output_components_count = output_components.size();
 
     Eigen::Matrix4d input_matrix;
     Eigen::Matrix4d output_matrix;
-    for(int i = 0; i < Rgba_component_count; i++)
+    for(Index i = 0; i < Rgba_component_count; i++)
     {
-        for(int j = 0; j < Rgba_component_count; j++)
+        for(Index j = 0; j < Rgba_component_count; j++)
         {
             if(i < input_components_count)
                 input_matrix(i, j) = input_components[i].m_coeff[j];
@@ -221,7 +221,7 @@ void Picture_buffer::convert_color_space(
     for(const auto &xy : m_parameters.get_pixel_range())
     {
         Eigen::Vector4d input;
-        for(int i = 0; i < Rgba_component_count; i++)
+        for(Index i = 0; i < Rgba_component_count; i++)
         {
             if(i >= input_components_count)
             {
@@ -246,7 +246,7 @@ void Picture_buffer::convert_color_space(
                     + valid_range[0];
         }
         Eigen::Vector4d output = combined_matrix * input;
-        for(int i = 0; i < output_components_count; i++)
+        for(Index i = 0; i < output_components_count; i++)
         {
             const Component &output_component = output_components[i];
             const double (&valid_range)[2] = output_component.m_valid_range;
@@ -364,22 +364,22 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
             == source.get_resolution(),
             "not supported yet");
 
-    for(int iy = 0; iy < size_in_macropixels.y(); iy++)
+    for(Index iy = 0; iy < size_in_macropixels.y(); iy++)
     {
-        for(int jy = 0; jy < macropixel_size.y(); jy++)
+        for(Index jy = 0; jy < macropixel_size.y(); jy++)
         {
-            for(int ix = 0; ix < size_in_macropixels.x(); ix++)
+            for(Index ix = 0; ix < size_in_macropixels.x(); ix++)
             {
-                for(int jx = 0; jx < macropixel_size.x(); jx++)
+                for(Index jx = 0; jx < macropixel_size.x(); jx++)
                 {
                     const Coordinates<Unit::pixel, Reference_point::picture>
                             coordinates(
                                 ix * macropixel_size.x() + jx,
                                 iy * macropixel_size.y() + jy);
-                    const int components_count =
+                    const Index components_count =
                             source_parameters.get_components_count();
                     for(
-                            int component_index = 0;
+                            Index component_index = 0;
                             component_index < components_count;
                             component_index++)
                     {
@@ -432,23 +432,23 @@ Picture_buffer subsample(
             cast_to_pixels(size_in_macropixels, macropixel_size)
             == source.get_resolution(),
             "not supported yet");
-    const int planes_count = subsampled_parameters.get_planes_count();
+    const Index planes_count = subsampled_parameters.get_planes_count();
 
-    for(int plane_index = 0; plane_index < planes_count; plane_index++)
+    for(Index plane_index = 0; plane_index < planes_count; plane_index++)
     {
-        for(int my = 0; my < size_in_macropixels.y(); my++)
+        for(Index my = 0; my < size_in_macropixels.y(); my++)
         {
-            const int entry_rows_count_in_plane =
+            const Index entry_rows_count_in_plane =
                     subsampled_parameters.get_entry_rows_count_in_plane(
                         plane_index);
             for(
-                    int row_index = 0;
+                    Index row_index = 0;
                     row_index < entry_rows_count_in_plane;
                     row_index++)
             {
-                for(int mx = 0; mx < size_in_macropixels.x(); mx++)
+                for(Index mx = 0; mx < size_in_macropixels.x(); mx++)
                 {
-                    const int entries_in_row_count =
+                    const Index entries_in_row_count =
                         subsampled_parameters.get_entry_count_in_row_in_plane(
                                 plane_index,
                                 row_index);
@@ -456,7 +456,7 @@ Picture_buffer subsample(
                             Unit::macropixel,
                             Reference_point::picture> macropixel(mx, my);
                     for(
-                            int entry_index = 0;
+                            Index entry_index = 0;
                             entry_index < entries_in_row_count;
                             entry_index++)
                     {
@@ -474,7 +474,7 @@ Picture_buffer subsample(
                                         macropixel,
                                         macropixel_size,
                                         sampling_point);
-                        const int component_index =
+                        const Index component_index =
                                 subsampled_parameters.get_sampled_component(
                                     plane_index,
                                     row_index,

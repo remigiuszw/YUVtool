@@ -34,6 +34,8 @@ namespace YUV_tool {
 Viewer_frame::Viewer_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL)
 {
+    m_drawer_gl.attach_yuv_file(&m_yuv_file);
+
     /* File menu action group */
     m_action_group = Gtk::ActionGroup::create();
     m_action_group->add(
@@ -326,8 +328,11 @@ void Viewer_frame::on_action_size_allocation()
             m_scroll_adapter.get_visible_area();
     const Vector<Unit::pixel> internal_size =
             m_scroll_adapter.get_internal_size();
-    const int width = std::min(visible_area.get_width(), internal_size.x());
-    const int height = std::min(visible_area.get_height(), internal_size.y());
+    const Vector<Unit::pixel> visible_area_size(
+                visible_area.get_width(),
+                visible_area.get_height());
+    const int width = std::min(visible_area_size.x(), internal_size.x());
+    const int height = std::min(visible_area_size.y(), internal_size.y());
     const int x0 = visible_area.get_x();
     const int y0 = visible_area.get_y();
     const int bottom_margin = visible_area.get_height() - height;
@@ -387,7 +392,7 @@ void Viewer_frame::draw_frame()
     glEnable( GL_TEXTURE_2D );
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
 
-    m_drawer_gl.draw( m_yuv_file, 0, m_scroll_adapter );
+    m_drawer_gl.draw(0, m_scroll_adapter.get_visible_area());
 
     glFlush();
     m_scroll_adapter.display();
