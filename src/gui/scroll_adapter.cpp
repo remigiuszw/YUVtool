@@ -22,7 +22,7 @@
 #include <iostream>
 
 namespace YUV_tool {
-
+/*----------------------------------------------------------------------------*/
 Scroll_adapter::Scroll_adapter() :
     m_x_adjustment(Gtk::Adjustment::create(0, 0, 1, 1, 10, 1)),
     m_y_adjustment(Gtk::Adjustment::create(0, 0, 1, 1, 10, 1)),
@@ -42,29 +42,27 @@ Scroll_adapter::Scroll_adapter() :
     signal_size_allocate().connect_notify(
             std::bind(
                 sigc::mem_fun(*this, &Scroll_adapter::update_allocation)));
-    m_drawing_area.signal_post_size_allocate().connect(
-            sigc::mem_fun(*this, &Scroll_adapter::update_allocation));
-    m_drawing_area.signal_draw().connect(
-            sigc::mem_fun(*this, &Scroll_adapter::kick_signal_update_drawing));
 
     m_drawing_area.set_hexpand();
     m_drawing_area.set_vexpand();
     attach(m_drawing_area, 0, 0, 1, 1);
     attach(m_x_scrollbar, 0, 1, 1, 1);
     attach(m_y_scrollbar, 1, 0, 1, 1);
+
+    m_drawing_area.set_required_version(3, 3);
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 void Scroll_adapter::set_internal_size(const Vector<Unit::pixel> &size)
 {
     m_internal_size = size;
     update_allocation();
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 const Vector<Unit::pixel> &Scroll_adapter::get_internal_size() const
 {
     return m_internal_size;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 Gdk::Rectangle Scroll_adapter::get_visible_area()
 {
     Gtk::Allocation result;
@@ -74,33 +72,17 @@ Gdk::Rectangle Scroll_adapter::get_visible_area()
     result.set_height(m_y_adjustment->get_page_size());
     return result;
 }
-//------------------------------------------------------------------------------
-sigc::signal<void> &Scroll_adapter::signal_update_viewport()
-{
-    return m_signal_update_viewport;
-}
-//------------------------------------------------------------------------------
-sigc::signal<void> &Scroll_adapter::signal_update_drawing()
-{
-    return m_signal_update_drawing;
-}
-//------------------------------------------------------------------------------
-bool Scroll_adapter::set_active(bool active)
-{
-    return m_drawing_area.set_active(active);
-}
-//------------------------------------------------------------------------------
-void Scroll_adapter::display()
-{
-    m_drawing_area.display();
-}
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 void Scroll_adapter::on_scroll()
 {
-    signal_update_viewport()();
-    signal_update_drawing()();
+    get_drawing_area().queue_render();
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
+Gtk::GLArea &Scroll_adapter::get_drawing_area()
+{
+    return m_drawing_area;
+}
+/*----------------------------------------------------------------------------*/
 void Scroll_adapter::update_allocation()
 {
     Gtk::Widget *child = get_child_at(0, 0);
@@ -142,12 +124,5 @@ void Scroll_adapter::update_allocation()
         on_scroll();
     }
 }
-//------------------------------------------------------------------------------
-bool Scroll_adapter::kick_signal_update_drawing(
-        const Cairo::RefPtr<Cairo::Context>)
-{
-    m_signal_update_drawing();
-    return true;
-}
-
+/*----------------------------------------------------------------------------*/
 } /* YUV_tool */

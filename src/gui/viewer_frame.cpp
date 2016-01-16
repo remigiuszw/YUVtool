@@ -104,12 +104,18 @@ Viewer_frame::Viewer_frame() :
     Gtk::Widget *tool_bar = m_ui_manager->get_widget("/tool_bar");
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
-    m_scroll_adapter.signal_update_viewport().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
-    m_scroll_adapter.signal_update_drawing().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
+    m_scroll_adapter.get_drawing_area().signal_render().connect(
+                sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
+    m_scroll_adapter.get_drawing_area().signal_realize().connect(
+                sigc::mem_fun(*this, &Viewer_frame::on_action_gl_context_init));
+    /* Please notice the last parameter to connect(), it makes sure handler is
+     * called _before_ the drawing area is unrealized. */
+    m_scroll_adapter.get_drawing_area().signal_unrealize().connect(
+                sigc::mem_fun(
+                    *this,
+                    &Viewer_frame::on_action_gl_context_deinit), false);
 
-    m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(300, 300));
+    m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(256, 128));
     m_box.pack_start(m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET);
 
     add(m_box);
@@ -126,7 +132,10 @@ void Viewer_frame::on_action_file_quit()
 }
 //------------------------------------------------------------------------------
 namespace {
-void print_gdk_window(std::ostream &os, const std::string &name, const Glib::RefPtr<Gdk::Window> window)
+void print_gdk_window(
+        std::ostream &os,
+        const std::string &name,
+        const Glib::RefPtr<Gdk::Window> window)
 {
     int x, y;
     window->get_position(x, y);
@@ -253,6 +262,7 @@ void Viewer_frame::on_action_file_open()
         switch(result)
         {
         case Gtk::RESPONSE_OK:
+            m_yuv_file.set_resolution(Vector<Unit::pixel>(64, 64));
             m_yuv_file.set_pixel_format(format_dialog.get_pixel_format());
             break;
         case Gtk::RESPONSE_CANCEL:
@@ -321,91 +331,37 @@ void Viewer_frame::on_action_help_about()
     dialog.run();
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation()
-{
-//    std::cerr << "Viewer_frame::on_action_size_allocation()" << std::endl;
-    const Gdk::Rectangle visible_area =
-            m_scroll_adapter.get_visible_area();
-    const Vector<Unit::pixel> internal_size =
-            m_scroll_adapter.get_internal_size();
-    const Vector<Unit::pixel> visible_area_size(
-                visible_area.get_width(),
-                visible_area.get_height());
-    const int width = std::min(visible_area_size.x(), internal_size.x());
-    const int height = std::min(visible_area_size.y(), internal_size.y());
-    const int x0 = visible_area.get_x();
-    const int y0 = visible_area.get_y();
-    const int bottom_margin = visible_area.get_height() - height;
-
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
-    glViewport(0, bottom_margin, width, height);
-
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    glOrtho(x0, x0 + width, y0 + height, y0, -1, 1);
-
-    glClearColor(0.0f, 0.5f, 0.0f, 0.0f);
-    glDisable(GL_DEPTH_TEST);
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
-}
-//------------------------------------------------------------------------------
-void Viewer_frame::draw_triangle()
-{
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
-    glClearColor( 0.0, 0.0, 0.5, 0.0 );
-    glClear( GL_COLOR_BUFFER_BIT );
-
-    glColor3f( 1.0, 1.0, 1.0 );
-    glBegin( GL_TRIANGLES );
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 300.0, 0.0);
-    glVertex3f(300.0, 0.0, 0.0);
-    glEnd();
-
-    glColor3f( 0.0, 1.0, 0.0 );
-    glBegin( GL_TRIANGLES );
-    glVertex3f(0.0, 300.0, 0.0);
-    glVertex3f(300.0, 300.0, 0.0);
-    glVertex3f(300.0, 0.0, 0.0);
-    glEnd();
-
-    glFlush();
-    m_scroll_adapter.display();
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
-}
-//------------------------------------------------------------------------------
 void Viewer_frame::draw_frame()
 {
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT );
     glEnable( GL_TEXTURE_2D );
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
 
-    m_drawer_gl.draw(0, m_scroll_adapter.get_visible_area());
-
-    glFlush();
-    m_scroll_adapter.display();
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
+    if(
+            m_yuv_file.is_open()
+            && m_yuv_file.get_pixel_format().m_macropixel_coding.m_size.x() > 0)
+        m_drawer_gl.draw(0, m_scroll_adapter.get_visible_area());
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_draw_event()
+bool Viewer_frame::on_action_draw_event(
+        const Glib::RefPtr<Gdk::GLContext> &context)
 {
 //    std::cerr << "Viewer_frame::on_action_draw_event()" << std::endl;
-    draw_triangle();
-    //draw_frame();
+    draw_frame();
+    return true;
 }
-
+/*----------------------------------------------------------------------------*/
+void Viewer_frame::on_action_gl_context_init()
+{
+    m_scroll_adapter.get_drawing_area().make_current();
+    m_drawer_gl.initialize(32);
+}
+/*----------------------------------------------------------------------------*/
+void Viewer_frame::on_action_gl_context_deinit()
+{
+    m_scroll_adapter.get_drawing_area().make_current();
+    m_drawer_gl.deinitialize();
+}
+/*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

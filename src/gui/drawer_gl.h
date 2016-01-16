@@ -24,7 +24,7 @@
 #include <yuv/Cache.h>
 #include <gui/scroll_adapter.h>
 
-#include <SFML/OpenGL.hpp>
+#include <epoxy/gl.h>
 #include <memory>
 
 namespace YUV_tool {

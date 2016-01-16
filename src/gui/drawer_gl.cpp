@@ -49,6 +49,7 @@ Drawer_gl::~Drawer_gl()
  * 32 KB of video memory. */
 void Drawer_gl::initialize(const Index cache_size)
 {
+    my_assert(!m_initialized, "trying to initialize initialized drawer");
     GLint success;
     const int max_log_length = 512;
     GLchar info_log[max_log_length];
@@ -63,13 +64,15 @@ layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 texture_sampling;
 out vec2 texture_sampling2;
 uniform vec2 viewport_size;
+uniform vec2 viewport_start;
 void main()
 {
+    vec2 shifted_position = position - viewport_start;
     vec2 scaled_position =
             vec2(
-                position.x / viewport_size.x * 2.0f - 1.0f,
-                position.y / viewport_size.y * 2.0f - 1.0f);
-    gl_Position = vec4(position, 0.0f, 1.0f);
+                shifted_position.x / viewport_size.x * 2.0f - 1.0f,
+                shifted_position.y / viewport_size.y * 2.0f - 1.0f);
+    gl_Position = vec4(scaled_position, 0.0f, 1.0f);
     texture_sampling2 = texture_sampling;
 }
 )";
@@ -97,6 +100,7 @@ uniform sampler2D my_texture;
 void main()
 {
     color = texture(my_texture, texture_sampling2);
+    color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 )";
     glShaderSource(m_fragment_shader, 1, &fragment_shader_source, 0);
@@ -168,11 +172,13 @@ void Drawer_gl::draw(
         visible_area_begin.x() / tile_size,
         visible_area_begin.y() / tile_size
     };
-    const Coordinates<Unit::tile, Reference_point::picture> tiles_end
-    {
-        round_up(visible_area_end.x(), tile_size) / tile_size,
-        round_up(visible_area_end.y(), tile_size) / tile_size
-    };
+    //    const Coordinates<Unit::tile, Reference_point::picture> tiles_end
+    //    {
+    //        round_up(visible_area_end.x(), tile_size) / tile_size,
+    //        round_up(visible_area_end.y(), tile_size) / tile_size
+    //    };
+    const Coordinates<Unit::tile, Reference_point::picture> tiles_end{1, 1};
+
     const Vector<Unit::tile> tiles_counts
     {
         tiles_end.x() - tiles_start.x(),
@@ -180,8 +186,14 @@ void Drawer_gl::draw(
     };
 
     reallocate_buffers(buffer_count);
-    const GLuint viewport_size_location =
-            glGetUniformLocation(m_shader_program, "vieport_size");
+    const GLint viewport_size_location =
+            glGetUniformLocation(m_shader_program, "viewport_size");
+    const GLint viewport_start_location =
+            glGetUniformLocation(m_shader_program, "viewport_start");
+    my_assert(
+                viewport_size_location != -1
+                && viewport_start_location != -1,
+                "GL could not find location of uniform");
 
     Index buffer_index = 0;
 
@@ -228,6 +240,8 @@ void Drawer_gl::draw(
                         * tile_size
                         * tile_size;
 
+
+
                 glBufferData(
                             GL_PIXEL_UNPACK_BUFFER,
                             pixel_buffer_size,
@@ -253,8 +267,8 @@ void Drawer_gl::draw(
 
             const GLfloat x0 = tile_start.x();
             const GLfloat x1 = tile_end.x();
-            const GLfloat y0 = tile_start.y();
-            const GLfloat y1 = tile_end.y();
+            const GLfloat y0 = tile_start.y() + tile_y * tile_size;
+            const GLfloat y1 = tile_end.y() + tile_y * tile_size;
 
             /* bind vertex array object */
             glBindVertexArray(m_vertex_arrays[buffer_index]);
@@ -318,6 +332,10 @@ void Drawer_gl::draw(
                         viewport_size_location,
                         1.0f * visible_area.get_width(),
                         1.0f * visible_area.get_height());
+            glUniform2f(
+                        viewport_start_location,
+                        1.0f * visible_area.get_x(),
+                        1.0f * visible_area.get_y());
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, vertex_count);
 

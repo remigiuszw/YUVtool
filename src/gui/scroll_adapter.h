@@ -21,11 +21,11 @@
 #define SCROLL_ADAPTER_H
 
 #include <yuv/Coordinates.h>
-#include <gui/SFMLWidget.h>
 
 #include <gtkmm/grid.h>
 #include <gtkmm/scrollbar.h>
 #include <gtkmm/adjustment.h>
+#include <gtkmm/glarea.h>
 
 namespace YUV_tool {
 
@@ -37,9 +37,7 @@ private:
     Gtk::Scrollbar m_x_scrollbar;
     Gtk::Scrollbar m_y_scrollbar;
     Vector<Unit::pixel> m_internal_size;
-    SFML_widget m_drawing_area;
-    sigc::signal<void> m_signal_update_viewport;
-    sigc::signal<void> m_signal_update_drawing;
+    Gtk::GLArea m_drawing_area;
 
 public:
     Scroll_adapter();
@@ -47,15 +45,11 @@ public:
     const Vector<Unit::pixel> &get_internal_size() const;
     /* might return area larger than internal size */
     Gdk::Rectangle get_visible_area();
-    sigc::signal<void> &signal_update_viewport();
-    sigc::signal<void> &signal_update_drawing();
-    bool set_active(bool active);
-    void display();
+    Gtk::GLArea &get_drawing_area();
 
 private:
     void update_allocation();
     void on_scroll();
-    bool kick_signal_update_drawing(const Cairo::RefPtr<Cairo::Context>);
 };
 
 } /* namespace YUV_tool */
