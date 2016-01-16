@@ -44,6 +44,7 @@ public:
 
 private:
     void reallocate_buffers(Index buffers_count);
+    void check_gl_errors();
 
     struct Resource_id
     {
@@ -75,6 +76,9 @@ private:
     GLuint m_vertex_shader;
     GLuint m_fragment_shader;
     GLuint m_shader_program;
+
+    GLint m_viewport_size_location;
+    GLint m_viewport_start_location;
 
     std::unique_ptr<Cache<Resource_id, GLuint> > m_cache;
 

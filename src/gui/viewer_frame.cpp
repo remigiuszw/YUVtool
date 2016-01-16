@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Dominik Wójt
+ * Copyright 2015, 2016 Dominik Wójt
  * Copyright 2015 Remigiusz Wilmont
  * 
  * This file is part of YUVtool.
@@ -333,11 +333,6 @@ void Viewer_frame::on_action_help_about()
 //------------------------------------------------------------------------------
 void Viewer_frame::draw_frame()
 {
-    glClearColor( 0.0, 0.0, 0.0, 0.0 );
-    glClear( GL_COLOR_BUFFER_BIT );
-    glEnable( GL_TEXTURE_2D );
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
-
     if(
             m_yuv_file.is_open()
             && m_yuv_file.get_pixel_format().m_macropixel_coding.m_size.x() > 0)

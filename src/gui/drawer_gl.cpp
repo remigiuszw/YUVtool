@@ -67,11 +67,12 @@ uniform vec2 viewport_size;
 uniform vec2 viewport_start;
 void main()
 {
-    vec2 shifted_position = position - viewport_start;
+    vec2 shifted_position =
+            position - viewport_start;
     vec2 scaled_position =
             vec2(
                 shifted_position.x / viewport_size.x * 2.0f - 1.0f,
-                shifted_position.y / viewport_size.y * 2.0f - 1.0f);
+                shifted_position.y / viewport_size.y * -2.0f + 1.0f);
     gl_Position = vec4(scaled_position, 0.0f, 1.0f);
     texture_sampling2 = texture_sampling;
 }
@@ -100,7 +101,6 @@ uniform sampler2D my_texture;
 void main()
 {
     color = texture(my_texture, texture_sampling2);
-    color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 )";
     glShaderSource(m_fragment_shader, 1, &fragment_shader_source, 0);
@@ -130,7 +130,18 @@ void main()
                     std::string("could not link shader program: ")
                     + info_log);
     }
+
+    m_viewport_size_location =
+            glGetUniformLocation(m_shader_program, "viewport_size");
+    m_viewport_start_location =
+            glGetUniformLocation(m_shader_program, "viewport_start");
+    my_assert(
+                m_viewport_size_location != -1
+                && m_viewport_start_location != -1,
+                "GL could not find location of uniform");
+
     m_initialized = true;
+    check_gl_errors();
 }
 /*----------------------------------------------------------------------------*/
 /* This function should be called when no more drawing is expected to be done */
@@ -142,6 +153,8 @@ void Drawer_gl::deinitialize()
     glDeleteShader(m_vertex_shader);
     glDeleteShader(m_fragment_shader);
     m_initialized = false;
+
+    check_gl_errors();
 }
 /*----------------------------------------------------------------------------*/
 bool Drawer_gl::is_initialized() const
@@ -161,6 +174,10 @@ void Drawer_gl::draw(
 {
     my_assert(is_initialized(), "drawer cannot draw before initialization");
     my_assert(m_yuv_file, "cannot draw when no YUV file is attached to drawer");
+
+    glClearColor(0.3f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     const Coordinates<Unit::pixel, Reference_point::picture>
             visible_area_begin(visible_area.get_x(), visible_area.get_y());
     const Coordinates<Unit::pixel, Reference_point::picture>
@@ -186,14 +203,6 @@ void Drawer_gl::draw(
     };
 
     reallocate_buffers(buffer_count);
-    const GLint viewport_size_location =
-            glGetUniformLocation(m_shader_program, "viewport_size");
-    const GLint viewport_start_location =
-            glGetUniformLocation(m_shader_program, "viewport_start");
-    my_assert(
-                viewport_size_location != -1
-                && viewport_start_location != -1,
-                "GL could not find location of uniform");
 
     Index buffer_index = 0;
 
@@ -240,7 +249,8 @@ void Drawer_gl::draw(
                         * tile_size
                         * tile_size;
 
-
+                /* TODO: extract 64x64 tile from the picture wide slice in
+                 * rgb_buffer */
 
                 glBufferData(
                             GL_PIXEL_UNPACK_BUFFER,
@@ -253,10 +263,14 @@ void Drawer_gl::draw(
              * pixel unpack buffer */
             {
                 glBindTexture(GL_TEXTURE_2D, m_textures[buffer_index]);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
                 glTexImage2D(
                             GL_TEXTURE_2D,
                             0,
-                            GL_RGBA16F,
+                            GL_RGB,
                             tile_size,
                             tile_size,
                             0,
@@ -320,36 +334,34 @@ void Drawer_gl::draw(
                             GL_STATIC_DRAW);
 
                 glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 0, 0);
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
             }
-
-            // TODO: draw square or triangle with m_buffer[tile_x] and
-            // m_texture[tile_x]
-            // glBindTexture, glTexSubImage2D, draw
 
             glUseProgram(m_shader_program);
             glUniform2f(
-                        viewport_size_location,
+                        m_viewport_size_location,
                         1.0f * visible_area.get_width(),
                         1.0f * visible_area.get_height());
             glUniform2f(
-                        viewport_start_location,
+                        m_viewport_start_location,
                         1.0f * visible_area.get_x(),
                         1.0f * visible_area.get_y());
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, vertex_count);
 
             glBindVertexArray(0);
-            glBindTexture(GL_TEXTURE_BUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
             buffer_index = (buffer_index + 1) % buffer_count;
+
+            check_gl_errors();
         }
     }
     reallocate_buffers( 0 );
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 void Drawer_gl::reallocate_buffers(const Index buffers_count)
 {
     MY_ASSERT(m_vertex_arrays.size() == m_coordinate_buffers.size());
@@ -402,6 +414,37 @@ void Drawer_gl::reallocate_buffers(const Index buffers_count)
             m_textures.resize(buffers_count);
         }
     }
+    check_gl_errors();
 }
+/*----------------------------------------------------------------------------*/
+void Drawer_gl::check_gl_errors()
+{
+    GLenum error_code = glGetError();
 
+    while(error_code != GL_NO_ERROR)
+    {
+        const char *error_name = 0;
+        switch(error_code)
+        {
+        case GL_INVALID_ENUM:
+            error_name = "GL_INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            error_name = "GL_INVALID_ENUM";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            error_name = "GL_INVALID_ENUM";
+            break;
+        case GL_OUT_OF_MEMORY:
+            error_name = "GL_INVALID_ENUM";
+            break;
+        default:
+            error_name = "unknown error";
+            break;
+        }
+
+        my_assert(false, "GL error detected: " + std::string(error_name));
+    }
+}
+/*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */
