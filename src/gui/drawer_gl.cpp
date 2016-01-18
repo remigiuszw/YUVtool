@@ -175,7 +175,7 @@ void Drawer_gl::draw(
     my_assert(is_initialized(), "drawer cannot draw before initialization");
     my_assert(m_yuv_file, "cannot draw when no YUV file is attached to drawer");
 
-    glClearColor(0.3f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     const Coordinates<Unit::pixel, Reference_point::picture>
@@ -274,7 +274,7 @@ void Drawer_gl::draw(
                             tile_size,
                             tile_size,
                             0,
-                            GL_RGB,
+                            GL_RGBA,
                             GL_UNSIGNED_BYTE,
                             0);
             }

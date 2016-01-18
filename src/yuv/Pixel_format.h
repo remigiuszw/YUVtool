@@ -531,8 +531,7 @@ public:
         const Component_coding &component_coding =
                 coded_pixel.m_components[component_index];
         const Index plane_index = component_coding.m_plane_index;
-        const Plane_parameters &plane_parameters =
-                m_planes[component_coding.m_plane_index];
+        const Plane_parameters &plane_parameters = m_planes[plane_index];
         const Bit_position entry_offset_in_row_of_pixels_in_macropixel =
                 get_entry_offset_in_macropixel_in_row_in_plane(
                     plane_index,
@@ -543,7 +542,7 @@ public:
                 + (
                     plane_parameters.m_size_per_row_of_macropixels
                     * macropixel_coordintes.y())
-                + plane_parameters.m_rows[pixel_in_macropixel.y()].m_offset
+                + plane_parameters.m_rows[component_coding.m_row_index].m_offset
                 + (
                     macropixel_coordintes.x()
                     * get_bits_per_macropixel_in_row_in_plane(
