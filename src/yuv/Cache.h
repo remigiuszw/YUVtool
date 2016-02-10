@@ -22,10 +22,22 @@
 
 #include <yuv/trees_and_heaps.h>
 
-#include<map>
+#include <map>
 #include <limits>
 
 namespace YUV_tool {
+/*----------------------------------------------------------------------------*/
+/* Cache class.
+ *
+ * Manages set of pointers to TData. Cache holds 0 to cache_size pointers at
+ * any given time.
+ *
+ * Pointer not referenced for the most iterations is removed first. Pointers are
+ * referenced by push, get_and_update and update_key. Pointer can be retrieved
+ * without registering a reference using get function.
+ *
+ * Pointer push, pop, reference and get have logarithmic complexity in
+ * the number of pointers being held. */
 /*----------------------------------------------------------------------------*/
 template<typename TKey, typename TData>
 class Cache

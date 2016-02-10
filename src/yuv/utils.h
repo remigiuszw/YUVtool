@@ -80,7 +80,15 @@ TNumber cached_power(TNumber exponent)
         b * b * b * b * b,
         b * b * b * b * b * b,
         b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b
+        b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b * b * b * b * b,
+        b * b * b * b * b * b * b * b * b * b * b * b * b * b * b * b
     };
 
     const TNumber cache_size = sizeof(cache)/sizeof(cache[0]);
@@ -96,6 +104,115 @@ struct Ratio_to_double
     using Ratio = TRatio;
     static constexpr double value = double(Ratio::num) / Ratio::den;
 };
+/*----------------------------------------------------------------------------*/
+/* This class is designed as helper for making range based loops over
+ * continuous ranges of e.g. enums or integers. */
+template<typename TValue>
+class Value_range
+{
+public:
+    using Value = TValue;
+
+    class Iterator
+    {
+    public:
+        friend class Value_range;
+
+    private:
+        Value m_value;
+
+    private:
+        /* constructor is to be accesible only to Value_range class */
+        Iterator(const Value value) :
+            m_value(value)
+        { }
+
+    public:
+        Value operator*() const
+        {
+            return m_value;
+        }
+
+        Iterator &operator++()
+        {
+            m_value = static_cast<Value>(static_cast<int>(m_value) + 1);
+        }
+
+        Iterator operator++(int)
+        {
+            const Iterator result = *this;
+            ++(*this);
+            return result;
+        }
+
+        bool operator!=(const Iterator &rhs) const
+        {
+            return m_value != rhs.m_value;
+        }
+    };
+
+private:
+    Iterator m_begin;
+    Iterator m_end;
+
+public:
+    Value_range(const Value begin, const Value end) :
+        m_begin(begin),
+        m_end(end)
+    { }
+
+    Iterator begin() const
+    {
+        return m_begin;
+    }
+
+    Iterator end() const
+    {
+        return m_end;
+    }
+};
+/*----------------------------------------------------------------------------*/
+template<typename Value>
+Value_range<Value> make_value_range(const Value begin, const Value end)
+{
+    return Value_range<Value>(begin, end);
+}
+/*----------------------------------------------------------------------------*/
+/* This is a helper class for making range based loops over a range described by
+ * a pair of iterators. */
+template<typename TIterator>
+class Range
+{
+public:
+    using Iterator = TIterator;
+
+private:
+    Iterator m_begin;
+    Iterator m_end;
+
+public:
+    Range(const Iterator begin, const Iterator end) :
+        m_begin(begin),
+        m_end(end)
+    { }
+
+    Iterator begin() const
+    {
+        return m_begin;
+    }
+
+    Iterator end() const
+    {
+        return m_end;
+    }
+};
+/*----------------------------------------------------------------------------*/
+template<typename Iterator>
+Range<Iterator> make_range(const Iterator begin, const Iterator end)
+{
+    return Range<Iterator>(begin, end);
+}
+
 /*----------------------------------------------------------------------------*/
 } /* YUV_tool */
 

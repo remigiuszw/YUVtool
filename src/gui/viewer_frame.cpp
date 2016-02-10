@@ -20,6 +20,7 @@
  */
 #include <gui/viewer_frame.h>
 #include <gui/format_chooser_dialog.h>
+#include <yuv/Errors.h>
 
 #include <SFML/OpenGL.hpp>
 #include <gtkmm/stock.h>
@@ -336,7 +337,32 @@ void Viewer_frame::draw_frame()
     if(
             m_yuv_file.is_open()
             && m_yuv_file.get_pixel_format().m_macropixel_coding.m_size.x() > 0)
-        m_drawer_gl.draw(0, m_scroll_adapter.get_visible_area());
+    {
+        try
+        {
+            const Gdk::Rectangle visible_area =
+                    m_scroll_adapter.get_visible_area();
+            const Coordinates<Unit::pixel, Reference_point::scaled_picture>
+                    visible_area_start(
+                        visible_area.get_x(),
+                        visible_area.get_y());
+            const Vector<Unit::pixel> visible_area_size(
+                        visible_area.get_width(),
+                        visible_area.get_height());
+            m_drawer_gl.draw(
+                        0,
+                        make_rectangle(visible_area_start, visible_area_size),
+                        1.0);
+        }
+        catch(...)
+        {
+            std::cerr << "failed to draw picture";
+            my_assert(
+                        false,
+                        "TODO: The picture might have changed or be deleted. "
+                        "Try to reload a file and, if fail, close it");
+        }
+    }
 }
 //------------------------------------------------------------------------------
 bool Viewer_frame::on_action_draw_event(

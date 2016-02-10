@@ -21,8 +21,6 @@
 #define DRAWER_GL_H
 
 #include <yuv/Yuv_file.h>
-#include <yuv/Cache.h>
-#include <gui/scroll_adapter.h>
 
 #include <epoxy/gl.h>
 #include <memory>
@@ -38,53 +36,18 @@ public:
     void deinitialize();
     bool is_initialized() const;
     void attach_yuv_file(Yuv_file *yuv_file);
+    void invalidate_cache();
     void draw(
             Index frame_number,
-            Gdk::Rectangle visible_area);
+            Rectangle<Unit::pixel, Reference_point::scaled_picture>
+                visible_area,
+            float scale);
 
 private:
-    void reallocate_buffers(Index buffers_count);
-    void check_gl_errors();
-
-    struct Resource_id
-    {
-        Index m_id;
-
-        Resource_id(
-                const Coordinate_pair coordinates,
-                const Index zoom_level)
-        {
-            const Index stride = cached_power<2>(zoom_level);
-            m_id =
-                    get_first_child_in_n_tree_at_level<4>(0, zoom_level)
-                    + coordinates.y() * stride
-                    + coordinates.x();
-        }
-
-        bool operator<(const Resource_id rhs) const
-        {
-            return m_id < rhs.m_id;
-        }
-    };
-
-    std::vector<GLuint> m_vertex_arrays;
-    std::vector<GLuint> m_coordinate_buffers;
-    std::vector<GLuint> m_sampling_buffers;
-    std::vector<GLuint> m_textures;
-    std::vector<GLuint> m_pixel_buffers;
-
-    GLuint m_vertex_shader;
-    GLuint m_fragment_shader;
-    GLuint m_shader_program;
-
-    GLint m_viewport_size_location;
-    GLint m_viewport_start_location;
-
-    std::unique_ptr<Cache<Resource_id, GLuint> > m_cache;
-
-    Yuv_file *m_yuv_file;
-
-    bool m_initialized;
+    /* PIMPL used to remove compile time dependancy on OpenGL headers and to
+     * remove long class declarations from this header. */
+    class Implementation;
+    std::unique_ptr<Implementation> m_implementation;
 };
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

@@ -564,10 +564,9 @@ public:
                 pixel_in_macropixel);
         return get_bits_per_entry(pixel_in_macropixel, component_index);
     }
-    Coordinate_range<Unit::pixel, Reference_point::picture> get_pixel_range(
-            ) const
+    Rectangle<Unit::pixel, Reference_point::picture> get_pixel_range() const
     {
-        return Coordinate_range<Unit::pixel, Reference_point::picture>(
+        return Rectangle<Unit::pixel, Reference_point::picture>(
                 Coordinates<Unit::pixel, Reference_point::picture>(0, 0),
                 m_resolution);
     }

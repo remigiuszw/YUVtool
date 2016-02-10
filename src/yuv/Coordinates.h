@@ -119,7 +119,8 @@ enum class Unit
 enum class Reference_point
 {
     macropixel,
-    picture
+    picture,
+    scaled_picture
 };
 //------------------------------------------------------------------------------
 template<Unit unit>
@@ -248,7 +249,7 @@ inline Vector<Unit::macropixel> cast_to_macropixels(
     remainder = a - cast_to_pixels(result, macropixel_size);
     return result;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 template<Reference_point reference_point>
 Coordinates<Unit::pixel, reference_point> cast_to_pixels(
         const Coordinates<Unit::macropixel, reference_point> &a,
@@ -264,7 +265,7 @@ Coordinates<Unit::pixel, reference_point> cast_to_pixels(
                 remainder
                 - Coordinates<Unit::pixel, Reference_point::macropixel>(0, 0));
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 template<Reference_point reference_point>
 Coordinates<Unit::macropixel, reference_point> cast_to_macropixels(
         const Coordinates<Unit::pixel, reference_point> &a,
@@ -280,9 +281,9 @@ Coordinates<Unit::macropixel, reference_point> cast_to_macropixels(
             + (a - cast_to_pixels(result, macropixel_size));
     return result;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 template<Unit Tunit, Reference_point Tpoint>
-class Coordinate_range
+class Rectangle
 {
 public:
     static constexpr Unit unit = Tunit;
@@ -296,21 +297,23 @@ public:
     class Iterator
     {
     private:
-        const Coordinate_range &m_range;
+        const Rectangle &m_range;
         Coordinates<unit, reference_point> m_coordinates;
 
     private:
         Iterator(
-                const Coordinate_range &range,
+                const Rectangle &range,
                 const Coordinates<unit, reference_point> &coordinates) :
             m_range(range),
             m_coordinates(coordinates)
         { }
+
     public:
         Coordinates<unit, reference_point> operator*() const
         {
             return m_coordinates;
         }
+
         Iterator operator++()
         {
             Iterator result = *this;
@@ -319,29 +322,59 @@ public:
                 m_coordinates += Vector<unit>(-m_range.m_size.x(), 1);
             return result;
         }
+
         bool operator!=(const Iterator &other) const
         {
             return m_coordinates != other.m_coordinates;
         }
-        friend class Coordinate_range;
+
+        friend class Rectangle;
     };
 
-    Coordinate_range(
+    Rectangle(
             const Coordinates<unit, reference_point> &start,
             const Vector<unit> &size) :
         m_start(start),
         m_size(size)
     { }
+
     Iterator begin() const
     {
         return Iterator(*this, m_start);
     }
+
     Iterator end() const
     {
-        return Iterator(*this, m_start + Vector<unit>(0, m_size.y()));
+        if(m_size.x() > 0 || m_size.y() > 0)
+            return Iterator(*this, m_start + Vector<unit>(0, m_size.y()));
+        else
+            return begin();
+    }
+
+    Coordinates<unit, reference_point> get_start() const
+    {
+        return m_start;
+    }
+
+    Vector<unit> get_size() const
+    {
+        return m_size;
+    }
+
+    Coordinates<unit, reference_point> get_end() const
+    {
+        return get_start() + get_size();
     }
 };
-
+/*----------------------------------------------------------------------------*/
+template<Unit unit, Reference_point reference_point>
+Rectangle<unit, reference_point> make_rectangle(
+        Coordinates<unit, reference_point> start,
+        Vector<unit> size)
+{
+    return Rectangle<unit, reference_point>(start, size);
+}
+/*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */
 
 #endif // COORDINATES_H
