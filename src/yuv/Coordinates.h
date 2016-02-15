@@ -345,7 +345,7 @@ public:
 
     Iterator end() const
     {
-        if(m_size.x() > 0 || m_size.y() > 0)
+        if(m_size.x() > 0 && m_size.y() > 0)
             return Iterator(*this, m_start + Vector<unit>(0, m_size.y()));
         else
             return begin();

@@ -40,7 +40,7 @@ Nice API and OpenGL support, but the resulting interfaces look a little bit unna
 Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of parallel execution. The signaling part of API incorporates an intriguing idea of passing not handled signals to parent widget. There is a good OpenGL support. The resulting interfaces look a little bit unnatural.
 
 \subsection{Conclusion.}
-Although the first choice has been made to use wxWidgets library, the choice has been changed in the course of further development thanks to discovery of SFML.
+Although the first choice has been made to use wxWidgets library, the choice has been changed in the course of further development thanks to discovery of SFML. In the mean time, gtkmm got native OpenGL support, so dependancy on SFML has been removed.
 
 \section{Pixel format representation.}
 
@@ -54,7 +54,7 @@ Decoded picture is a two-dimensional matrix of pixels. The two dimensions are ca
 
 The full description of light spectrum would be a function $\mathbb{R} \to \mathbb{R}$ assigning intensity to each light wave lenght. Such representation is both difficult to implement and unnecessary in terms of digital image processing. Human eye recognizes color by intensity, with which light stimulates three kinds of sensors. These sensors detect green, red and blue light. We choose the three intensities represented by real numbers in range $<0; 1>$ as canonical representation of color. In digital image prosessing it is common to additionaly keep transparency parameter with each pixel. Together with the three color parameters this constitutes an RGBA colorspace.
 
-For various reasons color spaces different to RGBA have been designed. Such colorspaces are wquivalent to RGBA in the sense color represented in those colorspaces can be transformed to RGBA and back. Most commonly such conversion cab be expressed in terms of linear transform:
+For various reasons color spaces different to RGBA have been designed. Such colorspaces are equivalent to RGBA in the sense color represented in those colorspaces can be transformed to RGBA and back. Most commonly such conversion cab be expressed in terms of linear transform:
 \begin{equation}
 X_i = \sum^3_{j=0} M_{ij} Y_j + N_i
 \end{equation}

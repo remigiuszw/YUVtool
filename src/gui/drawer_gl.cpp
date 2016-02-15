@@ -338,8 +338,8 @@ void Drawer_gl::Implementation::draw(
 
     const Index zoom_levels_count =
             get_picture_zoom_levels_count(m_yuv_file->get_resolution());
-    const Index zoom_level =
-            zoom_levels_count - 1 - get_unzoom_steps_count(scale);
+    const Index unzoom_steps_count = get_unzoom_steps_count(scale);
+    const Index zoom_level = zoom_levels_count - 1 - unzoom_steps_count;
     const Vector<Unit::pixel> resolution = m_yuv_file->get_resolution();
     const Vector<Unit::pixel> scaled_picture_size(
                 static_cast<Index>(std::ceil(resolution.x() * scale)),
