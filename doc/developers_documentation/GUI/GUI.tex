@@ -24,3 +24,19 @@ This window will contain a view of a single YUV file.
 \section{YUV comparison window}
 
 This window will be connected with two YUV view windows. The window will contain a view of an averaged YUV frame with differences marked.
+
+\section{Pixel format chooser dialog.}
+
+This windows dialog will be shown after selecting a YUV file to open or when choosen from menu. The menu should allow for pixel format selection and preview. The pixel format parameters are described in section \ref{section:pixel_format_representation}.
+
+The first selection is "predefined format selection". When one of the predefined formats is selected only picture width and picture heigth settings should be available. When the special value "custom", is selected in "predefined format selection", "color space", "planes" and "macropixel" sections should be active.
+
+In the color space part, $K_{xr}$, $K_{xg}$, $K_{xb}$, $K_{xa}$ are values of coeffictients of inversed matrix $M$. Each frame in the dialog is one column of matrix $M^{-1}$. Vector $N$ is assumed to be 0. Valid range represents $X_{i, min}$ and $X_{i, max}$. Coded range is $\frac{x_{i, min}}{2 ^ \mathrm{bitwidth}}$ and $\frac{x_{i, max}}{2 ^ \mathrm{bitwidth}}$, where $\mathrm{bitwidth}$ is the number of bits used to represent given component in fixed bit-witdh integer form. (Note: $M^{-1}$ was used because this is the way it is specified in BT.xxx specifications. Might be better to switch to straight $M$. It might be also decided to drop support for configurable color spaces and fall back to predefined only choices. This would allow for e.g. pallette coding and fixed point conversion functions.)
+
+\begin{figure}[ht]
+  \begin{center}
+    \def\svgwidth{400pt}
+    \input{GUI/images/format_chooser_dialog.pdf_tex}
+    \caption{Scheme of the pixel format chooser dialog.\label{fig:format_chooser_dialog}}
+  \end{center}
+\end{figure}

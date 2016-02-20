@@ -3,9 +3,11 @@
 
 Reviewing the currently available YUV viewer software we realized there is a lack of free (as in freedom), cross-platform YUV viewer application. The need for such application encouraged us to develop one.
 
+Of the currectly available choices YUVViewer\cite{YUVViewer} seems to be closes to the requirements of the current project. This one is neither open source nor cross-platform, though. Many of the design decision of this project are based on this appplication.
+
 \section{Desired features.}
 
-We would like to include following features observed in other similar software:
+We would like to include following features:
 \begin{itemize}
   \item{} support for configurable resolution,
   \item{} support for planar and interleaved formats,
@@ -16,14 +18,9 @@ We would like to include following features observed in other similar software:
   \item{} recognition of the video format based on the file name,
   \item{} display of pixel data in hex format,
   \item{} conversion between different formats
-\end{itemize}
-
-Apart from above we intend to implement following functionality we haven't yet observed in other applications:
-\begin{itemize}
   \item{} basic YUV editing features: hex edit, frames insertion, deletion, etc.
   \item{} encoding the description of YUV format in supplementary per YUV file files,
   \item{} project and/or workspace files containing: the list of open files, positions in each file, comparisons
 \end{itemize}
-
 
 Features will be added gradually, beginning with the core ones. However, a design allowing easy integration of the rest of them, will be maintained throughout the entire development period.

@@ -4,6 +4,7 @@ include( UseLATEX )
 
 set( DEV_DOC_INKSCAPE_IMAGES
   GUI/images/YUV_view_window.svg
+  GUI/images/format_chooser_dialog.svg
   implementation/images/entries_in_plane.svg
 )
 
@@ -43,6 +44,7 @@ add_latex_document(
     Introduction.tex
     GUI/GUI.tex
     implementation/implementation.tex
+    Bibliography.tex
   DEPENDS
     ${DEV_DOC_INKSCAPE_IMAGES_PDF}
   DEFAULT_PDF

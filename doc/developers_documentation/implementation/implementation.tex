@@ -7,10 +7,11 @@ The implementation language is C++. The features used are strictly limited to st
 
 The project is expected to compile cleanly on following compilers:
 \begin{itemize}
-  \item{} GCC 4.7 or later,
-  \item{} clang 3.1 or later,
-  \item{} Visual C++ Compiler November 2012 CTP or later (TODO: change to production quality compiler once it is released)
+  \item{} GCC 4.9 or later,
+  \item{} clang 3.5 or later
 \end{itemize}
+
+Microsoft Visual Studio does not fully support C++11 and as such is not supported. Gcc is available for Windows, so this poses no threat to cross platform support.
 
 \section{Build system.}
 
@@ -43,6 +44,7 @@ Odd, state machine based API (OpenGL-like) contradicts with e.g. the idea of par
 Although the first choice has been made to use wxWidgets library, the choice has been changed in the course of further development thanks to discovery of SFML. In the mean time, gtkmm got native OpenGL support, so dependancy on SFML has been removed.
 
 \section{Pixel format representation.}
+\label{section:pixel_format_representation}
 
 In order to provide a consistent method of describing and processing all the desired raw video formats the following format description has been proposed.
 
@@ -94,7 +96,7 @@ Macropixel is a rectangular group of pixels coding of which can be specified in 
 
 \subsubsection{yuv420p}
 
-This is common 8-bit planar format. Colorspace is specified with:
+This is common 8-bit planar format. Colorspace is specified as in \cite{BT.601}:
 
 \begin{displaymath}
 x_{i,min} = (16, 16, 16, 0),
@@ -104,10 +106,10 @@ x_{i,max} = (235, 240, 240, 255)
 \begin{displaymath}
 M =
   \left[ \begin{array}{ rrrr }
-    1.000 & 1.000 & 1.000 & 0.000 \\
-    0.000 & -0.344 & 1.770 & 0.000 \\
-    1.403 & -0.714 & 0.000 & 0.000 \\
-    0.000 & 0.000 & 0.000 & 1.000
+    0.299                   & 0.587                 & 0.114                 & 0.000 \\
+    \frac{0.701}{1.402}     & \frac{-0.587}{1.402}  & \frac{-0.114}{1.402}  & 0.000 \\
+    \frac{-0.299}{1.772}    & \frac{-0.587}{1.772}  & \frac{0.886}{1.772}   & 0.000 \\
+    0.000                   & 0.000                 & 0.000                 & 1.000
   \end{array} \right]^{-1}
 \end{displaymath}
 \begin{displaymath}
