@@ -81,10 +81,18 @@ Picture_buffer extract_tile(
     const Index offset_in_row = offset.x() * bytes_per_pixel;
     const Index source_stride = bytes_per_pixel * source.get_resolution().x();
     const Index target_stride = tile_size * bytes_per_pixel;
+    const Index available_pixels_in_row =
+            std::min(
+                source_stride - offset_in_row,
+                target_stride);
+    const Index available_rows =
+            std::min(
+                source.get_resolution().y() - offset.y(),
+                tile_size);
     Picture_buffer result(
                 Vector<Unit::pixel>(tile_size, tile_size),
                 rgb_32bpp);
-    for(Index y = 0; y < tile_size; ++y)
+    for(Index y = 0; y < available_rows; ++y)
     {
         const auto row_source_begin =
                 source.get_data().begin()
@@ -92,8 +100,22 @@ Picture_buffer extract_tile(
                 + offset_in_row;
         std::copy(
                     row_source_begin,
-                    row_source_begin + target_stride,
+                    row_source_begin + available_pixels_in_row,
                     result.get_data().begin() + y * target_stride);
+        std::fill(
+                    (
+                        result.get_data().begin()
+                        + y * target_stride
+                        + available_pixels_in_row),
+                    result.get_data().begin() + (y + 1) * target_stride,
+                    0);
+    }
+    for(Index y = available_rows; y < tile_size; ++y)
+    {
+        std::fill(
+                    result.get_data().begin() + y * target_stride,
+                    result.get_data().begin() + (y + 1) * target_stride,
+                    0);
     }
 
     return result;
@@ -486,12 +508,16 @@ void Drawer_gl::Implementation::fill_missing_buffers(
                         tile_row_begin->y() * tile_size,
                         macropixel_size.y()));
         Coordinates<Unit::pixel, Reference_point::picture> strip_end(
-                    round_up(
-                        ((tile_row_end - 1)->x() + 1) * tile_size,
-                        macropixel_size.x()),
-                    round_up(
-                        (tile_row_begin->y() + 1) * tile_size,
-                        macropixel_size.y()));
+                    std::min(
+                        round_up(
+                            ((tile_row_end - 1)->x() + 1) * tile_size,
+                            macropixel_size.x()),
+                        m_yuv_file->get_resolution().x()),
+                    std::min(
+                        round_up(
+                            (tile_row_begin->y() + 1) * tile_size,
+                            macropixel_size.y()),
+                        m_yuv_file->get_resolution().y()));
         auto strip =
                 m_yuv_file->extract_buffer(
                     picture_index,
@@ -665,8 +691,8 @@ Index Drawer_gl::Implementation::get_picture_zoom_levels_count(
     Index depth = 1;
     Index size = tile_size;
     while(
-          resolution.x() > tile_size
-          || resolution.y() > tile_size)
+          resolution.x() > size
+          || resolution.y() > size)
     {
         depth++;
         size *= 2;

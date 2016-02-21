@@ -263,8 +263,9 @@ void Viewer_frame::on_action_file_open()
         switch(result)
         {
         case Gtk::RESPONSE_OK:
-            m_yuv_file.set_resolution(Vector<Unit::pixel>(64, 64));
+            m_yuv_file.set_resolution(Vector<Unit::pixel>(176, 144));
             m_yuv_file.set_pixel_format(format_dialog.get_pixel_format());
+            m_scroll_adapter.set_internal_size(m_yuv_file.get_resolution());
             break;
         case Gtk::RESPONSE_CANCEL:
             return;

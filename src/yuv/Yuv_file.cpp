@@ -171,7 +171,7 @@ Picture_buffer Yuv_file::extract_buffer(
                 row_in_macropixel < pixel_rows_in_macropixel_in_plane;
                 row_in_macropixel++)
             {
-                const Bit_position bits_per_entry_row_in_plane =
+                const Bit_position bits_per_entry_in_row_in_plane =
                         m_buffer_parameters.get_bits_per_macropixel_in_row_in_plane(
                             plane_idx, row_in_macropixel);
                 const Bit_position x_position_offset =
@@ -179,10 +179,10 @@ Picture_buffer Yuv_file::extract_buffer(
                             start,
                             macropixel_size,
                             dummy_vector).x()
-                        * bits_per_entry_row_in_plane;
+                        * bits_per_entry_in_row_in_plane;
                 const Bit_position read_length =
                         buffer_size_in_macropixels.x()
-                        * bits_per_entry_row_in_plane;
+                        * bits_per_entry_in_row_in_plane;
                 const Bit_position offset =
                         picture_offset
                         + plane_offset
@@ -201,7 +201,7 @@ Picture_buffer Yuv_file::extract_buffer(
                         read_length.get_bytes());
 
                 row_in_macropixel_offset +=
-                        bits_per_entry_row_in_plane *
+                        bits_per_entry_in_row_in_plane *
                         picture_size_in_macropixels.x();
                 offset_in_buffer += read_length;
             }
