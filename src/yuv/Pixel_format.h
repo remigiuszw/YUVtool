@@ -36,7 +36,7 @@ struct Component
      */
     double m_coeff[Rgba_component_count];
     double m_valid_range[2];
-    double m_encoded_range[2];
+    double m_coded_range[2];
 };
 
 inline bool operator==(const Component &a, const Component &b)
@@ -49,8 +49,8 @@ inline bool operator==(const Component &a, const Component &b)
                 a.m_valid_range, a.m_valid_range + 2,
                 b.m_valid_range)
             && std::equal(
-                a.m_encoded_range, a.m_encoded_range + 2,
-                b.m_encoded_range);
+                a.m_coded_range, a.m_coded_range + 2,
+                b.m_coded_range);
 }
 
 struct Color_space

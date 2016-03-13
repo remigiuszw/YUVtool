@@ -7,6 +7,8 @@ Build requirements:
 - c++ compiler supporting C++11
 - gtkmm dev libraries 3.18 or later
 - libepoxy
+- libtinyxml2
+- boost(including filesystem module, headers only will not suffice)
 
 Additionally, to build developers documentation, these are required:
 - latex(babel with english and polish support, pdftex)

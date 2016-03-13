@@ -233,7 +233,7 @@ void Picture_buffer::convert_color_space(
                     m_parameters.get_bits_per_entry(xy, i).get_position();
             const Component &input_component = input_components[i];
             const double (&valid_range)[2] = input_component.m_valid_range;
-            const double (&encoded_range)[2] = input_component.m_encoded_range;
+            const double (&encoded_range)[2] = input_component.m_coded_range;
             /* the maximal value ((1 << input_width) - 1) represents 1 */
             const double input_in_encoded_range =
                     static_cast<double>(quantized_input)
@@ -250,7 +250,7 @@ void Picture_buffer::convert_color_space(
         {
             const Component &output_component = output_components[i];
             const double (&valid_range)[2] = output_component.m_valid_range;
-            const double (&encoded_range)[2] = output_component.m_encoded_range;
+            const double (&encoded_range)[2] = output_component.m_coded_range;
             const double output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);

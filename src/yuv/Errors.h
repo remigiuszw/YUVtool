@@ -52,7 +52,7 @@ inline void check_range(Index begin, Index value, Index end)
 }
 /*----------------------------------------------------------------------------*/
 #define MY_ASSERT(test) \
-    my_assert( \
+    YUV_tool::my_assert( \
         test, \
         "Assertion failed: (" # test \
         "), but the programmer was to lazy to explain what it means");
