@@ -24,6 +24,7 @@
 #include <yuv/Cache.h>
 
 #include <epoxy/gl.h>
+#include <cmath>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/

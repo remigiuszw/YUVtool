@@ -21,6 +21,7 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <numeric>
 
 namespace YUV_tool {
 

@@ -22,7 +22,6 @@
 #include <gui/format_chooser_dialog.h>
 #include <yuv/Errors.h>
 
-#include <SFML/OpenGL.hpp>
 #include <gtkmm/stock.h>
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/socket.h>
