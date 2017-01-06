@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) try
             throw GeneralError(help_string);
 
         Yuv_file input_file(argv[4]);
-        Yuv_file output_file(argv[5], std::ios::in|std::ios::out);
+        Yuv_file output_file(argv[5], std::ios::out);
 
         Vector<Unit::pixel> resolution;
         resolution.set_x(std::atoi(argv[2]));

@@ -32,6 +32,7 @@ set(HEADER_FILES
     Cache.h
     Coordinates.h
     Errors.h
+    Fixed.h
     Picture_buffer.h
     Pixel_format.h
     trees_and_heaps.h

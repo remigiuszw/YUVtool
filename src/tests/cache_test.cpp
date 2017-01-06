@@ -23,7 +23,6 @@
 #include <stdexcept>
 #include <random>
 #include <utility>
-#include <chrono>
 
 using namespace YUV_tool;
 
@@ -41,36 +40,6 @@ void randomize(
         *i = dis(gen);
     }
 }
-
-class Timer
-{
-private:
-    using Clock = std::chrono::high_resolution_clock;
-
-private:
-    Clock::time_point m_start_point;
-    std::string m_message;
-
-public:
-    Timer(const std::string &message) :
-        m_start_point(Clock::now()),
-        m_message(message)
-    { }
-
-    ~Timer()
-    {
-        const Clock::duration time_elapsed = Clock::now() - m_start_point;
-        const double time_in_ms =
-                time_elapsed.count()
-                * Ratio_to_double<
-                    std::ratio_divide<
-                        Clock::duration::period,
-                        std::milli> >::value;
-        std::cerr
-                << "Timer \"" << m_message << "\" : "
-                << time_in_ms << " ms\n";
-    }
-};
 
 template<typename TData>
 class Primitive_cache

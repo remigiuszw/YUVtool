@@ -19,6 +19,7 @@
  */
 #include <yuv/Picture_buffer.h>
 #include <yuv/Errors.h>
+#include <yuv/Fixed.h>
 
 #include <Eigen/Dense>
 #include <algorithm>

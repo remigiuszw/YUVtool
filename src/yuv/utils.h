@@ -21,6 +21,8 @@
 #define UTILS_H
 
 #include <cstdint>
+#include <chrono>
+#include <iostream>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
@@ -212,7 +214,36 @@ Range<Iterator> make_range(const Iterator begin, const Iterator end)
 {
     return Range<Iterator>(begin, end);
 }
+/*----------------------------------------------------------------------------*/
+class Timer
+{
+private:
+    using Clock = std::chrono::high_resolution_clock;
 
+private:
+    Clock::time_point m_start_point;
+    std::string m_message;
+
+public:
+    Timer(const std::string &message) :
+        m_start_point(Clock::now()),
+        m_message(message)
+    { }
+
+    ~Timer()
+    {
+        const Clock::duration time_elapsed = Clock::now() - m_start_point;
+        const double time_in_ms =
+                time_elapsed.count()
+                * Ratio_to_double<
+                    std::ratio_divide<
+                        Clock::duration::period,
+                        std::milli> >::value;
+        std::cerr
+                << "Timer \"" << m_message << "\" : "
+                << time_in_ms << " ms\n";
+    }
+};
 /*----------------------------------------------------------------------------*/
 } /* YUV_tool */
 
