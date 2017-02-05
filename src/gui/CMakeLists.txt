@@ -15,6 +15,11 @@ include_directories(${EPOXY_INCLUDE_DIRS})
 link_directories(${EPOXY_LIBRARY_DIRS})
 add_definitions(${EPOXY_CFLAGS_OTHER})
 
+find_package(
+    Eigen3
+    REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 set( CPP_SOURCE_FILES
     yuv_tool_application.cpp
     viewer_frame.cpp

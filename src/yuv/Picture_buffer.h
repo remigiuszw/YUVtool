@@ -33,7 +33,6 @@ public:
     Picture_buffer(
             const Vector<Unit::pixel> &resolution,
             const Pixel_format &pixel_format);
-    ~Picture_buffer();
     void allocate(
             const Vector<Unit::pixel> &resolution,
             const Pixel_format &pixel_format);

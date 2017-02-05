@@ -322,18 +322,26 @@ void store_pixel_format(
         for(auto &coefficient : component.m_coeff)
         {
             auto *coefficient_element = output_file.NewElement("coefficient");
-            coefficient_element->SetText(coefficient);
+            coefficient_element->SetText(to_string(coefficient).c_str());
             component_element->InsertEndChild(coefficient_element);
         }
 
         auto *valid_range_element = output_file.NewElement("valid_range");
-        valid_range_element->SetAttribute("min", component.m_valid_range[0]);
-        valid_range_element->SetAttribute("max", component.m_valid_range[1]);
+        valid_range_element->SetAttribute(
+                    "min",
+                    to_string(component.m_valid_range[0]).c_str());
+        valid_range_element->SetAttribute(
+                    "max",
+                    to_string(component.m_valid_range[1]).c_str());
         component_element->InsertEndChild(valid_range_element);
 
         auto *coded_range_element = output_file.NewElement("coded_range");
-        coded_range_element->SetAttribute("min", component.m_coded_range[0]);
-        coded_range_element->SetAttribute("max", component.m_coded_range[1]);
+        coded_range_element->SetAttribute(
+                    "min",
+                    to_string(component.m_coded_range[0]).c_str());
+        coded_range_element->SetAttribute(
+                    "max",
+                    to_string(component.m_coded_range[1]).c_str());
         component_element->InsertEndChild(coded_range_element);
     }
 

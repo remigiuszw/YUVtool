@@ -27,9 +27,9 @@
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
 using Byte = std::uint8_t;
-using Index = std::int_fast32_t;
+using Index = std::int32_t;
 const Index bits_in_byte = 8;
-using Length = std::int_fast32_t;
+using Length = std::int32_t;
 /*----------------------------------------------------------------------------*/
 enum Rgba_component
 {
@@ -68,33 +68,58 @@ TNumber power(const TNumber base, TNumber exponent)
     return result;
 }
 /*----------------------------------------------------------------------------*/
+template<Index x, Index n>
+struct Const_power
+{
+    static constexpr Index value =
+            (
+                Const_power<x, n - 1>::value
+                <= std::numeric_limits<Index>::max() / x)
+            ? Const_power<x, n - 1>::value * x
+            : -1;
+};
+/*----------------------------------------------------------------------------*/
+template<Index x>
+struct Const_power<x, 0>
+{
+    static constexpr Index value = 1;
+};
+/*----------------------------------------------------------------------------*/
+template<>
+struct Const_power<0, 0>;
+/*----------------------------------------------------------------------------*/
+static_assert(Const_power<1, 0>::value == 1, "Const_power failure");
+static_assert(Const_power<5, 0>::value == 1, "Const_power failure");
+static_assert(Const_power<5, 2>::value == 25, "Const_power failure");
+static_assert(Const_power<3, 3>::value == 27, "Const_power failure");
+/*----------------------------------------------------------------------------*/
 template<Index base, typename TNumber>
 TNumber cached_power(TNumber exponent)
 {
     constexpr TNumber b = base;
-    static const TNumber cache[] =
+    constexpr TNumber cache[] =
     {
-        1,
-        b,
-        b * b,
-        b * b * b,
-        b * b * b * b,
-        b * b * b * b * b,
-        b * b * b * b * b * b,
-        b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b * b * b * b * b,
-        b * b * b * b * b * b * b * b * b * b * b * b * b * b * b * b
+        Const_power<b, 0>::value,
+        Const_power<b, 1>::value,
+        Const_power<b, 2>::value,
+        Const_power<b, 3>::value,
+        Const_power<b, 4>::value,
+        Const_power<b, 5>::value,
+        Const_power<b, 6>::value,
+        Const_power<b, 7>::value,
+        Const_power<b, 8>::value,
+        Const_power<b, 9>::value,
+        Const_power<b, 10>::value,
+        Const_power<b, 11>::value,
+        Const_power<b, 12>::value,
+        Const_power<b, 13>::value,
+        Const_power<b, 14>::value,
+        Const_power<b, 15>::value,
+        Const_power<b, 16>::value
     };
 
-    const TNumber cache_size = sizeof(cache)/sizeof(cache[0]);
-    if(exponent < cache_size)
+    const TNumber cache_size = sizeof(cache) / sizeof(cache[0]);
+    if(exponent < cache_size && cache[exponent] != -1)
         return cache[exponent];
     else
         return power(b, exponent);

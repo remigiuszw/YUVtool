@@ -24,6 +24,7 @@ set(CPP_SOURCE_FILES
     Errors.cpp
     Picture_buffer.cpp
     Pixel_format.cpp
+    saturable_fixed.cpp
     Yuv_file.cpp
     xml_metadata.cpp
 )
@@ -32,9 +33,10 @@ set(HEADER_FILES
     Cache.h
     Coordinates.h
     Errors.h
-    Fixed.h
+    saturable_fixed.h
     Picture_buffer.h
     Pixel_format.h
+    saturable_fixed.h
     trees_and_heaps.h
     utils.h
     xml_metadata.h

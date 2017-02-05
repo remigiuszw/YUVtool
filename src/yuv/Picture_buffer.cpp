@@ -19,7 +19,7 @@
  */
 #include <yuv/Picture_buffer.h>
 #include <yuv/Errors.h>
-#include <yuv/Fixed.h>
+#include <yuv/saturable_fixed.h>
 
 #include <Eigen/Dense>
 #include <algorithm>
@@ -65,10 +65,6 @@ Picture_buffer::Picture_buffer(
         const Pixel_format &pixel_format)
 {
     allocate(resolution, pixel_format);
-}
-//------------------------------------------------------------------------------
-Picture_buffer::~Picture_buffer()
-{
 }
 //------------------------------------------------------------------------------
 void Picture_buffer::allocate(
@@ -197,8 +193,10 @@ void Picture_buffer::convert_color_space(
     const Index input_components_count = input_components.size();
     const Index output_components_count = output_components.size();
 
-    Eigen::Matrix4d input_matrix;
-    Eigen::Matrix4d output_matrix;
+    using Matrix4sf = Eigen::Matrix<saturable_fixed, 4, 4>;
+    using Vector4sf = Eigen::Matrix<saturable_fixed, 4, 1>;
+    Matrix4sf input_matrix;
+    Matrix4sf output_matrix;
     for(Index i = 0; i < Rgba_component_count; i++)
     {
         for(Index j = 0; j < Rgba_component_count; j++)
@@ -213,15 +211,14 @@ void Picture_buffer::convert_color_space(
                 output_matrix(i, j) = (i == j) ? 1 : 0;
         }
     }
-    Eigen::Matrix4d combined_matrix =
-            output_matrix * input_matrix.inverse();
+    Matrix4sf combined_matrix = output_matrix * input_matrix.inverse();
 
     /* TODO: combine all the operations into one matrix multiplication and one
      * vector addition */
 
     for(const auto &xy : m_parameters.get_pixel_range())
     {
-        Eigen::Vector4d input;
+        Vector4sf input;
         for(Index i = 0; i < Rgba_component_count; i++)
         {
             if(i >= input_components_count)
@@ -229,40 +226,45 @@ void Picture_buffer::convert_color_space(
                 input(i) = 1;
                 continue;
             }
-            const int quantized_input = get_entry(xy, i);
-            const int input_width =
+            const Index quantized_input = get_entry(xy, i);
+            const Index input_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
             const Component &input_component = input_components[i];
-            const double (&valid_range)[2] = input_component.m_valid_range;
-            const double (&encoded_range)[2] = input_component.m_coded_range;
+            const saturable_fixed (&valid_range)[2] =
+                    input_component.m_valid_range;
+            const saturable_fixed (&encoded_range)[2] =
+                    input_component.m_coded_range;
             /* the maximal value ((1 << input_width) - 1) represents 1 */
-            const double input_in_encoded_range =
-                    static_cast<double>(quantized_input)
+            const saturable_fixed input_in_encoded_range =
+                    saturable_fixed(quantized_input)
                     / ((1 << input_width) - 1);
-            const double input_in_0_to_1 =
+            const saturable_fixed input_in_0_to_1 =
                     (input_in_encoded_range - encoded_range[0])
                     / (encoded_range[1] - encoded_range[0]);
             input[i] =
-                    input_in_0_to_1 * (valid_range[1] - valid_range[0])
-                    + valid_range[0];
+                        input_in_0_to_1 * (valid_range[1] - valid_range[0])
+                        + valid_range[0];
         }
-        Eigen::Vector4d output = combined_matrix * input;
+        Vector4sf output = combined_matrix * input;
         for(Index i = 0; i < output_components_count; i++)
         {
             const Component &output_component = output_components[i];
-            const double (&valid_range)[2] = output_component.m_valid_range;
-            const double (&encoded_range)[2] = output_component.m_coded_range;
-            const double output_in_0_to_1 =
+            const saturable_fixed (&valid_range)[2] =
+                    output_component.m_valid_range;
+            const saturable_fixed (&encoded_range)[2] =
+                    output_component.m_coded_range;
+            const saturable_fixed output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);
-            const double output_in_encoded_range =
+            const saturable_fixed output_in_encoded_range =
                     output_in_0_to_1 * (encoded_range[1] - encoded_range[0])
                     + encoded_range[0];
-            const int output_width =
+            const Index output_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
-            const int quantized_output =
-                    std::round(
-                        output_in_encoded_range * ((1 << output_width) - 1));
+            const Index quantized_output =
+                    (
+                        output_in_encoded_range
+                        * ((1 << output_width) - 1)).to_int();
             set_entry(xy, i, quantized_output);
         }
     }

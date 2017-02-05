@@ -23,6 +23,7 @@
 #include <yuv/utils.h>
 #include <yuv/Bit_position.h>
 #include <yuv/Coordinates.h>
+#include <yuv/saturable_fixed.h>
 
 #include <vector>
 #include <algorithm>
@@ -34,9 +35,9 @@ struct Component
     /*
      * E'_X = K_XR * E'_R + K_XG * E'_G + K_XB * E'_B + K_XA * E'_A
      */
-    double m_coeff[Rgba_component_count];
-    double m_valid_range[2];
-    double m_coded_range[2];
+    saturable_fixed m_coeff[Rgba_component_count];
+    saturable_fixed m_valid_range[2];
+    saturable_fixed m_coded_range[2];
 };
 
 inline bool operator==(const Component &a, const Component &b)
@@ -137,25 +138,25 @@ const Color_space sRGB_color_space
     {
         { // R
             { 1, 0, 0, 0 },
-            { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         },
         { // G
             { 0, 1, 0, 0 },
-            { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         },
         { // B
             { 0, 0, 1, 0 },
             { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         }
     }
 };
 
 // ITU BT.601 standard
-const double ITU601_K_R = 0.299;
-const double ITU601_K_B = 0.114;
+const saturable_fixed ITU601_K_R = saturable_fixed(299) / 1000;
+const saturable_fixed ITU601_K_B = saturable_fixed(114) / 1000;
 
 const Color_space ITU601_YCbCr_color_space
 {
@@ -167,35 +168,35 @@ const Color_space ITU601_YCbCr_color_space
                 ITU601_K_B,
                 0
             },
-            { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         },
         { // Cb
             {
                 -ITU601_K_R/(2*(1-ITU601_K_B)),
                 -(1-ITU601_K_B-ITU601_K_R)/(2*(1-ITU601_K_B)),
-                0.5,
+                saturable_fixed(1) / 2,
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         },
         { // Cr
             {
-                0.5,
+                saturable_fixed(1) / 2,
                 -(1-ITU601_K_B-ITU601_K_R)/(2*(1-ITU601_K_R)),
                 -ITU601_K_B/(2*(1-ITU601_K_R)),
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         }
     }
 };
 
 // ITU BT.709 standard
-const double ITU709_K_R = 0.2126;
-const double ITU709_K_B = 0.0722;
+const saturable_fixed ITU709_K_R = saturable_fixed(2126) / 10000;
+const saturable_fixed ITU709_K_B = saturable_fixed(722) / 10000;
 
 const Color_space ITU709_YCbCr_color_space
 {
@@ -207,35 +208,35 @@ const Color_space ITU709_YCbCr_color_space
                 ITU709_K_B,
                 0
             },
-            { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         },
         { // Cb
             {
                 -ITU709_K_R/(2*(1-ITU709_K_B)),
                 -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_B)),
-                0.5,
+                saturable_fixed(1) / 2,
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         },
         { // Cr
             {
-                0.5,
+                saturable_fixed(1) / 2,
                 -(1-ITU709_K_B-ITU709_K_R)/(2*(1-ITU709_K_R)),
                 -ITU709_K_B/(2*(1-ITU709_K_R)),
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         }
     }
 };
 
 // ITU BT.2020 standard
-const double ITU2020_K_R = 0.2627;
-const double ITU2020_K_B = 0.0593;
+const saturable_fixed ITU2020_K_R = saturable_fixed(2627) / 10000;
+const saturable_fixed ITU2020_K_B = saturable_fixed(593) / 10000;
 
 const Color_space ITU2020_YCbCr_color_space
 {
@@ -247,28 +248,28 @@ const Color_space ITU2020_YCbCr_color_space
                 ITU2020_K_B,
                 0
             },
-            { 0.0, 1.0 },
-            { 16.0/256, 235.0/256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
         },
         { // Cb
             {
                 -ITU2020_K_R/(2*(1-ITU2020_K_B)),
                 -(1-ITU2020_K_B-ITU2020_K_R)/(2*(1-ITU2020_K_B)),
-                0.5,
+                saturable_fixed(1) / 2,
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         },
         { // Cr
             {
-                0.5,
+                saturable_fixed(1) / 2,
                 -(1-ITU2020_K_B-ITU2020_K_R)/(2*(1-ITU2020_K_R)),
                 -ITU2020_K_B/(2*(1-ITU2020_K_R)),
                 0
             },
-            { -0.5, 0.5 },
-            { 16.0/256, 240.0/256 }
+            { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
+            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
         }
     }
 };
