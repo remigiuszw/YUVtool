@@ -13,6 +13,8 @@ Contents:
    
    introduction
    gui
+   pixel_format_representation
+   xml_companion_format
    implementation
    bibliography
 
