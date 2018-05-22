@@ -28,6 +28,30 @@
 
 using namespace YUV_tool;
 /*----------------------------------------------------------------------------*/
+void simple_arithmetic_test()
+{
+    const auto error =
+            std::runtime_error("simple_arithmetic_test failed");
+
+    const saturable_fixed a = saturable_fixed(1) / 32;
+    const saturable_fixed b = saturable_fixed(-1) / 32;
+
+    if (a - a != saturable_fixed(0))
+        throw error;
+    if (a + b != saturable_fixed(0))
+        throw error;
+    if (1 / a != saturable_fixed(32))
+        throw error;
+    if (1 / b != saturable_fixed(-32))
+        throw error;
+    if (-b - a  != saturable_fixed(0))
+        throw error;
+    if (-a / b  != saturable_fixed(1))
+        throw error;
+    if (b * 32 != saturable_fixed(-1))
+        throw error;
+}
+/*----------------------------------------------------------------------------*/
 void integral_log2_floor_test()
 {
     const auto error =
@@ -201,6 +225,7 @@ void eigen_with_saturable_test()
 /*----------------------------------------------------------------------------*/
 int main() try
 {
+    simple_arithmetic_test();
     integral_log2_floor_test();
     integral_sqrt_floor_test();
     eigen_with_saturable_test();

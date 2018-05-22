@@ -32,7 +32,7 @@ class GeneralError : public std::exception
 {
 public:
     GeneralError(const std::string &file_name);
-    const char* what() const throw();
+    const char* what() const noexcept override;
 private:
     std::string m_description;
 };

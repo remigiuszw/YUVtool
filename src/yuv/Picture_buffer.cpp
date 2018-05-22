@@ -216,7 +216,7 @@ void Picture_buffer::convert_color_space(
     /* TODO: combine all the operations into one matrix multiplication and one
      * vector addition */
 
-    for(const auto &xy : m_parameters.get_pixel_range())
+    for(const auto xy : m_parameters.get_pixel_range())
     {
         Vector4sf input;
         for(Index i = 0; i < Rgba_component_count; i++)

@@ -96,7 +96,7 @@ public:
         return
                 min_integer
                 + static_cast<std::int32_t>(
-                    (m_value >> shift) + integer_sign_mask);
+                    (m_value >> shift) ^ integer_sign_mask);
     }
 
     internal_uint get_internal() const
@@ -122,6 +122,7 @@ private:
     friend saturable_fixed operator/(saturable_fixed, saturable_fixed);
     friend saturable_fixed operator-(saturable_fixed);
     friend bool operator==(saturable_fixed, saturable_fixed);
+    friend bool operator!=(saturable_fixed, saturable_fixed);
     friend bool operator<(saturable_fixed, saturable_fixed);
     friend bool operator<=(saturable_fixed, saturable_fixed);
     friend bool operator>(saturable_fixed, saturable_fixed);
@@ -244,8 +245,17 @@ inline saturable_fixed operator/(
             sf::sign_extend_to_double(rhs.get_internal());
     if (rhs_uint == 0)
         return sf::from_internal(0);
-    const uint_t fraction =
-            (lhs_uint << (2 * sf::shift)) / rhs_uint;
+    const bool lhs_negative = lhs_uint & sf::double_sign_mask;
+    const bool rhs_negative = rhs_uint & sf::double_sign_mask;
+    const bool negative = lhs_negative != rhs_negative;
+    const uint_t lhs_abs =
+            lhs_negative ? 0u - lhs_uint : lhs_uint;
+    const uint_t rhs_abs =
+            rhs_negative ? 0u - rhs_uint : rhs_uint;
+
+    const uint_t abs_fraction =
+            (lhs_abs << (2 * sf::shift)) / rhs_abs;
+    const uint_t fraction = negative ? 0u - abs_fraction : abs_fraction;
     const uint_t max_fraction =
             sf::sign_extend_to_double(sf::max_internal) << sf::shift;
     const uint_t min_fraction =
@@ -274,6 +284,13 @@ inline bool operator==(
     return lhs.m_value == rhs.m_value;
 }
 /*----------------------------------------------------------------------------*/
+inline bool operator!=(
+        const saturable_fixed lhs,
+        const saturable_fixed rhs)
+{
+    return !(lhs == rhs);
+}
+/*----------------------------------------------------------------------------*/
 inline bool operator<(
         const saturable_fixed lhs,
         const saturable_fixed rhs)
@@ -287,27 +304,21 @@ inline bool operator<=(
         const saturable_fixed lhs,
         const saturable_fixed rhs)
 {
-    return
-            lhs.m_value + saturable_fixed::sign_mask
-            <= rhs.m_value + saturable_fixed::sign_mask;
+    return !(rhs < lhs);
 }
 /*----------------------------------------------------------------------------*/
 inline bool operator>(
         const saturable_fixed lhs,
         const saturable_fixed rhs)
 {
-    return
-            lhs.m_value + saturable_fixed::sign_mask
-            > rhs.m_value + saturable_fixed::sign_mask;
+    return rhs < lhs;
 }
 /*----------------------------------------------------------------------------*/
 inline bool operator>=(
         const saturable_fixed lhs,
         const saturable_fixed rhs)
 {
-    return
-            lhs.m_value + saturable_fixed::sign_mask
-            >= rhs.m_value + saturable_fixed::sign_mask;
+    return !(lhs < rhs);
 }
 /*----------------------------------------------------------------------------*/
 inline std::uint32_t integral_log2_floor(std::uint64_t x)

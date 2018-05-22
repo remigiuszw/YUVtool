@@ -22,12 +22,12 @@
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
 GeneralError::GeneralError(const std::string &description) :
-        m_description(description)
+        m_description("general error: " + description)
 { }
 /*----------------------------------------------------------------------------*/
-const char *GeneralError::what() const throw()
+const char *GeneralError::what() const noexcept
 {
-    return ("general error: " + m_description).c_str();
+    return m_description.c_str();
 }
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

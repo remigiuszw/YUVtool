@@ -336,6 +336,28 @@ const Pixel_format rgb_32bpp
     }
 };
 
+const Pixel_format rgb_24bpp
+{
+    { // planes
+        { // plane RGB
+            { // rows
+                { {// entries
+                    { 8 }, { 8 }, { 8 }
+                } }
+            }
+        }
+    },
+    RGB_color_space,
+    { // macropixel coding
+        { // coded pixels
+            { // coded pixel
+                { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 0, 2 } }
+            }
+        },
+        { 1, 1 }
+    }
+};
+
 class Precalculated_pixel_format
 {
 private:

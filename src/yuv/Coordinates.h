@@ -314,12 +314,18 @@ public:
             return m_coordinates;
         }
 
-        Iterator operator++()
+        Iterator &operator++()
         {
-            Iterator result = *this;
             m_coordinates += Vector<unit>(1, 0);
             if(m_coordinates.x() >= m_range.m_start.x() + m_range.m_size.x())
                 m_coordinates += Vector<unit>(-m_range.m_size.x(), 1);
+            return *this;
+        }
+
+        Iterator operator++(int)
+        {
+            Iterator result = *this;
+            ++(*this);
             return result;
         }
 
