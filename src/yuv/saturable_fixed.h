@@ -91,6 +91,14 @@ public:
         return result;
     }
 
+    static saturable_fixed from_double(double x)
+    {
+        /* TODO: check for out of range. */
+        const std::int32_t x_int =
+                static_cast<std::int32_t>(std::round(std::ldexp(x, shift)));
+        return from_integer(x_int);
+    }
+
     std::int32_t to_int() const
     {
         return

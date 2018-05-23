@@ -71,16 +71,64 @@ Format_chooser_dialog::Format_chooser_dialog(
         iter = m_import_list_store->append();
         (*iter)[m_pixel_format_column_record.m_label] = "...";
         (*iter)[m_pixel_format_column_record.m_pointer] = nullptr;
-        m_import_box.m_import_choice.set_model(m_import_list_store);
-        m_import_box.m_import_choice.pack_start(
+        m_import_box.m_choice.set_model(m_import_list_store);
+        m_import_box.m_choice.pack_start(
                     m_pixel_format_column_record.m_label);
-        m_import_box.m_import_choice.set_active(iter);
+        m_import_box.m_choice.set_active(iter);
     }
 
-    m_predefined_choice.signal_changed().connect(
-                sigc::mem_fun(*this, &Format_chooser_dialog::update_format));
-    m_import_box.m_import_button.signal_clicked().connect(
-                sigc::mem_fun(*this, &Format_chooser_dialog::import_format));
+    /* color space */
+    {
+        m_color_space_list_store =
+                Gtk::ListStore::create(m_color_space_column_record);
+        Gtk::ListStore::iterator iter;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "RGB";
+        (*iter)[m_color_space_column_record.m_pointer] = &RGB_color_space;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "sRGB";
+        (*iter)[m_color_space_column_record.m_pointer] = &sRGB_color_space;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "ITU601_YCbCr";
+        (*iter)[m_color_space_column_record.m_pointer] =
+                &ITU601_YCbCr_color_space;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "ITU709_YCbCr";
+        (*iter)[m_color_space_column_record.m_pointer] =
+                &ITU709_YCbCr_color_space;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "ITU2020_YCbCr";
+        (*iter)[m_color_space_column_record.m_pointer] =
+                &ITU2020_YCbCr_color_space;
+        iter = m_color_space_list_store->append();
+        (*iter)[m_color_space_column_record.m_label] = "custom";
+        (*iter)[m_color_space_column_record.m_pointer] = nullptr;
+        m_colorspace_frame.m_predefined_colorspace_entry.set_model(
+                    m_color_space_list_store);
+        m_colorspace_frame.m_predefined_colorspace_entry.pack_start(
+                    m_color_space_column_record.m_label);
+        m_colorspace_frame.m_predefined_colorspace_entry.set_active(iter);
+    }
+
+    auto update_format_handler =
+            sigc::mem_fun(*this, &Format_chooser_dialog::update_format);
+    m_predefined_choice.signal_changed().connect(update_format_handler);
+    m_import_box.m_choice.signal_changed().connect(update_format_handler);
+    m_colorspace_frame.m_component_count_entry.signal_changed().connect(
+                update_format_handler);
+    for (auto & component : m_colorspace_frame.m_components)
+    {
+        for (auto & color : component.m_colors)
+            color.m_entry.signal_changed().connect(update_format_handler);
+        component.m_coded_range_low_entry.signal_changed().connect(
+                    update_format_handler);
+        component.m_coded_range_high_entry.signal_changed().connect(
+                    update_format_handler);
+        component.m_valid_range_low_entry.signal_changed().connect(
+                    update_format_handler);
+        component.m_valid_range_high_entry.signal_changed().connect(
+                    update_format_handler);
+    }
 
     update_format();
 
@@ -97,10 +145,10 @@ const Pixel_format &Format_chooser_dialog::get_pixel_format() const
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Import_box::Import_box() :
     Gtk::Box(Gtk::ORIENTATION_HORIZONTAL),
-    m_import_button("Import")
+    m_label("Import:")
 {
-    pack_start(m_import_choice);
-    pack_start(m_import_button);
+    pack_start(m_label);
+    pack_start(m_choice);
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Entry_configurator::Entry_configurator() :
@@ -137,30 +185,28 @@ Format_chooser_dialog::Plane_frame::Plane_frame() :
     m_box(Gtk::ORIENTATION_HORIZONTAL)
 { }
 /*----------------------------------------------------------------------------*/
+Format_chooser_dialog::Component_configurator::Color_group::Color_group(
+        const std::string &name) :
+    m_box(Gtk::ORIENTATION_HORIZONTAL),
+    m_label(name),
+    m_adjustment(Gtk::Adjustment::create(0, 0, 1, 0.01, 0.1)),
+    m_entry(m_adjustment, 0, 3)
+{
+    m_box.pack_start(m_label);
+    m_box.pack_start(m_entry);
+}
+/*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Component_configurator::Component_configurator() :
     m_box(Gtk::ORIENTATION_VERTICAL),
-    m_r_box(Gtk::ORIENTATION_HORIZONTAL),
-    m_r_label("R"),
-    m_g_box(Gtk::ORIENTATION_HORIZONTAL),
-    m_g_label("G"),
-    m_b_box(Gtk::ORIENTATION_HORIZONTAL),
-    m_b_label("B"),
-    m_a_box(Gtk::ORIENTATION_HORIZONTAL),
-    m_a_label("A")
+    m_colors{
+        std::string("R"),
+        std::string("G"),
+        std::string("B"),
+        std::string("A")}
 {
     add(m_box);
-    m_box.pack_start(m_r_box);
-    m_r_box.pack_start(m_r_label);
-    m_r_box.pack_start(m_r_entry);
-    m_box.pack_start(m_g_box);
-    m_g_box.pack_start(m_g_label);
-    m_g_box.pack_start(m_g_entry);
-    m_box.pack_start(m_b_box);
-    m_b_box.pack_start(m_b_label);
-    m_b_box.pack_start(m_b_entry);
-    m_box.pack_start(m_a_box);
-    m_a_box.pack_start(m_a_label);
-    m_a_box.pack_start(m_a_entry);
+    for (auto &color : m_colors)
+        m_box.pack_start(color.m_box);
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Colorspace_frame::Colorspace_frame() :
@@ -169,6 +215,9 @@ Format_chooser_dialog::Colorspace_frame::Colorspace_frame() :
     m_predefined_colorspace_label("colorspace:"),
     m_component_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_component_count_label("components_count:"),
+    m_component_count_adjustment(
+        Gtk::Adjustment::create(0, 0, Rgba_component_count, 1)),
+    m_component_count_entry(m_component_count_adjustment),
     m_component_box(Gtk::ORIENTATION_HORIZONTAL)
 {
     add(m_box);
@@ -179,6 +228,8 @@ Format_chooser_dialog::Colorspace_frame::Colorspace_frame() :
     m_component_count_box.pack_start(m_component_count_label);
     m_component_count_box.pack_start(m_component_count_entry);
     m_box.pack_start(m_component_box);
+    for (auto & component : m_components)
+        m_component_box.pack_start(component);
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Sample_configurator::Sample_configurator() :
@@ -186,15 +237,15 @@ Format_chooser_dialog::Sample_configurator::Sample_configurator() :
     m_sample_label("sample:"),
     m_plane_label("plane:"),
     m_row_label("row"),
-    m_column_label("column")
+    m_index_label("index")
 {
     pack_start(m_sample_label);
     pack_start(m_plane_label);
     pack_start(m_plane_entry);
     pack_start(m_row_label);
     pack_start(m_row_entry);
-    pack_start(m_column_label);
-    pack_start(m_column_entry);
+    pack_start(m_index_label);
+    pack_start(m_index_entry);
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Pixel_configurator::Pixel_configurator() :
@@ -218,41 +269,109 @@ Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
     m_box.pack_start(m_pixel_grid);
 }
 /*----------------------------------------------------------------------------*/
-void Format_chooser_dialog::import_format()
-{
-    const Pixel_format *imported_pixel_format =
-            (*m_import_box.m_import_choice.get_active())[
-                m_pixel_format_column_record.m_pointer];
-
-    if(imported_pixel_format != nullptr)
-    {
-        m_pixel_format = *imported_pixel_format;
-        update_format();
-    }
-    auto options_end = m_import_list_store->children().end();
-    options_end--;
-    m_import_box.m_import_choice.set_active(options_end);
-}
-/*----------------------------------------------------------------------------*/
 void Format_chooser_dialog::update_format()
 {
     const Pixel_format *predefined_format =
             (*m_predefined_choice.get_active())[
                 m_pixel_format_column_record.m_pointer];
+
     if(predefined_format != nullptr)
     {
         m_pixel_format = *predefined_format;
-        m_import_box.hide();
-        m_plane_frame.hide();
-        m_colorspace_frame.hide();
-        m_macropixel_frame.hide();
     }
     else
     {
-        m_import_box.show_all();
-        m_plane_frame.show_all();
-        m_colorspace_frame.show_all();
-        m_macropixel_frame.show_all();
+        m_pixel_format = Pixel_format();
+
+        const auto &cs_in = m_colorspace_frame;
+        auto &cs_out = m_pixel_format.m_color_space;
+        const Color_space *predefined_cs =
+                (*cs_in.m_predefined_colorspace_entry.get_active())[
+                    m_color_space_column_record.m_pointer];
+        if (predefined_cs != nullptr)
+        {
+            cs_out = *predefined_cs;
+        }
+        else
+        {
+            const Index components_count =
+                    cs_in.m_component_count_entry.get_value_as_int();
+            cs_out.m_components.resize(components_count);
+
+            for (Index i = 0; i < components_count; ++i)
+            {
+                auto &component = cs_in.m_components[i];
+                for (Index j = 0; j < Rgba_component_count; ++j)
+                    cs_out.m_components[i].m_coeff[j] =
+                            component.m_colors[j].m_entry.get_value_as_int();
+                cs_out.m_components[i].m_valid_range[0] =
+                        saturable_fixed::from_double(
+                            component.m_valid_range_low_entry.get_value());
+                cs_out.m_components[i].m_valid_range[1] =
+                        saturable_fixed::from_double(
+                            component.m_valid_range_high_entry.get_value());
+                cs_out.m_components[i].m_coded_range[0] =
+                        saturable_fixed::from_double(
+                            component.m_coded_range_low_entry.get_value());
+                cs_out.m_components[i].m_coded_range[1] =
+                        saturable_fixed::from_double(
+                            component.m_coded_range_high_entry.get_value());
+            }
+        }
+
+        const Index planes_count = m_plane_frame.m_planes.size();
+        m_pixel_format.m_planes.resize(planes_count);
+        for (Index i = 0; i < planes_count; ++i)
+        {
+            auto &plane_out = m_pixel_format.m_planes[i];
+            const auto &plane_in = *m_plane_frame.m_planes[i];
+            const Index rows_count = plane_in.m_rows.size();
+            plane_out.m_rows.resize(rows_count);
+            for (Index j = 0; j < rows_count; ++j)
+            {
+                auto &row_out = plane_out.m_rows[j];
+                const auto &row_in = *plane_in.m_rows[j];
+                const Index entries_count = row_in.m_entries.size();
+                row_out.m_entries.resize(entries_count);
+                for (Index k = 0; k < entries_count; ++k)
+                {
+                    auto &entry_out = row_out.m_entries[k];
+                    const auto &entry_in = *row_in.m_entries[k];
+                    entry_out.m_width =
+                            entry_in.m_bit_count_entry.get_value_as_int();
+                }
+            }
+        }
+
+        auto &mp_size = m_pixel_format.m_macropixel_coding.m_size;
+        mp_size.set(
+                    m_macropixel_frame.m_columns_entry.get_value_as_int(),
+                    m_macropixel_frame.m_rows_entry.get_value_as_int());
+        m_pixel_format.m_macropixel_coding.m_pixels.resize(
+                    mp_size.x() * mp_size.y());
+        for (Index y = 0; y < mp_size.y(); ++y)
+        {
+            for (Index x = 0; x < mp_size.x(); ++x)
+            {
+                const Index i = y * mp_size.x() + x;
+                auto &pixel_out =
+                        m_pixel_format.m_macropixel_coding.m_pixels[i];
+                const auto &pixel_in = *m_macropixel_frame.m_pixels[i];
+                const Index components_count = pixel_in.m_samples.size();
+                pixel_out.m_components.resize(components_count);
+                for (Index j = 0; j < components_count; ++j)
+                {
+                    auto &component_out = pixel_out.m_components[j];
+                    const auto &component_in = *pixel_in.m_samples[j];
+                    component_out.m_plane_index =
+                            component_in.m_plane_entry.get_value_as_int();
+                    component_out.m_row_index =
+                            component_in.m_row_entry.get_value_as_int();
+                    component_out.m_entry_index =
+                            component_in.m_index_entry.get_value_as_int();
+                }
+            }
+        }
     }
 }
 /*----------------------------------------------------------------------------*/

@@ -45,8 +45,8 @@ private:
     {
         Import_box();
 
-        Gtk::ComboBox m_import_choice;
-        Gtk::Button m_import_button;
+        Gtk::Label m_label;
+        Gtk::ComboBox m_choice;
     };
 
     struct Entry_configurator : Gtk::Box
@@ -98,25 +98,35 @@ private:
 
     struct Component_configurator : Gtk::Frame
     {
+        struct Color_group
+        {
+            Gtk::Box m_box;
+            Gtk::Label m_label;
+            Glib::RefPtr<Gtk::Adjustment> m_adjustment;
+            Gtk::SpinButton m_entry;
+
+            Color_group(const std::string &name);
+        };
+
         Component_configurator();
 
         Gtk::Box m_box;
 
-        Gtk::Box m_r_box;
-        Gtk::Label m_r_label;
-        Gtk::SpinButton m_r_entry;
+        Color_group m_colors[Rgba_component_count];
 
-        Gtk::Box m_g_box;
-        Gtk::Label m_g_label;
-        Gtk::SpinButton m_g_entry;
+        Gtk::Box m_valid_range_box;
+        Gtk::Label m_valid_range_label;
+        Glib::RefPtr<Gtk::Adjustment> m_range_low_adjustment;
+        Glib::RefPtr<Gtk::Adjustment> m_range_high_adjustment;
+        Gtk::SpinButton m_valid_range_low_entry;
+        Gtk::SpinButton m_valid_range_high_entry;
 
-        Gtk::Box m_b_box;
-        Gtk::Label m_b_label;
-        Gtk::SpinButton m_b_entry;
-
-        Gtk::Box m_a_box;
-        Gtk::Label m_a_label;
-        Gtk::SpinButton m_a_entry;
+        Gtk::Box m_coded_range_box;
+        Gtk::Label m_coded_range_label;
+        Glib::RefPtr<Gtk::Adjustment> m_coded_range_low_adjustment;
+        Glib::RefPtr<Gtk::Adjustment> m_coded_range_high_adjustment;
+        Gtk::SpinButton m_coded_range_low_entry;
+        Gtk::SpinButton m_coded_range_high_entry;
     };
 
     struct Colorspace_frame : Gtk::Frame
@@ -131,10 +141,11 @@ private:
 
         Gtk::Box m_component_count_box;
         Gtk::Label m_component_count_label;
+        Glib::RefPtr<Gtk::Adjustment> m_component_count_adjustment;
         Gtk::SpinButton m_component_count_entry;
 
         Gtk::Box m_component_box;
-        std::vector<std::unique_ptr<Component_configurator> > m_components;
+        Component_configurator m_components[Rgba_component_count];
     };
 
     struct Sample_configurator : Gtk::Box
@@ -143,11 +154,11 @@ private:
 
         Gtk::Label m_sample_label;
         Gtk::Label m_plane_label;
-        Gtk::ComboBox m_plane_entry;
+        Gtk::SpinButton m_plane_entry;
         Gtk::Label m_row_label;
-        Gtk::ComboBox m_row_entry;
-        Gtk::Label m_column_label;
-        Gtk::ComboBox m_column_entry;
+        Gtk::SpinButton m_row_entry;
+        Gtk::Label m_index_label;
+        Gtk::SpinButton m_index_entry;
     };
 
     struct Pixel_configurator : Gtk::Frame
@@ -186,8 +197,24 @@ private:
         }
     };
 
-    void import_format();
+    struct Color_space_column_record : Gtk::TreeModelColumnRecord
+    {
+        Gtk::TreeModelColumn<Glib::ustring> m_label;
+        Gtk::TreeModelColumn<const Color_space *> m_pointer;
+
+        Color_space_column_record()
+        {
+            add(m_label);
+            add(m_pointer);
+        }
+    };
+
     void update_format();
+    void on_predefined_format();
+    void on_import_format();
+    void on_predefined_color_space();
+    void on_components_count();
+    void on_component(Rgba_component c);
 
     Gtk::ComboBox m_predefined_choice;
     Import_box m_import_box;
@@ -198,6 +225,9 @@ private:
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
     Glib::RefPtr<Gtk::ListStore> m_import_list_store;
     Pixel_format_column_record m_pixel_format_column_record;
+
+    Glib::RefPtr<Gtk::ListStore> m_color_space_list_store;
+    Color_space_column_record m_color_space_column_record;
 
     Pixel_format m_pixel_format;
 };
