@@ -61,8 +61,7 @@ private:
     struct Row_in_plane_configurator : Gtk::Box
     {
         Row_in_plane_configurator();
-        void add_entry(Format_chooser_dialog &parent);
-        void remove_entry(Format_chooser_dialog &parent);
+        void set_entries_count(Index n);
 
         Gtk::Box m_entry_count_box;
         Gtk::Label m_row_label;
@@ -74,8 +73,7 @@ private:
     struct Plane_configurator : Gtk::Frame
     {
         Plane_configurator();
-        void add_row(Format_chooser_dialog &parent);
-        void remove_row(Format_chooser_dialog &parent);
+        void set_rows_count(Index n);
 
         Gtk::Box m_box;
 
@@ -89,10 +87,15 @@ private:
     struct Plane_frame : Gtk::Frame
     {
         Plane_frame();
-        void add_plane(Format_chooser_dialog &parent);
-        void remove_plane(Format_chooser_dialog &parent);
+        void set_planes_count(Index n);
 
         Gtk::Box m_box;
+
+        Gtk::Box m_planes_count_box;
+        Gtk::Label m_planes_count_label;
+        Gtk::SpinButton m_planes_count_entry;
+
+        Gtk::Box m_planes_box;
         std::vector<std::unique_ptr<Plane_configurator> > m_planes;
     };
 
@@ -102,7 +105,6 @@ private:
         {
             Gtk::Box m_box;
             Gtk::Label m_label;
-            Glib::RefPtr<Gtk::Adjustment> m_adjustment;
             Gtk::SpinButton m_entry;
 
             Color_group(const std::string &name);
@@ -116,15 +118,11 @@ private:
 
         Gtk::Box m_valid_range_box;
         Gtk::Label m_valid_range_label;
-        Glib::RefPtr<Gtk::Adjustment> m_range_low_adjustment;
-        Glib::RefPtr<Gtk::Adjustment> m_range_high_adjustment;
         Gtk::SpinButton m_valid_range_low_entry;
         Gtk::SpinButton m_valid_range_high_entry;
 
         Gtk::Box m_coded_range_box;
         Gtk::Label m_coded_range_label;
-        Glib::RefPtr<Gtk::Adjustment> m_coded_range_low_adjustment;
-        Glib::RefPtr<Gtk::Adjustment> m_coded_range_high_adjustment;
         Gtk::SpinButton m_coded_range_low_entry;
         Gtk::SpinButton m_coded_range_high_entry;
     };
@@ -141,7 +139,6 @@ private:
 
         Gtk::Box m_component_count_box;
         Gtk::Label m_component_count_label;
-        Glib::RefPtr<Gtk::Adjustment> m_component_count_adjustment;
         Gtk::SpinButton m_component_count_entry;
 
         Gtk::Box m_component_box;
@@ -164,6 +161,7 @@ private:
     struct Pixel_configurator : Gtk::Frame
     {
         Pixel_configurator();
+        void set_samples_count(Index n);
 
         Gtk::Box m_box;
         std::vector<std::unique_ptr<Sample_configurator> > m_samples;
@@ -172,6 +170,7 @@ private:
     struct Macropixel_frame : Gtk::Frame
     {
         Macropixel_frame();
+        void set_entries_count(Index n);
 
         Gtk::Box m_box;
 

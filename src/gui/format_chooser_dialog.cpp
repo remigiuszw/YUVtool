@@ -19,7 +19,31 @@
  */
 #include <gui/format_chooser_dialog.h>
 
+#define DEBUG 1
+
 namespace YUV_tool {
+/*----------------------------------------------------------------------------*/
+namespace {
+/*----------------------------------------------------------------------------*/
+template<typename TWidget>
+void set_children_count(
+        Gtk::Box &box,
+        std::vector<std::unique_ptr<TWidget>> &vector,
+        const Index n)
+{
+    while (vector.size() < n)
+    {
+        vector.emplace_back(new TWidget);
+        box.pack_start(*vector.back());
+    }
+    while (vector.size() > n)
+    {
+        box.remove(*vector.back());
+        vector.pop_back();
+    }
+}
+/*----------------------------------------------------------------------------*/
+}
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Format_chooser_dialog(
         Gtk::Window &parent,
@@ -34,8 +58,8 @@ Format_chooser_dialog::Format_chooser_dialog(
     Gtk::Box &content_area = *get_content_area();
     content_area.pack_start(m_predefined_choice);
     content_area.pack_start(m_import_box);
-    content_area.pack_start(m_plane_frame);
     content_area.pack_start(m_colorspace_frame);
+    content_area.pack_start(m_plane_frame);
     content_area.pack_start(m_macropixel_frame);
 
     /* predefined choice */
@@ -110,10 +134,19 @@ Format_chooser_dialog::Format_chooser_dialog(
         m_colorspace_frame.m_predefined_colorspace_entry.set_active(iter);
     }
 
+    m_predefined_choice.signal_changed().connect(
+                sigc::mem_fun(
+                    *this,
+                    &Format_chooser_dialog::on_predefined_format));
+    m_import_box.m_choice.signal_changed().connect(
+                sigc::mem_fun(
+                    *this,
+                    &Format_chooser_dialog::on_import_format));
+
     auto update_format_handler =
-            sigc::mem_fun(*this, &Format_chooser_dialog::update_format);
-    m_predefined_choice.signal_changed().connect(update_format_handler);
-    m_import_box.m_choice.signal_changed().connect(update_format_handler);
+            sigc::mem_fun(
+                *this,
+                &Format_chooser_dialog::on_predefined_format);
     m_colorspace_frame.m_component_count_entry.signal_changed().connect(
                 update_format_handler);
     for (auto & component : m_colorspace_frame.m_components)
@@ -171,6 +204,12 @@ Format_chooser_dialog::Row_in_plane_configurator::Row_in_plane_configurator() :
     pack_start(m_entry_count_entry);
 }
 /*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::Row_in_plane_configurator::set_entries_count(
+        const Index n)
+{
+    set_children_count(*this, m_entries, n);
+}
+/*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Plane_configurator::Plane_configurator() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_row_count_label("rows count:")
@@ -181,16 +220,38 @@ Format_chooser_dialog::Plane_configurator::Plane_configurator() :
     m_box.pack_start(m_row_count_entry);
 }
 /*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::Plane_configurator::set_rows_count(const Index n)
+{
+    set_children_count(m_box, m_rows, n);
+}
+/*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Plane_frame::Plane_frame() :
-    m_box(Gtk::ORIENTATION_HORIZONTAL)
-{ }
+    m_box(Gtk::ORIENTATION_VERTICAL),
+    m_planes_count_box(Gtk::ORIENTATION_HORIZONTAL),
+    m_planes_count_label("planes count: "),
+    m_planes_count_entry(Gtk::Adjustment::create(0, 0, 100, 1)),
+    m_planes_box(Gtk::ORIENTATION_HORIZONTAL)
+{
+    set_label("Planes");
+    set_shadow_type(Gtk::SHADOW_ETCHED_OUT);
+
+    add(m_box);
+    m_box.pack_start(m_planes_count_box);
+    m_planes_count_box.pack_start(m_planes_count_label);
+    m_planes_count_box.pack_start(m_planes_count_entry);
+    m_box.pack_start(m_planes_box);
+}
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::Plane_frame::set_planes_count(const Index n)
+{
+    set_children_count(m_planes_box, m_planes, n);
+}
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Component_configurator::Color_group::Color_group(
         const std::string &name) :
     m_box(Gtk::ORIENTATION_HORIZONTAL),
     m_label(name),
-    m_adjustment(Gtk::Adjustment::create(0, 0, 1, 0.01, 0.1)),
-    m_entry(m_adjustment, 0, 3)
+    m_entry(Gtk::Adjustment::create(0, 0, 1, 0.01, 0.1), 0, 3)
 {
     m_box.pack_start(m_label);
     m_box.pack_start(m_entry);
@@ -202,11 +263,39 @@ Format_chooser_dialog::Component_configurator::Component_configurator() :
         std::string("R"),
         std::string("G"),
         std::string("B"),
-        std::string("A")}
+        std::string("A")},
+    m_valid_range_box(Gtk::ORIENTATION_HORIZONTAL),
+    m_valid_range_label("valid range:"),
+    m_valid_range_low_entry(
+        Gtk::Adjustment::create(0, -1000, 1000, 0.001),
+        0,
+        3),
+    m_valid_range_high_entry(
+        Gtk::Adjustment::create(0, -1000, 1000, 0.001),
+        0,
+        3),
+    m_coded_range_box(Gtk::ORIENTATION_HORIZONTAL),
+    m_coded_range_label("coded range:"),
+    m_coded_range_low_entry(
+        Gtk::Adjustment::create(0, -1000, 1000, 0.001),
+        0,
+        3),
+    m_coded_range_high_entry(
+        Gtk::Adjustment::create(0, -1000, 1000, 0.001),
+        0,
+        3)
 {
     add(m_box);
     for (auto &color : m_colors)
         m_box.pack_start(color.m_box);
+    m_box.pack_start(m_valid_range_box);
+    m_valid_range_box.pack_start(m_valid_range_label);
+    m_valid_range_box.pack_start(m_valid_range_low_entry);
+    m_valid_range_box.pack_start(m_valid_range_high_entry);
+    m_box.pack_start(m_coded_range_box);
+    m_coded_range_box.pack_start(m_coded_range_label);
+    m_coded_range_box.pack_start(m_coded_range_low_entry);
+    m_coded_range_box.pack_start(m_coded_range_high_entry);
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Colorspace_frame::Colorspace_frame() :
@@ -215,11 +304,13 @@ Format_chooser_dialog::Colorspace_frame::Colorspace_frame() :
     m_predefined_colorspace_label("colorspace:"),
     m_component_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_component_count_label("components_count:"),
-    m_component_count_adjustment(
+    m_component_count_entry(
         Gtk::Adjustment::create(0, 0, Rgba_component_count, 1)),
-    m_component_count_entry(m_component_count_adjustment),
     m_component_box(Gtk::ORIENTATION_HORIZONTAL)
 {
+    set_label("Color space");
+    set_shadow_type(Gtk::SHADOW_ETCHED_OUT);
+
     add(m_box);
     m_box.pack_start(m_predefined_colorspace_box);
     m_predefined_colorspace_box.pack_start(m_predefined_colorspace_label);
@@ -254,12 +345,21 @@ Format_chooser_dialog::Pixel_configurator::Pixel_configurator() :
     add(m_box);
 }
 /*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::Pixel_configurator::set_samples_count(
+        const Index n)
+{
+    set_children_count(m_box, m_samples, n);
+}
+/*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_parameters_box(Gtk::ORIENTATION_HORIZONTAL),
     m_rows_label("rows:"),
     m_columns_label("columns:")
 {
+    set_label("Macropixel");
+    set_shadow_type(Gtk::SHADOW_ETCHED_OUT);
+
     add(m_box);
     m_box.pack_start(m_parameters_box);
     m_parameters_box.pack_start(m_rows_label);
@@ -319,7 +419,8 @@ void Format_chooser_dialog::update_format()
             }
         }
 
-        const Index planes_count = m_plane_frame.m_planes.size();
+        const Index planes_count =
+                m_plane_frame.m_planes_count_entry.get_value_as_int();
         m_pixel_format.m_planes.resize(planes_count);
         for (Index i = 0; i < planes_count; ++i)
         {
@@ -373,6 +474,134 @@ void Format_chooser_dialog::update_format()
             }
         }
     }
+}
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::on_predefined_format()
+{
+    const Pixel_format *predefined_format =
+            (*m_predefined_choice.get_active())[
+                m_pixel_format_column_record.m_pointer];
+
+    if(predefined_format != nullptr)
+    {
+        m_import_box.hide();
+        m_plane_frame.hide();
+        m_colorspace_frame.hide();
+        m_macropixel_frame.hide();
+    }
+    else
+    {
+        m_import_box.show();
+        m_plane_frame.show();
+        m_colorspace_frame.show();
+        m_macropixel_frame.show();
+    }
+    update_format();
+}
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::on_import_format()
+{
+    const Pixel_format *import_format =
+            (*m_import_box.m_choice.get_active())[
+                m_pixel_format_column_record.m_pointer];
+
+    if(import_format != nullptr)
+    {
+        const auto &cs_in = import_format->m_color_space;
+        auto &cs_out = m_colorspace_frame;
+        cs_out.m_predefined_colorspace_entry.set_active(
+                    --m_color_space_list_store->children().end());
+
+        const Index components_count = cs_in.m_components.size();
+        cs_out.m_component_count_entry.set_value(components_count);
+
+        for (Index i = 0; i < Rgba_component_count; ++i)
+        {
+            auto &component_out = cs_out.m_components[i];
+            if (i < components_count)
+            {
+                const auto &component_in = cs_in.m_components[i];
+                for (Index j = 0; j < Rgba_component_count; ++j)
+                    component_out.m_colors[j].m_entry.set_value(
+                                component_in.m_coeff[j].to_double());
+                component_out.m_valid_range_low_entry.set_value(
+                            component_in.m_valid_range[0].to_double());
+                component_out.m_valid_range_high_entry.set_value(
+                            component_in.m_valid_range[1].to_double());
+                component_out.m_coded_range_low_entry.set_value(
+                            component_in.m_valid_range[0].to_double());
+                component_out.m_coded_range_high_entry.set_value(
+                            component_in.m_valid_range[1].to_double());
+                component_out.show();
+            }
+            else
+            {
+                component_out.hide();
+            }
+        }
+
+        const Index planes_count = import_format->m_planes.size();
+        m_plane_frame.m_planes_count_entry.set_value(planes_count);
+        m_plane_frame.set_planes_count(planes_count);
+        for (Index i = 0; i < planes_count; ++i)
+        {
+            auto &plane_out = *m_plane_frame.m_planes[i];
+            const auto &plane_in = import_format->m_planes[i];
+            const Index rows_count = plane_in.m_rows.size();
+            plane_out.m_row_count_entry.set_value(rows_count);
+            plane_out.set_rows_count(rows_count);
+            for (Index j = 0; j < rows_count; ++j)
+            {
+                auto &row_out = *plane_out.m_rows[j];
+                const auto &row_in = plane_in.m_rows[j];
+                const Index entries_count = row_in.m_entries.size();
+                row_out.m_entry_count_entry.set_value(entries_count);
+                row_out.set_entries_count(entries_count);
+                for (Index k = 0; k < entries_count; ++k)
+                {
+                    auto &entry_out = *row_out.m_entries[k];
+                    const auto &entry_in = row_in.m_entries[k];
+                    entry_out.m_bit_count_entry.set_value(
+                                entry_in.m_width.get_position());
+                }
+            }
+        }
+        m_plane_frame.show_all();
+
+//        auto &mp_size = m_pixel_format.m_macropixel_coding.m_size;
+//        mp_size.set(
+//                    m_macropixel_frame.m_columns_entry.get_value_as_int(),
+//                    m_macropixel_frame.m_rows_entry.get_value_as_int());
+//        m_pixel_format.m_macropixel_coding.m_pixels.resize(
+//                    mp_size.x() * mp_size.y());
+//        for (Index y = 0; y < mp_size.y(); ++y)
+//        {
+//            for (Index x = 0; x < mp_size.x(); ++x)
+//            {
+//                const Index i = y * mp_size.x() + x;
+//                auto &pixel_out =
+//                        m_pixel_format.m_macropixel_coding.m_pixels[i];
+//                const auto &pixel_in = *m_macropixel_frame.m_pixels[i];
+//                const Index components_count = pixel_in.m_samples.size();
+//                pixel_out.m_components.resize(components_count);
+//                for (Index j = 0; j < components_count; ++j)
+//                {
+//                    auto &component_out = pixel_out.m_components[j];
+//                    const auto &component_in = *pixel_in.m_samples[j];
+//                    component_out.m_plane_index =
+//                            component_in.m_plane_entry.get_value_as_int();
+//                    component_out.m_row_index =
+//                            component_in.m_row_entry.get_value_as_int();
+//                    component_out.m_entry_index =
+//                            component_in.m_index_entry.get_value_as_int();
+//                }
+//            }
+//        }
+    }
+
+    m_import_box.m_choice.set_active(--m_import_list_store->children().end());
+
+    update_format();
 }
 /*----------------------------------------------------------------------------*/
 }

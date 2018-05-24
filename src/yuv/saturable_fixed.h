@@ -107,6 +107,13 @@ public:
                     (m_value >> shift) ^ integer_sign_mask);
     }
 
+    double to_double() const
+    {
+        std::int64_t x = get_internal() ^ sign_mask;
+        x -= sign_mask;
+        return std::ldexp(x, -shift);
+    }
+
     internal_uint get_internal() const
     {
         return m_value;
