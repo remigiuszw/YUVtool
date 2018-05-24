@@ -64,7 +64,7 @@ private:
         void set_entries_count(Index n);
 
         Gtk::Box m_entry_count_box;
-        Gtk::Label m_row_label;
+        Gtk::Label m_entry_count_label;
         Gtk::SpinButton m_entry_count_entry;
 
         std::vector<std::unique_ptr<Entry_configurator> > m_entries;
@@ -170,7 +170,7 @@ private:
     struct Macropixel_frame : Gtk::Frame
     {
         Macropixel_frame();
-        void set_entries_count(Index n);
+        void reshape();
 
         Gtk::Box m_box;
 
