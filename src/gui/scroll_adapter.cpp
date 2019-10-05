@@ -17,7 +17,7 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <gui/scroll_adapter.h>
+#include <scroll_adapter.h>
 
 #include <iostream>
 

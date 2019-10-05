@@ -17,10 +17,11 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <iostream>
-#include "Errors.h"
 
-#include "Yuv_file.h"
+#include <yuv/Errors.h>
+#include <yuv/Yuv_file.h>
+
+#include <iostream>
 
 void print_stream_info(YUV_tool::Yuv_file &yuv_file)
 {

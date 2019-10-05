@@ -17,7 +17,7 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <gui/format_chooser_dialog.h>
+#include <format_chooser_dialog.h>
 
 #define DEBUG 1
 

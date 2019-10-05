@@ -17,7 +17,7 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "Errors.h"
+#include <yuv/Errors.h>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/

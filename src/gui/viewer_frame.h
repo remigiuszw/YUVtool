@@ -20,8 +20,8 @@
 #ifndef VIEWER_FRAME_H
 #define VIEWER_FRAME_H
 
-#include <gui/scroll_adapter.h>
-#include <gui/drawer_gl.h>
+#include <scroll_adapter.h>
+#include <drawer_gl.h>
 #include <yuv/Yuv_file.h>
 
 #include <gtkmm/window.h>

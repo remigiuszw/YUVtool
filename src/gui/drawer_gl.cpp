@@ -17,7 +17,7 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <gui/drawer_gl.h>
+#include <drawer_gl.h>
 #include <yuv/Picture_buffer.h>
 #include <yuv/Errors.h>
 #include <yuv/Yuv_file.h>

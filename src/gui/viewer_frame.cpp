@@ -18,8 +18,8 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <gui/viewer_frame.h>
-#include <gui/format_chooser_dialog.h>
+#include <viewer_frame.h>
+#include <format_chooser_dialog.h>
 #include <yuv/Errors.h>
 
 #include <gtkmm/stock.h>
