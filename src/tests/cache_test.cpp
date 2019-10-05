@@ -19,6 +19,8 @@
  */
 #include <yuv/Cache.h>
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <random>
@@ -193,205 +195,182 @@ private:
     }
 };
 
-int main() try
+TEST(cache_test, sort)
 {
-    std::cout << "Hello!\n";
-
+    const Index n = 1000000;
+    for(int seed = 15; seed < 20; seed++)
     {
-        const Index n = 1000000;
-        for(int seed = 15; seed < 20; seed++)
+        std::vector<int> test_std(n);
+        randomize(test_std.begin(), test_std.end(), seed);
+        std::vector<int> test_custom = test_std;
+
         {
-            std::vector<int> test_std(n);
-            randomize(test_std.begin(), test_std.end(), seed);
-            std::vector<int> test_custom = test_std;
-
-            {
-                Timer std_timer("custom");
-                my_make_heap(
-                            test_custom.begin(),
-                            test_custom.end(),
-                            std::less<int>());
-                my_sort_heap(
-                            test_custom.begin(),
-                            test_custom.end(),
-                            std::less<int>());
-            }
-
-            {
-                Timer std_timer("std");
-                std::make_heap(
-                            test_std.begin(),
-                            test_std.end(),
-                            std::less<int>());
-                std::sort_heap(
-                            test_std.begin(),
-                            test_std.end(),
-                            std::less<int>());
-            }
-
-            {
-                Timer std_timer("custom");
-                my_make_heap(
-                            test_custom.begin(),
-                            test_custom.end(),
-                            std::less<int>());
-                my_sort_heap(
-                            test_custom.begin(),
-                            test_custom.end(),
-                            std::less<int>());
-            }
-
-            {
-                Timer std_timer("std");
-                std::make_heap(
-                            test_std.begin(),
-                            test_std.end(),
-                            std::less<int>());
-                std::sort_heap(
-                            test_std.begin(),
-                            test_std.end(),
-                            std::less<int>());
-            }
-
-            if(test_std == test_custom)
-                std::cerr << "test OK\n";
-            else
-                std::cerr << "test fail\n";
+            Timer std_timer("custom");
+            my_make_heap(
+                        test_custom.begin(),
+                        test_custom.end(),
+                        std::less<int>());
+            my_sort_heap(
+                        test_custom.begin(),
+                        test_custom.end(),
+                        std::less<int>());
         }
+
+        {
+            Timer std_timer("std");
+            std::make_heap(
+                        test_std.begin(),
+                        test_std.end(),
+                        std::less<int>());
+            std::sort_heap(
+                        test_std.begin(),
+                        test_std.end(),
+                        std::less<int>());
+        }
+
+        {
+            Timer std_timer("custom");
+            my_make_heap(
+                        test_custom.begin(),
+                        test_custom.end(),
+                        std::less<int>());
+            my_sort_heap(
+                        test_custom.begin(),
+                        test_custom.end(),
+                        std::less<int>());
+        }
+
+        {
+            Timer std_timer("std");
+            std::make_heap(
+                        test_std.begin(),
+                        test_std.end(),
+                        std::less<int>());
+            std::sort_heap(
+                        test_std.begin(),
+                        test_std.end(),
+                        std::less<int>());
+        }
+
+        EXPECT_EQ(test_std, test_custom);
     }
+}
 
+TEST(cache_test, push_get)
+{
+    const int cache_size = 10000;
+    const int key_range = 20000;
 
-    {
-        const int cache_size = 10000;
-        const int key_range = 20000;
+    int resources[cache_size] = {1000, 1001, 1002};
 
-        int resources[cache_size] = {1000, 1001, 1002};
+    std::vector<int> tests(5 * cache_size);
+    randomize(tests.begin(), tests.end(), 15, key_range);
 
-        std::vector<int> tests(5 * cache_size);
-        randomize(tests.begin(), tests.end(), 15, key_range);
-
-        std::vector<int *> advanced_results;
-        std::vector<int *> primitive_results;
-        advanced_results.reserve(5 * cache_size);
-        primitive_results.reserve(5 * cache_size);
-
-        {
-            Timer timer("advanced");
-            Cache<int, int> advanced_cache(cache_size);
-            for(int test : tests)
-            {
-                int *sought_resource =
-                        advanced_cache.get_and_update(test);
-                advanced_results.push_back(sought_resource);
-
-                if(sought_resource)
-                {
-                    ;
-                }
-                else
-                {
-                    if(advanced_cache.is_full())
-                        sought_resource = advanced_cache.pop();
-                    else
-                        sought_resource = &resources[test % cache_size];
-
-                    advanced_cache.push(test, sought_resource);
-                }
-            }
-        }
-
-        {
-            Timer timer("primitive");
-            Primitive_cache<int> primitive_cache(cache_size);
-            for(int test : tests)
-            {
-                int *sought_resource =
-                        primitive_cache.get_and_update(test);
-                primitive_results.push_back(sought_resource);
-
-                if(sought_resource)
-                {
-                    ;
-                }
-                else
-                {
-                    if(primitive_cache.full())
-                        sought_resource = primitive_cache.pop();
-                    else
-                        sought_resource = &resources[test % cache_size];
-
-                    primitive_cache.push(test, sought_resource);
-                }
-            }
-        }
-
-        if(advanced_results == primitive_results)
-            std::cerr << "Cache test passed!\n";
-        else
-            std::cerr << "Cache test failed!\n";
-    }
+    std::vector<int *> advanced_results;
+    std::vector<int *> primitive_results;
+    advanced_results.reserve(5 * cache_size);
+    primitive_results.reserve(5 * cache_size);
 
     {
-        const int cache_size = 3;
-        Cache<int, int> cache_test(cache_size);
-
-        int resources[cache_size] = {1000, 1001, 1002};
-        cache_test.push(3, &resources[0]);
-        cache_test.push(7, &resources[1]);
-        cache_test.push(5, &resources[2]);
-
-
-        std::pair<int, int *> tests[] = {
-            {3, &resources[0]},
-            {4, nullptr},
-            {7, nullptr},
-            {4, &resources[1]}
-        };
-        for(auto test : tests)
+        Timer timer("advanced");
+        Cache<int, int> advanced_cache(cache_size);
+        for(int test : tests)
         {
-            int *sought_resource =
-                    cache_test.get_and_update(test.first);
-            my_assert(
-                        sought_resource == test.second,
-                        "unexpected resource returned in test");
+            int *sought_resource = advanced_cache.get_and_update(test);
+            advanced_results.push_back(sought_resource);
+
             if(sought_resource)
             {
-                ;/* resource found, just use it */
+                ;
             }
             else
             {
-                /* resource not found in the cache */
-                /* need to produce the resource, fortunately we can reuse memory
-                 * allocated for the resource which is now removed from the
-                 * cache */
-                sought_resource = cache_test.pop();
-                cache_test.push(test.first, sought_resource);
-            }
-            /* use the resource */
-        }
+                if(advanced_cache.is_full())
+                    sought_resource = advanced_cache.pop();
+                else
+                    sought_resource = &resources[test % cache_size];
 
-        bool test_passed = false;
-        try
-        {
-            cache_test.push(2, &resources[0]);
+                advanced_cache.push(test, sought_resource);
+            }
         }
-        catch(std::runtime_error &e)
-        {
-            test_passed = true;
-        }
-        my_assert(test_passed, "push over cache size succeeded!");
     }
 
-    std::cout << "Bye!\n";
-    return 0;
+    {
+        Timer timer("primitive");
+        Primitive_cache<int> primitive_cache(cache_size);
+        for(int test : tests)
+        {
+            int *sought_resource =
+                    primitive_cache.get_and_update(test);
+            primitive_results.push_back(sought_resource);
+
+            if(sought_resource)
+            {
+                ;
+            }
+            else
+            {
+                if(primitive_cache.full())
+                    sought_resource = primitive_cache.pop();
+                else
+                    sought_resource = &resources[test % cache_size];
+
+                primitive_cache.push(test, sought_resource);
+            }
+        }
+    }
+
+    EXPECT_EQ(advanced_results, primitive_results);
 }
-catch(std::runtime_error &e)
+
+TEST(cache_test, push_over_size)
 {
-    std::cerr << "runtime error caught: " << e.what() << std::endl;
-    return -1;
-}
-catch(...)
-{
-    std::cerr << "unknown exception caught: " << std::endl;
-    return -1;
+    const int cache_size = 3;
+    Cache<int, int> cache_test(cache_size);
+
+    int resources[cache_size] = {1000, 1001, 1002};
+    cache_test.push(3, &resources[0]);
+    cache_test.push(7, &resources[1]);
+    cache_test.push(5, &resources[2]);
+
+
+    std::pair<int, int *> tests[] = {
+        {3, &resources[0]},
+        {4, nullptr},
+        {7, nullptr},
+        {4, &resources[1]}
+    };
+    for(auto test : tests)
+    {
+        int *sought_resource =
+                cache_test.get_and_update(test.first);
+        my_assert(
+                    sought_resource == test.second,
+                    "unexpected resource returned in test");
+        if(sought_resource)
+        {
+            ;/* resource found, just use it */
+        }
+        else
+        {
+            /* resource not found in the cache */
+            /* need to produce the resource, fortunately we can reuse memory
+             * allocated for the resource which is now removed from the
+             * cache */
+            sought_resource = cache_test.pop();
+            cache_test.push(test.first, sought_resource);
+        }
+        /* use the resource */
+    }
+
+    bool test_passed = false;
+    try
+    {
+        cache_test.push(2, &resources[0]);
+    }
+    catch(std::runtime_error &)
+    {
+        test_passed = true;
+    }
+    EXPECT_TRUE(test_passed);
 }

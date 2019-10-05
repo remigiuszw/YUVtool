@@ -19,6 +19,3 @@ add_subdirectory(tests)
 if(BUILD_GTKMM_GUI)
     add_subdirectory(gui)
 endif()
-
-enable_testing()
-add_test(cache_test cache_test)
