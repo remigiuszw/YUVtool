@@ -197,8 +197,8 @@ private:
 
 TEST(cache_test, sort)
 {
-    const Index n = 1000000;
-    for(int seed = 15; seed < 20; seed++)
+    const Index n = 100000;
+    for (int seed = 15; seed < 20; seed++)
     {
         std::vector<int> test_std(n);
         randomize(test_std.begin(), test_std.end(), seed);
@@ -258,12 +258,12 @@ TEST(cache_test, sort)
 
 TEST(cache_test, push_get)
 {
-    const int cache_size = 10000;
+    const int cache_size = 3000;
     const int key_range = 20000;
 
     int resources[cache_size] = {1000, 1001, 1002};
 
-    std::vector<int> tests(5 * cache_size);
+    std::vector<int> tests(2 * cache_size);
     randomize(tests.begin(), tests.end(), 15, key_range);
 
     std::vector<int *> advanced_results;

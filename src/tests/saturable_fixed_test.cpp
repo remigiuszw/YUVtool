@@ -21,6 +21,7 @@
 #include <yuv/saturable_fixed.h>
 #include <yuv/utils.h>
 
+#include <gtest/gtest.h>
 #include <Eigen/Dense>
 #include <stdexcept>
 #include <iostream>
@@ -28,50 +29,31 @@
 
 using namespace YUV_tool;
 /*----------------------------------------------------------------------------*/
-void simple_arithmetic_test()
+TEST(saturable_fixed_test, simple_arithmetic_test)
 {
-    const auto error =
-            std::runtime_error("simple_arithmetic_test failed");
-
     const saturable_fixed a = saturable_fixed(1) / 32;
     const saturable_fixed b = saturable_fixed(-1) / 32;
 
-    if (a - a != saturable_fixed(0))
-        throw error;
-    if (a + b != saturable_fixed(0))
-        throw error;
-    if (1 / a != saturable_fixed(32))
-        throw error;
-    if (1 / b != saturable_fixed(-32))
-        throw error;
-    if (-b - a  != saturable_fixed(0))
-        throw error;
-    if (-a / b  != saturable_fixed(1))
-        throw error;
-    if (b * 32 != saturable_fixed(-1))
-        throw error;
+    EXPECT_EQ(a - a, saturable_fixed(0));
+    EXPECT_EQ(a + b, saturable_fixed(0));
+    EXPECT_EQ(1 / a, saturable_fixed(32));
+    EXPECT_EQ(1 / b, saturable_fixed(-32));
+    EXPECT_EQ(-b - a, saturable_fixed(0));
+    EXPECT_EQ(-a / b, saturable_fixed(1));
+    EXPECT_EQ(b * 32, saturable_fixed(-1));
 }
 /*----------------------------------------------------------------------------*/
-void integral_log2_floor_test()
+TEST(saturable_fixed_test, integral_log2_floor_test)
 {
-    const auto error =
-            std::runtime_error("integral_log2_floor failed");
-
-    if (integral_log2_floor(0) != 0)
-        throw error;
-    if (integral_log2_floor(1) != 0)
-        throw error;
-    if (integral_log2_floor(2) != 1)
-        throw error;
-    if (integral_log2_floor(3) != 1)
-        throw error;
-    if (integral_log2_floor(4) != 2)
-        throw error;
-    if (integral_log2_floor(0xffffffffffffffffull) != 63)
-        throw error;
+    EXPECT_EQ(integral_log2_floor(0), 0);
+    EXPECT_EQ(integral_log2_floor(1), 0);
+    EXPECT_EQ(integral_log2_floor(2), 1);
+    EXPECT_EQ(integral_log2_floor(3), 1);
+    EXPECT_EQ(integral_log2_floor(4), 2);
+    EXPECT_EQ(integral_log2_floor(0xffffffffffffffffull), 63);
 
     std::mt19937_64 random_gen;
-    const uint32_t inputs_per_test = 10000000;
+    const uint32_t inputs_per_test = 1000000;
     std::vector<std::uint64_t> input(inputs_per_test);
     for (auto &x : input)
         x = random_gen();
@@ -82,13 +64,11 @@ void integral_log2_floor_test()
         for (auto &x : input)
         {
             const auto result = integral_log2_floor(x);
-            const bool is_correct =
+            EXPECT_TRUE(
                     (result == 0 && x == 0)
                     || (
                         (1ull << result) <= x
-                        && x <= (((1ull << result) << 1u) - 1u));
-            if (!is_correct)
-                throw error;
+                        && x <= (((1ull << result) << 1u) - 1u)));
         }
     }
 }
@@ -119,30 +99,19 @@ inline std::uint64_t integral_sqrt_floor_bisection(const std::uint64_t x)
     return result_min;
 }
 /*----------------------------------------------------------------------------*/
-void integral_sqrt_floor_test()
+TEST(saturable_fixed_test, integral_sqrt_floor_test)
 {
-    const auto error =
-            std::runtime_error("integral_sqrt_floor failed");
-
-    if (integral_sqrt_floor(0) != 0)
-        throw error;
-    if (integral_sqrt_floor(1) != 1)
-        throw error;
-    if (integral_sqrt_floor(2) != 1)
-        throw error;
-    if (integral_sqrt_floor(3) != 1)
-        throw error;
-    if (integral_sqrt_floor(4) != 2)
-        throw error;
-    if (integral_sqrt_floor(8) != 2)
-        throw error;
-    if (integral_sqrt_floor(9) != 3)
-        throw error;
-    if (integral_sqrt_floor(0xffffffffffffffffull) != 0xffffffffull)
-        throw error;
+    EXPECT_EQ(integral_sqrt_floor(0), 0);
+    EXPECT_EQ(integral_sqrt_floor(1), 1);
+    EXPECT_EQ(integral_sqrt_floor(2), 1);
+    EXPECT_EQ(integral_sqrt_floor(3), 1);
+    EXPECT_EQ(integral_sqrt_floor(4), 2);
+    EXPECT_EQ(integral_sqrt_floor(8), 2);
+    EXPECT_EQ(integral_sqrt_floor(9), 3);
+    EXPECT_EQ(integral_sqrt_floor(0xffffffffffffffffull), 0xffffffffull);
 
     std::mt19937_64 random_gen;
-    const uint32_t inputs_per_test = 10000000;
+    const uint32_t inputs_per_test = 1000000;
     std::vector<std::uint64_t> input(inputs_per_test);
     for (auto &x : input)
         x = random_gen();
@@ -170,11 +139,9 @@ void integral_sqrt_floor_test()
         for (auto &x : input)
         {
             const auto result = integral_sqrt_floor(x);
-            const bool is_correct =
+            EXPECT_TRUE(
                     result * result <= x
-                    && x <= (result + 1u) * (result + 1u) - 1u;
-            if (!is_correct)
-                throw error;
+                    && x <= (result + 1u) * (result + 1u) - 1u);
         }
     }
 
@@ -184,11 +151,9 @@ void integral_sqrt_floor_test()
         for (auto &x : input)
         {
             const auto result = integral_sqrt_floor_bisection(x);
-            const bool is_correct =
+            EXPECT_TRUE(
                     result * result <= x
-                    && x <= (result + 1u) * (result + 1u) - 1u;
-            if (!is_correct)
-                throw error;
+                    && x <= (result + 1u) * (result + 1u) - 1u);
         }
     }
 
@@ -201,46 +166,20 @@ void integral_sqrt_floor_test()
             const auto result =
                     static_cast<std::uint64_t>(
                         std::sqrt(static_cast<long double>(x)));
-            const bool is_correct =
+            EXPECT_TRUE(
                     result * result <= x
-                    && x <= (result + 1u) * (result + 1u) - 1u;
-            if (!is_correct)
-                throw error;
+                    && x <= (result + 1u) * (result + 1u) - 1u);
         }
     }
 }
 /*----------------------------------------------------------------------------*/
-void eigen_with_saturable_test()
+TEST(saturable_fixed_test, simple_inversion)
 {
-    const auto error =
-            std::runtime_error("eigen_with_saturable_test failed");
     using sf = saturable_fixed;
 
     Eigen::Matrix<sf, 2, 2> M;
     M(0, 0) = sf::from_integer(1) / sf::from_integer(2);
     M(1, 1) = sf::from_integer(2);
-    M = M * M.inverse();
-    std::cout << M << std::endl;
+    EXPECT_EQ(M * M.inverse(), (Eigen::Matrix<sf, 2, 2>::Identity()));
 }
 /*----------------------------------------------------------------------------*/
-int main() try
-{
-    simple_arithmetic_test();
-    integral_log2_floor_test();
-    integral_sqrt_floor_test();
-    eigen_with_saturable_test();
-
-    std::cout << "all tests passed!" << std::endl;
-
-    return 0;
-}
-catch(std::runtime_error &e)
-{
-    std::cerr << "runtime error caught: " << e.what() << std::endl;
-    return -1;
-}
-catch(...)
-{
-    std::cerr << "unknown exception caught: " << std::endl;
-    return -1;
-}

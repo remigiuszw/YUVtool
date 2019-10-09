@@ -21,15 +21,16 @@
 #include <yuv/xml_metadata.h>
 #include <yuv/Errors.h>
 
+#include <gtest/gtest.h>
+
 const std::string file_name = "test_pixel_format.xml";
 
-int main()
+TEST(xml_metadata_test, test_0)
 {
     YUV_tool::store_pixel_format(YUV_tool::yuv_420p_8bit, file_name);
     const auto recovered_pixel_format =
             YUV_tool::read_pixel_format(file_name);
-    MY_ASSERT(
-                recovered_pixel_format.m_macropixel_coding.m_size
-                == YUV_tool::yuv_420p_8bit.m_macropixel_coding.m_size);
-    return 0;
+    EXPECT_EQ(
+                recovered_pixel_format.m_macropixel_coding.m_size,
+                YUV_tool::yuv_420p_8bit.m_macropixel_coding.m_size);
 }
