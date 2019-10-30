@@ -36,9 +36,10 @@ class saturable_fixed
 public:
     using internal_uint = std::uint32_t;
     using double_internal_uint = std::uint64_t;
-    static constexpr std::uint32_t shift = 16;
+    static constexpr std::uint32_t fraction_bits = 16;
     static constexpr std::uint32_t total_bits = 32;
 
+    static constexpr std::uint32_t shift = fraction_bits;
     static constexpr std::uint32_t integer_bits = total_bits - shift;
     static constexpr std::uint32_t integer_sign_mask =
             static_cast<std::uint32_t>(1) << (integer_bits - 1u);
@@ -50,14 +51,15 @@ public:
 
 
     static constexpr std::uint32_t fraction_mask =
-            (static_cast<std::uint32_t>(1) << saturable_fixed::shift) - 1u;
+            (static_cast<std::uint32_t>(1) << shift) - 1u;
 
     static constexpr internal_uint sign_mask =
             static_cast<internal_uint>(1) << (total_bits - 1u);
-    static constexpr internal_uint max_internal =
-            sign_mask - 1u;
-    static constexpr internal_uint min_internal =
-            sign_mask;
+    static constexpr internal_uint max_internal = sign_mask - 1u;
+    static constexpr internal_uint min_internal = sign_mask;
+    static constexpr internal_uint one_internal =
+            static_cast<std::uint32_t>(1) << shift;
+    static constexpr internal_uint half_internal = one_internal >> 1;
 
     static constexpr double_internal_uint double_sign_mask =
             static_cast<double_internal_uint>(1) << (2 * total_bits - 1);
@@ -73,7 +75,7 @@ public:
     saturable_fixed(std::int32_t integer)
     {
         integer = std::min(max_integer, std::max(min_integer, integer));
-        std::uint32_t unsigned_integer =
+        const std::uint32_t unsigned_integer =
                 static_cast<std::uint32_t>(integer - min_integer)
                 - integer_sign_mask;
         m_value = unsigned_integer << shift;
@@ -105,6 +107,11 @@ public:
                 min_integer
                 + static_cast<std::int32_t>(
                     (m_value >> shift) ^ integer_sign_mask);
+    }
+
+    std::int32_t to_int_round() const
+    {
+        return to_int() + ((m_value & half_internal) ? 1 : 0);
     }
 
     double to_double() const

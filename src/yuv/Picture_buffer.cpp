@@ -188,8 +188,7 @@ void Picture_buffer::convert_color_space(
         return;
     const auto &input_components =
             m_parameters.get_pixel_format().m_color_space.m_components;
-    const auto &output_components =
-            color_space.m_components;
+    const auto &output_components = color_space.m_components;
     const Index input_components_count = input_components.size();
     const Index output_components_count = output_components.size();
 
@@ -264,7 +263,7 @@ void Picture_buffer::convert_color_space(
             const Index quantized_output =
                     (
                         output_in_encoded_range
-                        * ((1 << output_width) - 1)).to_int();
+                        * ((1 << output_width) - 1)).to_int_round();
             set_entry(xy, i, quantized_output);
         }
     }

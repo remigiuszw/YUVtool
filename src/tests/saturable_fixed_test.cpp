@@ -173,6 +173,15 @@ TEST(saturable_fixed_test, integral_sqrt_floor_test)
     }
 }
 /*----------------------------------------------------------------------------*/
+TEST(saturable_fixed_test, color_transform_last_step)
+{
+    const auto output_in_encoded_range {saturable_fixed {16} / 255};
+    const Index output_width {8};
+    const Index quantized_output =
+        (output_in_encoded_range * ((1 << output_width) - 1)).to_int_round();
+    EXPECT_EQ(quantized_output, 16);
+}
+/*----------------------------------------------------------------------------*/
 TEST(saturable_fixed_test, simple_inversion)
 {
     using sf = saturable_fixed;

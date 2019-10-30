@@ -18,6 +18,7 @@
  *
  */
 #include <yuv/Pixel_format.h>
+#include <yuv/Errors.h>
 
 #include <stdexcept>
 #include <algorithm>
@@ -30,6 +31,10 @@ Pixel_format get_expanded_pixel_format(
         const std::vector<Entry> &entries)
 {
     const Index components_count = color_space.m_components.size();
+    my_assert(
+                entries.size() >= components_count,
+                "insufficient number of entries to create expanded pixel "
+                "format");
     Pixel_format result;
     result.m_color_space = color_space;
     result.m_macropixel_coding.m_size = {1, 1};
@@ -84,6 +89,13 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input)
 Precalculated_pixel_format::Precalculated_pixel_format()
 {
     clear();
+}
+//------------------------------------------------------------------------------
+Precalculated_pixel_format::Precalculated_pixel_format(
+        const Pixel_format &pixel_format)
+{
+    clear();
+    recalculate(pixel_format);
 }
 //------------------------------------------------------------------------------
 void Precalculated_pixel_format::clear()
@@ -179,11 +191,11 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
     }
 
     // m_is_expanded
-    if(planes_count == get_components_count())
+    if (planes_count == get_components_count())
     {
-        for(Index plane_index = 0; plane_index < planes_count; plane_index++)
+        for (Index plane_index = 0; plane_index < planes_count; plane_index++)
         {
-            for(const Coded_pixel &pixel : get_pixel_format(
+            for (const Coded_pixel &pixel : get_pixel_format(
                     ).m_macropixel_coding.m_pixels)
             {
                 const Component_coding &component =
@@ -193,7 +205,6 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                         || component.m_row_index != 0
                         || component.m_entry_index != 0)
                 {
-                    m_is_expanded = false;
                     goto is_not_expanded;
                 }
             }
@@ -210,6 +221,14 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
 Precalculated_buffer_parameters::Precalculated_buffer_parameters()
 {
     clear();
+}
+//------------------------------------------------------------------------------
+Precalculated_buffer_parameters::Precalculated_buffer_parameters(
+        const Pixel_format &format,
+        const Vector<Unit::pixel> &resolution)
+{
+    clear();
+    recalculate(format, resolution);
 }
 //------------------------------------------------------------------------------
 void Precalculated_buffer_parameters::clear()

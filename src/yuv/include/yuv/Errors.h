@@ -55,7 +55,7 @@ inline void check_range(Index begin, Index value, Index end)
     YUV_tool::my_assert( \
         test, \
         "Assertion failed: (" # test \
-        "), but the programmer was to lazy to explain what it means");
+        "), but the programmer was to lazy to explain what it means")
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */
 

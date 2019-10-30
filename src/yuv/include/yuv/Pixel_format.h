@@ -139,17 +139,17 @@ const Color_space sRGB_color_space
         { // R
             { 1, 0, 0, 0 },
             { 0, 1 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         },
         { // G
             { 0, 1, 0, 0 },
             { 0, 1 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         },
         { // B
             { 0, 0, 1, 0 },
-            { 0.0, 1.0 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { 0, 1 },
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         }
     }
 };
@@ -169,7 +169,7 @@ const Color_space ITU601_YCbCr_color_space
                 0
             },
             { 0, 1 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         },
         { // Cb
             {
@@ -179,7 +179,7 @@ const Color_space ITU601_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         },
         { // Cr
             {
@@ -189,7 +189,7 @@ const Color_space ITU601_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         }
     }
 };
@@ -209,7 +209,7 @@ const Color_space ITU709_YCbCr_color_space
                 0
             },
             { 0, 1 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         },
         { // Cb
             {
@@ -219,7 +219,7 @@ const Color_space ITU709_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         },
         { // Cr
             {
@@ -229,7 +229,7 @@ const Color_space ITU709_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         }
     }
 };
@@ -249,7 +249,7 @@ const Color_space ITU2020_YCbCr_color_space
                 0
             },
             { 0, 1 },
-            { saturable_fixed(16) / 256, saturable_fixed(235) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(235) / 255 }
         },
         { // Cb
             {
@@ -259,7 +259,7 @@ const Color_space ITU2020_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         },
         { // Cr
             {
@@ -269,7 +269,7 @@ const Color_space ITU2020_YCbCr_color_space
                 0
             },
             { -saturable_fixed(1) / 2, saturable_fixed(1) / 2 },
-            { saturable_fixed(16) / 256, saturable_fixed(240) / 256 }
+            { saturable_fixed(16) / 255, saturable_fixed(240) / 255 }
         }
     }
 };
@@ -311,6 +311,36 @@ const Pixel_format yuv_420p_8bit
             }
         },
         { 2, 2 }
+    }
+};
+
+const Pixel_format yuv_444p_8bit
+{
+    { // planes
+        { // plane Y
+            { // rows
+                { { { 8 } } }
+            }
+        },
+        { // plane U
+            { // rows
+                { { { 8 } } }
+            }
+        },
+        { // plane V
+            { // rows
+                { { { 8 } } }
+            }
+        },
+    },
+    ITU601_YCbCr_color_space,
+    { // macropixel coding
+        { // coded pixels
+            { // coded pixel
+                { { 0, 0, 0 }, { 1, 0, 0 }, { 2, 0, 0 } }
+            }
+        },
+        { 1, 1 }
     }
 };
 
@@ -389,6 +419,7 @@ private:
 
 public:
     Precalculated_pixel_format();
+    Precalculated_pixel_format(const Pixel_format &pixel_format);
     void clear();
     void recalculate(const Pixel_format &pixel_format);
 
@@ -503,6 +534,9 @@ class Precalculated_buffer_parameters : public Precalculated_pixel_format
 {
 public:
     Precalculated_buffer_parameters();
+    Precalculated_buffer_parameters(
+            const Pixel_format &format,
+            const Vector<Unit::pixel> &resolution);
     void recalculate(
             const Pixel_format &format,
             const Vector<Unit::pixel> &resolution);
@@ -617,7 +651,8 @@ private:
     Bit_position m_buffer_size;
 };
 
-Pixel_format get_expanded_pixel_format(const Color_space &color_space,
+Pixel_format get_expanded_pixel_format(
+        const Color_space &color_space,
         const std::vector<Entry> &entries);
 Pixel_format get_expanded_pixel_format(const Pixel_format &input);
 
