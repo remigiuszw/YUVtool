@@ -252,9 +252,13 @@ void Picture_buffer::convert_color_space(
                     output_component.m_valid_range;
             const saturable_fixed (&encoded_range)[2] =
                     output_component.m_coded_range;
-            const saturable_fixed output_in_0_to_1 =
+            saturable_fixed output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);
+            output_in_0_to_1 =
+                    std::max<saturable_fixed>(
+                        std::min<saturable_fixed>(1, output_in_0_to_1),
+                        0);
             const saturable_fixed output_in_encoded_range =
                     output_in_0_to_1 * (encoded_range[1] - encoded_range[0])
                     + encoded_range[0];
