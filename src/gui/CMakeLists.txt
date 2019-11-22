@@ -7,17 +7,19 @@ pkg_check_modules(epoxy REQUIRED epoxy IMPORTED_TARGET)
 
 add_executable(
     yuvtool
-    yuv_tool_application.cpp
-    viewer_frame.cpp
-    scroll_adapter.cpp
+    colorspace_frame.cpp
+    colorspace_frame.h
     drawer_gl.cpp
-    main.cpp
-    format_chooser_dialog.cpp
-    yuv_tool_application.h
-    viewer_frame.h
-    scroll_adapter.h
     drawer_gl.h
-    format_chooser_dialog.h)
+    format_chooser_dialog.cpp
+    format_chooser_dialog.h
+    main.cpp
+    scroll_adapter.cpp
+    scroll_adapter.h
+    viewer_frame.cpp
+    viewer_frame.h
+    yuv_tool_application.cpp
+    yuv_tool_application.h)
 
 target_include_directories(yuvtool PRIVATE .)
 

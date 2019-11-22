@@ -336,7 +336,7 @@ void Viewer_frame::draw_frame()
 {
     if(
             m_yuv_file.is_open()
-            && m_yuv_file.get_pixel_format().m_macropixel_coding.m_size.x() > 0)
+            && m_yuv_file.get_pixel_format().macropixel_coding.size.x() > 0)
     {
         try
         {

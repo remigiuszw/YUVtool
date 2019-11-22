@@ -487,7 +487,7 @@ void Drawer_gl::Implementation::fill_missing_buffers(
         const Index zoom_level)
 {
     const auto macropixel_size =
-            m_yuv_file->get_pixel_format().m_macropixel_coding.m_size;
+            m_yuv_file->get_pixel_format().macropixel_coding.size;
     const Index zoom_levels_count =
             get_picture_zoom_levels_count(m_yuv_file->get_resolution());
     my_assert(zoom_level == zoom_levels_count - 1, "scaling not supported yet");

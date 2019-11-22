@@ -184,11 +184,11 @@ void Picture_buffer::convert_color_space(
             m_parameters.is_expanded(),
             "color space conversion of not expanded pixel formats is not "
             "supported");
-    if(color_space == m_parameters.get_pixel_format().m_color_space)
+    if(color_space == m_parameters.get_pixel_format().color_space)
         return;
     const auto &input_components =
-            m_parameters.get_pixel_format().m_color_space.m_components;
-    const auto &output_components = color_space.m_components;
+            m_parameters.get_pixel_format().color_space.components;
+    const auto &output_components = color_space.components;
     const Index input_components_count = input_components.size();
     const Index output_components_count = output_components.size();
 
@@ -201,11 +201,11 @@ void Picture_buffer::convert_color_space(
         for(Index j = 0; j < Rgba_component_count; j++)
         {
             if(i < input_components_count)
-                input_matrix(i, j) = input_components[i].m_coeff[j];
+                input_matrix(i, j) = input_components[i].coeff[j];
             else
                 input_matrix(i, j) = (i == j) ? 1 : 0;
             if(i < output_components_count)
-                output_matrix(i, j) = output_components[i].m_coeff[j];
+                output_matrix(i, j) = output_components[i].coeff[j];
             else
                 output_matrix(i, j) = (i == j) ? 1 : 0;
         }
@@ -229,10 +229,10 @@ void Picture_buffer::convert_color_space(
             const Index input_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
             const Component &input_component = input_components[i];
-            const saturable_fixed (&valid_range)[2] =
-                    input_component.m_valid_range;
-            const saturable_fixed (&encoded_range)[2] =
-                    input_component.m_coded_range;
+            const std::array<saturable_fixed, 2> &valid_range =
+                    input_component.valid_range;
+            const std::array<saturable_fixed, 2> &encoded_range =
+                    input_component.coded_range;
             /* the maximal value ((1 << input_width) - 1) represents 1 */
             const saturable_fixed input_in_encoded_range =
                     saturable_fixed(quantized_input)
@@ -248,10 +248,10 @@ void Picture_buffer::convert_color_space(
         for(Index i = 0; i < output_components_count; i++)
         {
             const Component &output_component = output_components[i];
-            const saturable_fixed (&valid_range)[2] =
-                    output_component.m_valid_range;
-            const saturable_fixed (&encoded_range)[2] =
-                    output_component.m_coded_range;
+            const std::array<saturable_fixed, 2> &valid_range =
+                    output_component.valid_range;
+            const std::array<saturable_fixed, 2> &encoded_range =
+                    output_component.coded_range;
             saturable_fixed output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);
@@ -346,7 +346,7 @@ Picture_buffer convert(
         const Pixel_format &pixel_format)
 {
     Picture_buffer expanded = expand_sampling(source);
-    expanded.convert_color_space(pixel_format.m_color_space);
+    expanded.convert_color_space(pixel_format.color_space);
     return subsample(expanded, pixel_format);
 }
 //------------------------------------------------------------------------------

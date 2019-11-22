@@ -145,7 +145,7 @@ Picture_buffer Yuv_file::extract_buffer(
     const Bit_position picture_size = get_frame_size();
     const Bit_position picture_offset = picture_number * picture_size;
 
-    const Index planes_count = pixel_format.m_planes.size();
+    const Index planes_count = pixel_format.planes.size();
     for(Index plane_idx = 0; plane_idx < planes_count; plane_idx++)
     {
         Bit_position plane_offset =
@@ -255,7 +255,7 @@ void Yuv_file::insert_buffer(
     const Bit_position picture_size = get_frame_size();
     const Bit_position picture_offset = picture_number * picture_size;
 
-    const Index planes_count = pixel_format.m_planes.size();
+    const Index planes_count = pixel_format.planes.size();
     for(Index plane_idx = 0; plane_idx < planes_count; plane_idx++)
     {
         Bit_position plane_offset =

@@ -35,67 +35,61 @@ struct Component
     /*
      * E'_X = K_XR * E'_R + K_XG * E'_G + K_XB * E'_B + K_XA * E'_A
      */
-    saturable_fixed m_coeff[Rgba_component_count];
-    saturable_fixed m_valid_range[2];
-    saturable_fixed m_coded_range[2];
+    std::array<saturable_fixed, Rgba_component_count> coeff;
+    std::array<saturable_fixed, 2> valid_range;
+    std::array<saturable_fixed, 2> coded_range;
 };
 
 inline bool operator==(const Component &a, const Component &b)
 {
     return
-            std::equal(
-                a.m_coeff, a.m_coeff + Rgba_component_count,
-                b.m_coeff)
-            && std::equal(
-                a.m_valid_range, a.m_valid_range + 2,
-                b.m_valid_range)
-            && std::equal(
-                a.m_coded_range, a.m_coded_range + 2,
-                b.m_coded_range);
+            a.coeff == b.coeff
+            && a.valid_range == b.valid_range
+            && a.coded_range == b.coded_range;
 }
 
 struct Color_space
 {
-    std::vector<Component> m_components;
+    std::vector<Component> components;
 };
 
 inline bool operator==(const Color_space &a, const Color_space &b)
 {
-    return a.m_components == b.m_components;
+    return a.components == b.components;
 }
 
 struct Entry
 {
-    Bit_position m_width;
+    Bit_position width;
 };
 
 struct Entry_row
 {
-    std::vector<Entry> m_entries;
+    std::vector<Entry> entries;
 };
 
 struct Plane
 {
     // one set of entries in plane corresponds to one macropixel
-    std::vector<Entry_row> m_rows;
+    std::vector<Entry_row> rows;
 };
 
 struct Component_coding
 {
-    Index m_plane_index;
-    Index m_row_index;
-    Index m_entry_index;
+    Index plane_index;
+    Index row_index;
+    Index entry_index;
 };
 
 struct Coded_pixel
 {
-    std::vector<Component_coding> m_components;
+    std::vector<Component_coding> components;
 };
 
 struct Macropixel_coding
 {
-    std::vector<Coded_pixel> m_pixels;
-    Vector<Unit::pixel> m_size;
+    std::vector<Coded_pixel> pixels;
+    Vector<Unit::pixel> size;
 };
 
 // TODO: add support for big-endian storage
@@ -103,9 +97,9 @@ struct Macropixel_coding
 //       picture size is not integer multiplicity of macropixel size
 struct Pixel_format
 {
-    std::vector<Plane> m_planes;
-    Color_space m_color_space;
-    Macropixel_coding m_macropixel_coding;
+    std::vector<Plane> planes;
+    Color_space color_space;
+    Macropixel_coding macropixel_coding;
 };
 
 // full range RGB
@@ -429,7 +423,7 @@ public:
     }
     Index get_components_count() const
     {
-        return m_pixel_format.m_color_space.m_components.size();
+        return m_pixel_format.color_space.components.size();
     }
     Index get_planes_count() const
     {
@@ -464,10 +458,10 @@ public:
             const Index row_index,
             const Index entry_index) const
     {
-        return m_pixel_format.m_planes[
-                plane_index].m_rows[
-                row_index].m_entries[
-                entry_index].m_width;
+        return m_pixel_format.planes[
+                plane_index].rows[
+                row_index].entries[
+                entry_index].width;
     }
     Bit_position get_bits_per_entry(
             const Coordinates<Unit::pixel, Reference_point::macropixel>
@@ -475,14 +469,14 @@ public:
             const Index component_index) const
     {
         const Component_coding &coding =
-                m_pixel_format.m_macropixel_coding.m_pixels[
-                get_pixel_coding_index(pixel_in_macropixel)].m_components[
+                m_pixel_format.macropixel_coding.pixels[
+                get_pixel_coding_index(pixel_in_macropixel)].components[
                 component_index];
         return
-                m_pixel_format.m_planes[
-                    coding.m_plane_index].m_rows[
-                    coding.m_row_index].m_entries[
-                    coding.m_entry_index].m_width;
+                m_pixel_format.planes[
+                    coding.plane_index].rows[
+                    coding.row_index].entries[
+                    coding.entry_index].width;
     }
     Bit_position get_entry_offset_in_macropixel_in_row_in_plane(
             const Index plane_index,
@@ -497,7 +491,7 @@ public:
     }
     Vector<Unit::pixel> get_macropixel_size() const
     {
-        return m_pixel_format.m_macropixel_coding.m_size;
+        return m_pixel_format.macropixel_coding.size;
     }
     bool is_expanded() const
     {
@@ -580,31 +574,31 @@ public:
                         get_macropixel_size(),
                         pixel_in_macropixel);
         const Macropixel_coding &macropixel_coding =
-                get_pixel_format().m_macropixel_coding;
+                get_pixel_format().macropixel_coding;
         const Coded_pixel &coded_pixel =
-                macropixel_coding.m_pixels[
-                    macropixel_coding.m_size.x() * pixel_in_macropixel.y()
+                macropixel_coding.pixels[
+                    macropixel_coding.size.x() * pixel_in_macropixel.y()
                     + pixel_in_macropixel.x()];
         const Component_coding &component_coding =
-                coded_pixel.m_components[component_index];
-        const Index plane_index = component_coding.m_plane_index;
+                coded_pixel.components[component_index];
+        const Index plane_index = component_coding.plane_index;
         const Plane_parameters &plane_parameters = m_planes[plane_index];
         const Bit_position entry_offset_in_row_of_pixels_in_macropixel =
                 get_entry_offset_in_macropixel_in_row_in_plane(
                     plane_index,
-                    component_coding.m_row_index,
-                    component_coding.m_entry_index);
+                    component_coding.row_index,
+                    component_coding.entry_index);
         return
                 plane_parameters.m_offset
                 + (
                     plane_parameters.m_size_per_row_of_macropixels
                     * macropixel_coordintes.y())
-                + plane_parameters.m_rows[component_coding.m_row_index].m_offset
+                + plane_parameters.m_rows[component_coding.row_index].m_offset
                 + (
                     macropixel_coordintes.x()
                     * get_bits_per_macropixel_in_row_in_plane(
                         plane_index,
-                        component_coding.m_row_index))
+                        component_coding.row_index))
                 + entry_offset_in_row_of_pixels_in_macropixel;
     }
     using Precalculated_pixel_format::get_bits_per_entry;

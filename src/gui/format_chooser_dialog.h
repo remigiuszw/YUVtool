@@ -20,14 +20,16 @@
 #ifndef FORMAT_CHOOSER_DIALOG_H
 #define FORMAT_CHOOSER_DIALOG_H
 
+#include <colorspace_frame.h>
+
 #include <yuv/Pixel_format.h>
 
-#include <gtkmm/dialog.h>
 #include <gtkmm/combobox.h>
+#include <gtkmm/dialog.h>
 #include <gtkmm/frame.h>
-#include <gtkmm/spinbutton.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/liststore.h>
+#include <gtkmm/spinbutton.h>
 
 namespace YUV_tool {
 
@@ -99,52 +101,6 @@ private:
         std::vector<std::unique_ptr<Plane_configurator> > m_planes;
     };
 
-    struct Component_configurator : Gtk::Frame
-    {
-        struct Color_group
-        {
-            Gtk::Box m_box;
-            Gtk::Label m_label;
-            Gtk::SpinButton m_entry;
-
-            Color_group(const std::string &name);
-        };
-
-        Component_configurator();
-
-        Gtk::Box m_box;
-
-        Color_group m_colors[Rgba_component_count];
-
-        Gtk::Box m_valid_range_box;
-        Gtk::Label m_valid_range_label;
-        Gtk::SpinButton m_valid_range_low_entry;
-        Gtk::SpinButton m_valid_range_high_entry;
-
-        Gtk::Box m_coded_range_box;
-        Gtk::Label m_coded_range_label;
-        Gtk::SpinButton m_coded_range_low_entry;
-        Gtk::SpinButton m_coded_range_high_entry;
-    };
-
-    struct Colorspace_frame : Gtk::Frame
-    {
-        Colorspace_frame();
-
-        Gtk::Box m_box;
-
-        Gtk::Box m_predefined_colorspace_box;
-        Gtk::Label m_predefined_colorspace_label;
-        Gtk::ComboBox m_predefined_colorspace_entry;
-
-        Gtk::Box m_component_count_box;
-        Gtk::Label m_component_count_label;
-        Gtk::SpinButton m_component_count_entry;
-
-        Gtk::Box m_component_box;
-        Component_configurator m_components[Rgba_component_count];
-    };
-
     struct Sample_configurator : Gtk::Box
     {
         Sample_configurator();
@@ -196,18 +152,6 @@ private:
         }
     };
 
-    struct Color_space_column_record : Gtk::TreeModelColumnRecord
-    {
-        Gtk::TreeModelColumn<Glib::ustring> m_label;
-        Gtk::TreeModelColumn<const Color_space *> m_pointer;
-
-        Color_space_column_record()
-        {
-            add(m_label);
-            add(m_pointer);
-        }
-    };
-
     void update_format();
     void on_predefined_format();
     void on_import_format();
@@ -224,9 +168,6 @@ private:
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
     Glib::RefPtr<Gtk::ListStore> m_import_list_store;
     Pixel_format_column_record m_pixel_format_column_record;
-
-    Glib::RefPtr<Gtk::ListStore> m_color_space_list_store;
-    Color_space_column_record m_color_space_column_record;
 
     Pixel_format m_pixel_format;
 };

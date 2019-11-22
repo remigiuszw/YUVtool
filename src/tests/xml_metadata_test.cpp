@@ -31,6 +31,6 @@ TEST(xml_metadata_test, test_0)
     const auto recovered_pixel_format =
             YUV_tool::read_pixel_format(file_name);
     EXPECT_EQ(
-                recovered_pixel_format.m_macropixel_coding.m_size,
-                YUV_tool::yuv_420p_8bit.m_macropixel_coding.m_size);
+                recovered_pixel_format.macropixel_coding.size,
+                YUV_tool::yuv_420p_8bit.macropixel_coding.size);
 }

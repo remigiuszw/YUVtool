@@ -41,14 +41,14 @@ enum Rgba_component
     Rgba_component_rgb_count = 3
 };
 /*----------------------------------------------------------------------------*/
-template<typename TNumber>
-TNumber round_down(TNumber value,TNumber divisor)
+template <typename TNumber>
+TNumber round_down(const TNumber value, const TNumber divisor)
 {
     return value - value % divisor;
 }
 /*----------------------------------------------------------------------------*/
-template<typename TNumber>
-TNumber round_up(TNumber value, TNumber divisor)
+template <typename TNumber>
+TNumber round_up(const TNumber value, const TNumber divisor)
 {
     return round_down(value + divisor - static_cast<TNumber>(1), divisor);
 }

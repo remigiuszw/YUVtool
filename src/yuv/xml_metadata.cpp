@@ -175,14 +175,14 @@ Pixel_format read_pixel_format(const std::string &file_name)
                     XmlElementRange(row_element, "entry"))
             {
                 Entry entry;
-                entry.m_width = get_xml_element_value<int>(entry_element);
-                row.m_entries.push_back(entry);
+                entry.width = get_xml_element_value<int>(entry_element);
+                row.entries.push_back(entry);
             }
 
-            plane.m_rows.push_back(std::move(row));
+            plane.rows.push_back(std::move(row));
         }
 
-        result.m_planes.push_back(std::move(plane));
+        result.planes.push_back(std::move(plane));
     }
 
     const auto *colorspace_elment =
@@ -199,34 +199,34 @@ Pixel_format read_pixel_format(const std::string &file_name)
             const auto *coefficient_element :
                 XmlElementRange(component_element, "coefficient"))
         {
-            component.m_coeff[i++] =
+            component.coeff[i++] =
                     get_xml_element_value<double>(coefficient_element);
         }
 
         const auto *valid_range_element =
                 component_element->FirstChildElement("valid_range");
         MY_ASSERT(valid_range_element);
-        component.m_valid_range[0] =
+        component.valid_range[0] =
                 get_xml_element_attribute<double>(valid_range_element, "min");
-        component.m_valid_range[1] =
+        component.valid_range[1] =
                 get_xml_element_attribute<double>(valid_range_element, "max");
 
         const auto *coded_range_element =
                 component_element->FirstChildElement("coded_range");
         MY_ASSERT(coded_range_element);
-        component.m_coded_range[0] =
+        component.coded_range[0] =
                 get_xml_element_attribute<double>(coded_range_element, "min");
-        component.m_coded_range[1] =
+        component.coded_range[1] =
                 get_xml_element_attribute<double>(coded_range_element, "max");
 
-        result.m_color_space.m_components.push_back(std::move(component));
+        result.color_space.components.push_back(std::move(component));
     }
 
     const auto *macropixel_coding_element =
             pixel_format_element->FirstChildElement("macropixel_coding");
     MY_ASSERT(macropixel_coding_element);
 
-    result.m_macropixel_coding.m_size.set(
+    result.macropixel_coding.size.set(
                 get_xml_element_attribute<int>(
                     macropixel_coding_element,
                     "columns_count"),
@@ -246,31 +246,31 @@ Pixel_format read_pixel_format(const std::string &file_name)
         {
             Component_coding component_coding;
 
-            component_coding.m_plane_index =
+            component_coding.plane_index =
                     get_xml_element_attribute<int>(
                         component_coding_element,
                         "plane_index");
-            component_coding.m_row_index =
+            component_coding.row_index =
                     get_xml_element_attribute<int>(
                         component_coding_element,
                         "row_index");
-            component_coding.m_entry_index =
+            component_coding.entry_index =
                     get_xml_element_attribute<int>(
                         component_coding_element,
                         "entry_index");
 
-            coded_pixel.m_components.push_back(std::move(component_coding));
+            coded_pixel.components.push_back(std::move(component_coding));
         }
 
-        result.m_macropixel_coding.m_pixels.push_back(std::move(coded_pixel));
+        result.macropixel_coding.pixels.push_back(std::move(coded_pixel));
     }
 
     MY_ASSERT(
                 (
-                    result.m_macropixel_coding.m_size.x()
-                    * result.m_macropixel_coding.m_size.y())
+                    result.macropixel_coding.size.x()
+                    * result.macropixel_coding.size.y())
                 == static_cast<Index>(
-                    result.m_macropixel_coding.m_pixels.size()));
+                    result.macropixel_coding.pixels.size()));
 
     return result;
 }
@@ -291,20 +291,20 @@ void store_pixel_format(
     auto *planes_element = output_file.NewElement("planes");
     root->InsertEndChild(planes_element);
 
-    for(auto &plane : pixel_format.m_planes)
+    for(auto &plane : pixel_format.planes)
     {
         auto *plane_element = output_file.NewElement("plane");
         planes_element->InsertEndChild(plane_element);
 
-        for(auto &row : plane.m_rows)
+        for(auto &row : plane.rows)
         {
             auto *row_element = output_file.NewElement("row");
             plane_element->InsertEndChild(row_element);
 
-            for(auto &entry : row.m_entries)
+            for(auto &entry : row.entries)
             {
                 auto *entry_element = output_file.NewElement("entry");
-                entry_element->SetText(entry.m_width.get_bits());
+                entry_element->SetText(entry.width.get_bits());
                 row_element->InsertEndChild(entry_element);
             }
         }
@@ -314,12 +314,12 @@ void store_pixel_format(
     auto *colorspace_element = output_file.NewElement("colorspace");
     root->InsertFirstChild(colorspace_element);
 
-    for(auto &component : pixel_format.m_color_space.m_components)
+    for(auto &component : pixel_format.color_space.components)
     {
         auto *component_element = output_file.NewElement("component");
         colorspace_element->InsertEndChild(component_element);
 
-        for(auto &coefficient : component.m_coeff)
+        for(auto &coefficient : component.coeff)
         {
             auto *coefficient_element = output_file.NewElement("coefficient");
             coefficient_element->SetText(to_string(coefficient).c_str());
@@ -329,19 +329,19 @@ void store_pixel_format(
         auto *valid_range_element = output_file.NewElement("valid_range");
         valid_range_element->SetAttribute(
                     "min",
-                    to_string(component.m_valid_range[0]).c_str());
+                    to_string(component.valid_range[0]).c_str());
         valid_range_element->SetAttribute(
                     "max",
-                    to_string(component.m_valid_range[1]).c_str());
+                    to_string(component.valid_range[1]).c_str());
         component_element->InsertEndChild(valid_range_element);
 
         auto *coded_range_element = output_file.NewElement("coded_range");
         coded_range_element->SetAttribute(
                     "min",
-                    to_string(component.m_coded_range[0]).c_str());
+                    to_string(component.coded_range[0]).c_str());
         coded_range_element->SetAttribute(
                     "max",
-                    to_string(component.m_coded_range[1]).c_str());
+                    to_string(component.coded_range[1]).c_str());
         component_element->InsertEndChild(coded_range_element);
     }
 
@@ -349,30 +349,30 @@ void store_pixel_format(
             output_file.NewElement("macropixel_coding");
     macropixel_coding_element->SetAttribute(
                 "columns_count",
-                static_cast<int>(pixel_format.m_macropixel_coding.m_size.x()));
+                static_cast<int>(pixel_format.macropixel_coding.size.x()));
     macropixel_coding_element->SetAttribute(
                 "rows_count",
-                static_cast<int>(pixel_format.m_macropixel_coding.m_size.y()));
+                static_cast<int>(pixel_format.macropixel_coding.size.y()));
     root->InsertEndChild(macropixel_coding_element);
 
-    for(auto &coded_pixel : pixel_format.m_macropixel_coding.m_pixels)
+    for(auto &coded_pixel : pixel_format.macropixel_coding.pixels)
     {
         auto *coded_pixel_element = output_file.NewElement("coded_pixel");
         macropixel_coding_element->InsertEndChild(coded_pixel_element);
 
-        for(auto &component_coding : coded_pixel.m_components)
+        for(auto &component_coding : coded_pixel.components)
         {
             auto *component_coding_element =
                     output_file.NewElement("component_coding");
             component_coding_element->SetAttribute(
                         "plane_index",
-                        static_cast<int>(component_coding.m_plane_index));
+                        static_cast<int>(component_coding.plane_index));
             component_coding_element->SetAttribute(
                         "row_index",
-                        static_cast<int>(component_coding.m_row_index));
+                        static_cast<int>(component_coding.row_index));
             component_coding_element->SetAttribute(
                         "entry_index",
-                        static_cast<int>(component_coding.m_entry_index));
+                        static_cast<int>(component_coding.entry_index));
             coded_pixel_element->InsertEndChild(component_coding_element);
         }
     }

@@ -30,35 +30,35 @@ Pixel_format get_expanded_pixel_format(
         const Color_space &color_space,
         const std::vector<Entry> &entries)
 {
-    const Index components_count = color_space.m_components.size();
+    const Index components_count = color_space.components.size();
     my_assert(
                 entries.size() >= components_count,
                 "insufficient number of entries to create expanded pixel "
                 "format");
     Pixel_format result;
-    result.m_color_space = color_space;
-    result.m_macropixel_coding.m_size = {1, 1};
-    result.m_macropixel_coding.m_pixels.resize(1);
+    result.color_space = color_space;
+    result.macropixel_coding.size = {1, 1};
+    result.macropixel_coding.pixels.resize(1);
     Coded_pixel &target_pixel =
-            result.m_macropixel_coding.m_pixels.front();
-    target_pixel.m_components.resize(components_count);
-    result.m_planes.resize(components_count);
+            result.macropixel_coding.pixels.front();
+    target_pixel.components.resize(components_count);
+    result.planes.resize(components_count);
     for(Index component_index = 0; component_index < components_count;
             component_index++)
     {
-        target_pixel.m_components[component_index] = {component_index, 0, 0};
-        result.m_planes[component_index] = {{{{entries[component_index]}}}};
+        target_pixel.components[component_index] = {component_index, 0, 0};
+        result.planes[component_index] = {{{{entries[component_index]}}}};
     }
     return result;
 }
 //------------------------------------------------------------------------------
 Pixel_format get_expanded_pixel_format(const Pixel_format &input)
 {
-    const Index components_count = input.m_color_space.m_components.size();
+    const Index components_count = input.color_space.components.size();
 
     std::vector<Entry> entries(components_count);
     const std::vector<Coded_pixel> &coded_pixels =
-            input.m_macropixel_coding.m_pixels;
+            input.macropixel_coding.pixels;
     for(Index plane_index = 0; plane_index < components_count; plane_index++)
     {
         const Bit_position max_depth =
@@ -71,19 +71,19 @@ Pixel_format get_expanded_pixel_format(const Pixel_format &input)
                             const Coded_pixel &coded_pixel)
                     {
                         const Component_coding &input_component_coding =
-                                coded_pixel.m_components[plane_index];
+                                coded_pixel.components[plane_index];
                         const Entry &input_entry =
-                                input.m_planes[
-                                input_component_coding.m_plane_index].m_rows[
-                                input_component_coding.m_row_index].m_entries[
-                                input_component_coding.m_entry_index];
-                        return std::max(max, input_entry.m_width);
+                                input.planes[
+                                input_component_coding.plane_index].rows[
+                                input_component_coding.row_index].entries[
+                                input_component_coding.entry_index];
+                        return std::max(max, input_entry.width);
                     });
-        entries[plane_index].m_width.set_position(round_up(
+        entries[plane_index].width.set_position(round_up(
                 max_depth.get_position(), bits_in_byte));
     }
 
-    return get_expanded_pixel_format(input.m_color_space, entries);
+    return get_expanded_pixel_format(input.color_space, entries);
 }
 //------------------------------------------------------------------------------
 Precalculated_pixel_format::Precalculated_pixel_format()
@@ -107,7 +107,7 @@ void Precalculated_pixel_format::clear()
 //------------------------------------------------------------------------------
 void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
 {
-    const Index planes_count = pixel_format.m_planes.size();
+    const Index planes_count = pixel_format.planes.size();
 
     m_pixel_format = pixel_format;
 
@@ -115,17 +115,17 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
     for(Index plane_index = 0; plane_index < planes_count; plane_index++)
     {
         Plane_parameters &plane_parameters = m_planes[plane_index];
-        const Plane &plane = pixel_format.m_planes[plane_index];
+        const Plane &plane = pixel_format.planes[plane_index];
 
-        const Index rows_count = pixel_format.m_planes[plane_index].m_rows.size();
+        const Index rows_count = pixel_format.planes[plane_index].rows.size();
         plane_parameters.m_rows.resize(rows_count);
         for(Index row_index = 0; row_index < rows_count; row_index++)
         {
             Entry_row_paramters &row_parameters =
                     plane_parameters.m_rows[row_index];
-            const Entry_row &row = plane.m_rows[row_index];
+            const Entry_row &row = plane.rows[row_index];
 
-            const Index entry_count = row.m_entries.size();
+            const Index entry_count = row.entries.size();
             row_parameters.m_entries.resize(entry_count);
             Bit_position offset = 0;
             for(Index entry_index = 0; entry_index < entry_count; entry_index++)
@@ -134,7 +134,7 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                 entry.m_offset = offset;
                 entry.m_sampling_point = {-1, -1};
                 entry.m_component_index = -1;
-                offset += row.m_entries[entry_index].m_width;
+                offset += row.entries[entry_index].width;
             }
             row_parameters.m_bits_per_macropixel = offset;
         }
@@ -170,14 +170,14 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
                     component_index++)
             {
                 const Component_coding &component_coding =
-                        pixel_format.m_macropixel_coding.m_pixels[
-                        pixel_index].m_components[
+                        pixel_format.macropixel_coding.pixels[
+                        pixel_index].components[
                         component_index];
                 Entry_parameters &entry_parameters =
                         m_planes[
-                        component_coding.m_plane_index].m_rows[
-                        component_coding.m_row_index].m_entries[
-                        component_coding.m_entry_index];
+                        component_coding.plane_index].m_rows[
+                        component_coding.row_index].m_entries[
+                        component_coding.entry_index];
                 if(
                         entry_parameters.m_sampling_point
                         == Coordinates<Unit::pixel,
@@ -196,14 +196,14 @@ void Precalculated_pixel_format::recalculate(const Pixel_format &pixel_format)
         for (Index plane_index = 0; plane_index < planes_count; plane_index++)
         {
             for (const Coded_pixel &pixel : get_pixel_format(
-                    ).m_macropixel_coding.m_pixels)
+                    ).macropixel_coding.pixels)
             {
                 const Component_coding &component =
-                        pixel.m_components[plane_index];
+                        pixel.components[plane_index];
                 if(
-                        component.m_plane_index != plane_index
-                        || component.m_row_index != 0
-                        || component.m_entry_index != 0)
+                        component.plane_index != plane_index
+                        || component.row_index != 0
+                        || component.entry_index != 0)
                 {
                     goto is_not_expanded;
                 }
