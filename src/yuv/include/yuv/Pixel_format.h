@@ -40,23 +40,10 @@ struct Component
     std::array<saturable_fixed, 2> coded_range;
 };
 
-inline bool operator==(const Component &a, const Component &b)
-{
-    return
-            a.coeff == b.coeff
-            && a.valid_range == b.valid_range
-            && a.coded_range == b.coded_range;
-}
-
 struct Color_space
 {
     std::vector<Component> components;
 };
-
-inline bool operator==(const Color_space &a, const Color_space &b)
-{
-    return a.components == b.components;
-}
 
 struct Entry
 {
@@ -101,6 +88,60 @@ struct Pixel_format
     Color_space color_space;
     Macropixel_coding macropixel_coding;
 };
+
+inline bool operator==(const Component &a, const Component &b)
+{
+    return
+            a.coeff == b.coeff
+            && a.valid_range == b.valid_range
+            && a.coded_range == b.coded_range;
+}
+
+inline bool operator==(const Color_space &a, const Color_space &b)
+{
+    return a.components == b.components;
+}
+
+inline bool operator==(const Entry &a, const Entry &b)
+{
+    return a.width == b.width;
+}
+
+inline bool operator==(const Entry_row &a, const Entry_row &b)
+{
+    return a.entries == b.entries;
+}
+
+inline bool operator==(const Plane &a, const Plane &b)
+{
+    return a.rows == b.rows;
+}
+
+inline bool operator==(const Component_coding &a, const Component_coding &b)
+{
+    return
+            a.plane_index == b.plane_index
+            && a.row_index == b.row_index
+            && a.entry_index == b.entry_index;
+}
+
+inline bool operator==(const Coded_pixel &a, const Coded_pixel &b)
+{
+    return a.components == b.components;
+}
+
+inline bool operator==(const Macropixel_coding &a, const Macropixel_coding &b)
+{
+    return a.pixels == b.pixels && a.size == b.size;
+}
+
+inline bool operator==(const Pixel_format &a, const Pixel_format &b)
+{
+    return
+            a.planes == b.planes
+            && a.color_space == b.color_space
+            && a.macropixel_coding == b.macropixel_coding;
+}
 
 // full range RGB
 

@@ -214,21 +214,23 @@ void Colorspace_frame::set_color_space(const Color_space &color_space)
     if (predefined_iter == predefined_container.end())
     {
         m_predefined_entry.set_active(--predefined_container.end());
+        m_component_box.set_sensitive(true);
     }
     else
     {
         m_predefined_entry.set_active(predefined_iter);
+        m_component_box.set_sensitive(false);
     }
 
     update_components(color_space);
 
-    color_space_changed_signal().emit(color_space);
+    signal_color_space_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
-sigc::signal<void(const Color_space&)> &
-    Colorspace_frame::color_space_changed_signal()
+sigc::signal<void()> &
+    Colorspace_frame::signal_color_space_changed()
 {
-    return m_color_space_changed_signal;
+    return m_signal_color_space_changed;
 }
 /*----------------------------------------------------------------------------*/
 void Colorspace_frame::update()

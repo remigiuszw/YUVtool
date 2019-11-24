@@ -38,7 +38,7 @@ enum Rgba_component
     Rgba_component_blue,
     Rgba_component_alpha,
     Rgba_component_count,
-    Rgba_component_rgb_count = 3
+    Rgba_component_rgb_count = Rgba_component_alpha
 };
 /*----------------------------------------------------------------------------*/
 template <typename TNumber>

@@ -88,7 +88,7 @@ private:
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
     const Color_space_column_record m_predefined_column_record;
 
-    sigc::signal<void(const Color_space &)> m_color_space_changed_signal;
+    sigc::signal<void()> m_signal_color_space_changed;
 
     bool m_update_in_progress{false};
 
@@ -98,7 +98,7 @@ public:
     Color_space get_color_space() const;
     void set_color_space(const Color_space &color_space);
 
-    sigc::signal<void(const Color_space &)> &color_space_changed_signal();
+    sigc::signal<void()> &signal_color_space_changed();
 
 private:
     void update();

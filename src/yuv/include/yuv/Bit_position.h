@@ -106,7 +106,12 @@ inline Bit_position operator*(const Bit_position &a, const int factor)
 //------------------------------------------------------------------------------
 inline Bit_position operator*(const int factor, const Bit_position &a)
 {
-    return a*factor;
+    return a * factor;
+}
+//------------------------------------------------------------------------------
+inline bool operator==(const Bit_position &a, const Bit_position &b)
+{
+    return a.get_position() == b.get_position();
 }
 //------------------------------------------------------------------------------
 inline int operator/(const Bit_position &a, const Bit_position &b)

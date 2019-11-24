@@ -40,17 +40,10 @@ public:
             Gtk::Window &parent,
             const Pixel_format &default_pixel_format);
     virtual ~Format_chooser_dialog();
-    const Pixel_format &get_pixel_format() const;
+    const Pixel_format get_pixel_format() const;
+    void set_pixel_format(const Pixel_format &pixel_format);
 
 private:
-    struct Import_box : Gtk::Box
-    {
-        Import_box();
-
-        Gtk::Label m_label;
-        Gtk::ComboBox m_choice;
-    };
-
     struct Entry_configurator : Gtk::Box
     {
         Entry_configurator();
@@ -63,19 +56,17 @@ private:
     struct Row_in_plane_configurator : Gtk::Box
     {
         Row_in_plane_configurator();
-        void set_entries_count(Index n);
 
         Gtk::Box m_entry_count_box;
         Gtk::Label m_entry_count_label;
         Gtk::SpinButton m_entry_count_entry;
 
-        std::vector<std::unique_ptr<Entry_configurator> > m_entries;
+        std::vector<std::unique_ptr<Entry_configurator>> m_entries;
     };
 
     struct Plane_configurator : Gtk::Frame
     {
         Plane_configurator();
-        void set_rows_count(Index n);
 
         Gtk::Box m_box;
 
@@ -83,13 +74,12 @@ private:
         Gtk::Label m_row_count_label;
         Gtk::SpinButton m_row_count_entry;
 
-        std::vector<std::unique_ptr<Row_in_plane_configurator> > m_rows;
+        std::vector<std::unique_ptr<Row_in_plane_configurator>> m_rows;
     };
 
     struct Plane_frame : Gtk::Frame
     {
         Plane_frame();
-        void set_planes_count(Index n);
 
         Gtk::Box m_box;
 
@@ -98,7 +88,7 @@ private:
         Gtk::SpinButton m_planes_count_entry;
 
         Gtk::Box m_planes_box;
-        std::vector<std::unique_ptr<Plane_configurator> > m_planes;
+        std::vector<std::unique_ptr<Plane_configurator>> m_planes;
     };
 
     struct Sample_configurator : Gtk::Box
@@ -117,10 +107,9 @@ private:
     struct Pixel_configurator : Gtk::Frame
     {
         Pixel_configurator();
-        void set_samples_count(Index n);
 
         Gtk::Box m_box;
-        std::vector<std::unique_ptr<Sample_configurator> > m_samples;
+        std::vector<std::unique_ptr<Sample_configurator>> m_samples;
     };
 
     struct Macropixel_frame : Gtk::Frame
@@ -142,34 +131,23 @@ private:
 
     struct Pixel_format_column_record : Gtk::TreeModel::ColumnRecord
     {
-        Gtk::TreeModelColumn<Glib::ustring> m_label;
-        Gtk::TreeModelColumn<const Pixel_format *> m_pointer;
+        Gtk::TreeModelColumn<Glib::ustring> label;
+        Gtk::TreeModelColumn<const Pixel_format *> pointer;
 
-        Pixel_format_column_record()
-        {
-            add(m_label);
-            add(m_pointer);
-        }
+        Pixel_format_column_record();
     };
 
-    void update_format();
-    void on_predefined_format();
-    void on_import_format();
-    void on_predefined_color_space();
-    void on_components_count();
-    void on_component(Rgba_component c);
+    void update();
 
     Gtk::ComboBox m_predefined_choice;
-    Import_box m_import_box;
     Plane_frame m_plane_frame;
     Colorspace_frame m_colorspace_frame;
     Macropixel_frame m_macropixel_frame;
 
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
-    Glib::RefPtr<Gtk::ListStore> m_import_list_store;
     Pixel_format_column_record m_pixel_format_column_record;
 
-    Pixel_format m_pixel_format;
+    bool m_update_in_progress{false};
 };
 
 }
