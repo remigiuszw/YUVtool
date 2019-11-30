@@ -43,7 +43,7 @@ int get_xml_element_value<int>(const tinyxml2::XMLElement *element)
     check_tinyxml2_result(status);
     return i;
 }
-
+/*----------------------------------------------------------------------------*/
 template <>
 double get_xml_element_value<double>(const tinyxml2::XMLElement *element)
 {
@@ -57,7 +57,7 @@ template <typename Value>
 Value get_xml_element_attribute(
         const tinyxml2::XMLElement *element,
         const char *name);
-
+/*----------------------------------------------------------------------------*/
 template <>
 int get_xml_element_attribute<int>(
         const tinyxml2::XMLElement *element,
@@ -68,7 +68,7 @@ int get_xml_element_attribute<int>(
     check_tinyxml2_result(status);
     return i;
 }
-
+/*----------------------------------------------------------------------------*/
 template <>
 double get_xml_element_attribute<double>(
         const tinyxml2::XMLElement *element,

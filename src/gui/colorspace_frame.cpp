@@ -71,6 +71,7 @@ Colorspace_frame::Component_configurator::Component_configurator() :
     m_coded_range_box.pack_start(m_coded_range_low_entry);
     m_coded_range_box.pack_start(m_coded_range_high_entry);
 
+    m_frame.show_all();
     m_frame.set_no_show_all(true);
 }
 /*----------------------------------------------------------------------------*/
@@ -101,8 +102,10 @@ Colorspace_frame::Colorspace_frame() :
     m_component_count_box.pack_start(m_component_count_label);
     m_component_count_box.pack_start(m_component_count_entry);
     m_box.pack_start(m_component_box);
-    for (auto & component : m_components)
-        m_component_box.append_page(component.m_frame);
+    m_component_box.append_page(m_components[0].m_frame, "Component 0");
+    m_component_box.append_page(m_components[1].m_frame, "Component 1");
+    m_component_box.append_page(m_components[2].m_frame, "Component 2");
+    m_component_box.append_page(m_components[3].m_frame, "Component 3");
 
     m_predefined_list_store =
             Gtk::ListStore::create(m_predefined_column_record);
