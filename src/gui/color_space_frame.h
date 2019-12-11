@@ -32,7 +32,7 @@
 
 namespace YUV_tool {
 
-class Colorspace_frame : public Gtk::Frame
+class Color_space_frame : public Gtk::Frame
 {
 private:
     struct Color_group
@@ -93,7 +93,7 @@ private:
     bool m_update_in_progress{false};
 
 public:
-    Colorspace_frame();
+    Color_space_frame();
 
     Color_space get_color_space() const;
     void set_color_space(const Color_space &color_space);

@@ -17,11 +17,11 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <colorspace_frame.h>
+#include <color_space_frame.h>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
-Colorspace_frame::Color_group::Color_group(
+Color_space_frame::Color_group::Color_group(
         const std::string &name) :
     m_box(Gtk::ORIENTATION_HORIZONTAL),
     m_label(name),
@@ -31,7 +31,7 @@ Colorspace_frame::Color_group::Color_group(
     m_box.pack_start(m_entry);
 }
 /*----------------------------------------------------------------------------*/
-Colorspace_frame::Component_configurator::Component_configurator() :
+Color_space_frame::Component_configurator::Component_configurator() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_colors{
         std::string("R"),
@@ -75,16 +75,16 @@ Colorspace_frame::Component_configurator::Component_configurator() :
     m_frame.set_no_show_all(true);
 }
 /*----------------------------------------------------------------------------*/
-Colorspace_frame::Color_space_column_record::Color_space_column_record()
+Color_space_frame::Color_space_column_record::Color_space_column_record()
 {
     add(label);
     add(pointer);
 }
 /*----------------------------------------------------------------------------*/
-Colorspace_frame::Colorspace_frame() :
+Color_space_frame::Color_space_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_predefined_box(Gtk::ORIENTATION_HORIZONTAL),
-    m_predefined_label("colorspace:"),
+    m_predefined_label("color_space:"),
     m_component_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_component_count_label("components_count:"),
     m_component_count_entry(
@@ -135,9 +135,9 @@ Colorspace_frame::Colorspace_frame() :
     m_predefined_entry.pack_start(m_predefined_column_record.label);
     m_predefined_entry.set_active(iter);
 
-    const auto update_handler = sigc::mem_fun(this, &Colorspace_frame::update);
+    const auto update_handler = sigc::mem_fun(this, &Color_space_frame::update);
     m_predefined_entry.signal_changed().connect(
-        sigc::mem_fun(this, &Colorspace_frame::on_predefined_entry));
+        sigc::mem_fun(this, &Color_space_frame::on_predefined_entry));
     m_component_count_entry.signal_value_changed().connect(update_handler);
     for (auto &component : m_components)
     {
@@ -159,7 +159,7 @@ Colorspace_frame::Colorspace_frame() :
     update();
 }
 /*----------------------------------------------------------------------------*/
-Color_space Colorspace_frame::get_color_space() const
+Color_space Color_space_frame::get_color_space() const
 {
     Color_space result;
 
@@ -180,8 +180,8 @@ Color_space Colorspace_frame::get_color_space() const
             auto &component = m_components[i];
             for (Index j = 0; j < Rgba_component_count; ++j)
             {
-                result.components[i].coeff[j] =
-                        component.m_colors[j].m_entry.get_value_as_int();
+              result.components[i].coeff[j] = saturable_fixed::from_double(
+                  component.m_colors[j].m_entry.get_value());
             }
             result.components[i].valid_range[0] =
                     saturable_fixed::from_double(
@@ -201,7 +201,7 @@ Color_space Colorspace_frame::get_color_space() const
     return result;
 }
 /*----------------------------------------------------------------------------*/
-void Colorspace_frame::set_color_space(const Color_space &color_space)
+void Color_space_frame::set_color_space(const Color_space &color_space)
 {
     if (!m_update_in_progress && get_color_space() == color_space)
         return;
@@ -234,12 +234,12 @@ void Colorspace_frame::set_color_space(const Color_space &color_space)
 }
 /*----------------------------------------------------------------------------*/
 sigc::signal<void()> &
-    Colorspace_frame::signal_color_space_changed()
+    Color_space_frame::signal_color_space_changed()
 {
     return m_signal_color_space_changed;
 }
 /*----------------------------------------------------------------------------*/
-void Colorspace_frame::update()
+void Color_space_frame::update()
 {
     if (m_update_in_progress)
         return;
@@ -249,7 +249,7 @@ void Colorspace_frame::update()
     m_update_in_progress = false;
 }
 /*----------------------------------------------------------------------------*/
-void Colorspace_frame::update_components(const Color_space &color_space)
+void Color_space_frame::update_components(const Color_space &color_space)
 {
     const Index components_count = color_space.components.size();
     m_component_count_entry.set_value(components_count);
@@ -263,8 +263,8 @@ void Colorspace_frame::update_components(const Color_space &color_space)
             for (Index j = 0; j < Rgba_component_count; ++j)
 
             {
-                component_out.m_colors[j].m_entry.set_value(
-                            component_in.coeff[j].to_double());
+              component_out.m_colors[j].m_entry.set_value(
+                  component_in.coeff[j].to_double());
             }
             component_out.m_valid_range_low_entry.set_value(
                         component_in.valid_range[0].to_double());
@@ -283,7 +283,7 @@ void Colorspace_frame::update_components(const Color_space &color_space)
     }
 }
 /*----------------------------------------------------------------------------*/
-void Colorspace_frame::on_predefined_entry()
+void Color_space_frame::on_predefined_entry()
 {
     const Color_space* predefined_cs =
         (*m_predefined_entry.get_active())[m_predefined_column_record.pointer];

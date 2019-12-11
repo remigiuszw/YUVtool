@@ -20,7 +20,7 @@
 #ifndef FORMAT_CHOOSER_DIALOG_H
 #define FORMAT_CHOOSER_DIALOG_H
 
-#include <colorspace_frame.h>
+#include <color_space_frame.h>
 
 #include <yuv/Pixel_format.h>
 
@@ -141,7 +141,7 @@ private:
 
     Gtk::ComboBox m_predefined_choice;
     Plane_frame m_plane_frame;
-    Colorspace_frame m_colorspace_frame;
+    Color_space_frame m_color_space_frame;
     Macropixel_frame m_macropixel_frame;
 
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;

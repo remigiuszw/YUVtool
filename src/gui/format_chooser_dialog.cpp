@@ -34,7 +34,7 @@ Format_chooser_dialog::Format_chooser_dialog(
 
     Gtk::Box &content_area = *get_content_area();
     content_area.pack_start(m_predefined_choice);
-    content_area.pack_start(m_colorspace_frame);
+    content_area.pack_start(m_color_space_frame);
     content_area.pack_start(m_plane_frame);
     content_area.pack_start(m_macropixel_frame);
 
@@ -59,7 +59,7 @@ Format_chooser_dialog::Format_chooser_dialog(
 
     auto update_handler = sigc::mem_fun(*this, &Format_chooser_dialog::update);
     m_predefined_choice.signal_changed().connect(update_handler);
-    m_colorspace_frame.signal_color_space_changed().connect(update_handler);
+    m_color_space_frame.signal_color_space_changed().connect(update_handler);
     m_plane_frame.m_planes_count_entry.signal_value_changed().connect(
         update_handler);
     m_macropixel_frame.m_rows_entry.signal_value_changed().connect(
@@ -88,7 +88,7 @@ const Pixel_format Format_chooser_dialog::get_pixel_format() const
 
     Pixel_format result;
 
-    result.color_space = m_colorspace_frame.get_color_space();
+    result.color_space = m_color_space_frame.get_color_space();
 
     const Index planes_count =
         m_plane_frame.m_planes_count_entry.get_value_as_int();
@@ -187,18 +187,18 @@ void Format_chooser_dialog::set_pixel_format(const Pixel_format& pixel_format)
     {
         m_predefined_choice.set_active(--predefined_container.end());
         m_plane_frame.set_sensitive(true);
-        m_colorspace_frame.set_sensitive(true);
+        m_color_space_frame.set_sensitive(true);
         m_macropixel_frame.set_sensitive(true);
     }
     else
     {
         m_predefined_choice.set_active(predefined_iter);
         m_plane_frame.set_sensitive(false);
-        m_colorspace_frame.set_sensitive(false);
+        m_color_space_frame.set_sensitive(false);
         m_macropixel_frame.set_sensitive(false);
     }
 
-    m_colorspace_frame.set_color_space(pixel_format.color_space);
+    m_color_space_frame.set_color_space(pixel_format.color_space);
 
     auto fix_size =
         [](auto& container, const Index new_size, auto connect) {

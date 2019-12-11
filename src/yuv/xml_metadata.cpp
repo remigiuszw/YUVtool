@@ -185,12 +185,12 @@ Pixel_format read_pixel_format(const std::string &file_name)
         result.planes.push_back(std::move(plane));
     }
 
-    const auto *colorspace_elment =
-            pixel_format_element->FirstChildElement("colorspace");
-    MY_ASSERT(colorspace_elment);
+    const auto *color_space_elment =
+            pixel_format_element->FirstChildElement("color_space");
+    MY_ASSERT(color_space_elment);
     for(
         const auto component_element :
-            XmlElementRange(colorspace_elment, "component"))
+            XmlElementRange(color_space_elment, "component"))
     {
         Component component;
 
@@ -310,14 +310,14 @@ void store_pixel_format(
         }
     }
 
-    /* colorspace */
-    auto *colorspace_element = output_file.NewElement("colorspace");
-    root->InsertFirstChild(colorspace_element);
+    /* color_space */
+    auto *color_space_element = output_file.NewElement("color_space");
+    root->InsertFirstChild(color_space_element);
 
     for(auto &component : pixel_format.color_space.components)
     {
         auto *component_element = output_file.NewElement("component");
-        colorspace_element->InsertEndChild(component_element);
+        color_space_element->InsertEndChild(component_element);
 
         for(auto &coefficient : component.coeff)
         {

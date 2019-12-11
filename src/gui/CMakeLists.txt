@@ -7,8 +7,8 @@ pkg_check_modules(epoxy REQUIRED epoxy IMPORTED_TARGET)
 
 add_executable(
     yuvtool
-    colorspace_frame.cpp
-    colorspace_frame.h
+    color_space_frame.cpp
+    color_space_frame.h
     drawer_gl.cpp
     drawer_gl.h
     format_chooser_dialog.cpp
