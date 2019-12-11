@@ -136,7 +136,8 @@ Colorspace_frame::Colorspace_frame() :
     m_predefined_entry.set_active(iter);
 
     const auto update_handler = sigc::mem_fun(this, &Colorspace_frame::update);
-    m_predefined_entry.signal_changed().connect(update_handler);
+    m_predefined_entry.signal_changed().connect(
+        sigc::mem_fun(this, &Colorspace_frame::on_predefined_entry));
     m_component_count_entry.signal_value_changed().connect(update_handler);
     for (auto &component : m_components)
     {
@@ -217,11 +218,13 @@ void Colorspace_frame::set_color_space(const Color_space &color_space)
     if (predefined_iter == predefined_container.end())
     {
         m_predefined_entry.set_active(--predefined_container.end());
+        m_component_count_entry.set_sensitive(true);
         m_component_box.set_sensitive(true);
     }
     else
     {
         m_predefined_entry.set_active(predefined_iter);
+        m_component_count_entry.set_sensitive(false);
         m_component_box.set_sensitive(false);
     }
 
@@ -242,7 +245,7 @@ void Colorspace_frame::update()
         return;
 
     m_update_in_progress = true;
-    set_color_space(get_color_space());
+    on_predefined_entry();
     m_update_in_progress = false;
 }
 /*----------------------------------------------------------------------------*/
@@ -268,9 +271,9 @@ void Colorspace_frame::update_components(const Color_space &color_space)
             component_out.m_valid_range_high_entry.set_value(
                         component_in.valid_range[1].to_double());
             component_out.m_coded_range_low_entry.set_value(
-                        component_in.valid_range[0].to_double());
+                        component_in.coded_range[0].to_double());
             component_out.m_coded_range_high_entry.set_value(
-                        component_in.valid_range[1].to_double());
+                        component_in.coded_range[1].to_double());
             component_out.m_frame.show();
         }
         else
@@ -278,6 +281,18 @@ void Colorspace_frame::update_components(const Color_space &color_space)
             component_out.m_frame.hide();
         }
     }
+}
+/*----------------------------------------------------------------------------*/
+void Colorspace_frame::on_predefined_entry()
+{
+    const Color_space* predefined_cs =
+        (*m_predefined_entry.get_active())[m_predefined_column_record.pointer];
+    const bool use_predefined = predefined_cs != nullptr;
+    m_component_count_entry.set_sensitive(!use_predefined);
+    m_component_box.set_sensitive(!use_predefined);
+    update_components(get_color_space());
+
+    signal_color_space_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

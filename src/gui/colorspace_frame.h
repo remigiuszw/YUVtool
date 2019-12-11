@@ -103,6 +103,7 @@ public:
 private:
     void update();
     void update_components(const Color_space &color_space);
+    void on_predefined_entry();
 };
 
 }
