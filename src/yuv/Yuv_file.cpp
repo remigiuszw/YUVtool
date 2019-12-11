@@ -31,7 +31,7 @@ Yuv_file::Yuv_file() :
 }
 //------------------------------------------------------------------------------
 Yuv_file::Yuv_file(
-        const boost::filesystem::path &path,
+        const std::filesystem::path &path,
         const std::ios_base::openmode mode) :
     m_path(path),
     m_parameters_valid(false)
@@ -46,7 +46,7 @@ bool Yuv_file::is_open() const
 }
 //------------------------------------------------------------------------------
 void Yuv_file::open(
-        const boost::filesystem::path &path,
+        const std::filesystem::path &path,
         const std::ios_base::openmode mode)
 {
     std::cout << "TYUV_file::TYUV_file(const std::string file_name)\n";

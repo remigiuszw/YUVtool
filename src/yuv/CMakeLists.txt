@@ -1,10 +1,5 @@
 project(yuv)
 
-set(Boost_USE_STATIC_LIBS        ON)
-set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME    OFF)
-
-find_package(Boost REQUIRED COMPONENTS filesystem system)
 find_package(Eigen3 REQUIRED)
 find_package(PkgConfig REQUIRED)
 
@@ -41,7 +36,5 @@ target_include_directories(
 target_link_libraries(
     yuv
     PUBLIC
-        Boost::filesystem
-        Boost::system
         Eigen3::Eigen
         PkgConfig::tinyxml2)

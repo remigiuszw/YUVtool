@@ -24,10 +24,10 @@
 #include <yuv/Picture_buffer.h>
 #include <yuv/utils.h>
 
-#include <boost/filesystem/fstream.hpp>
-#include <string>
-#include <fstream>
 #include <array>
+#include <filesystem>
+#include <fstream>
+#include <string>
 
 namespace YUV_tool {
 /*--------------------------------------------------------------------*/
@@ -36,11 +36,11 @@ class Yuv_file
 public:
     Yuv_file();
     Yuv_file(
-            const boost::filesystem::path &path,
+            const std::filesystem::path &path,
             const std::ios_base::openmode mode = std::ios_base::in);
     bool is_open() const;
     void open(
-            const boost::filesystem::path &path,
+            const std::filesystem::path &path,
             const std::ios_base::openmode mode = std::ios_base::in);
     void close();
     void drawFrameGL() const;
@@ -65,8 +65,8 @@ private:
     void init_file_parameters();
     void recalculate_parameters();
 
-    boost::filesystem::path m_path;
-    boost::filesystem::fstream m_file;
+    std::filesystem::path m_path;
+    std::fstream m_file;
     size_t m_file_size;
     Pixel_format m_pixel_format;
     Precalculated_buffer_parameters m_buffer_parameters;
