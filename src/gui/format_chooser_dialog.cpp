@@ -250,8 +250,11 @@ Format_chooser_dialog::Sample_configurator::Sample_configurator() :
     Gtk::Box(Gtk::ORIENTATION_HORIZONTAL),
     m_sample_label("sample:"),
     m_plane_label("plane:"),
+    m_plane_entry(Gtk::Adjustment::create(0, 0, 1000)),
     m_row_label("row"),
-    m_index_label("index")
+    m_row_entry(Gtk::Adjustment::create(0, 0, 1000)),
+    m_index_label("index"),
+    m_index_entry(Gtk::Adjustment::create(0, 0, 1000))
 {
     pack_start(m_sample_label);
     pack_start(m_plane_label);
@@ -272,9 +275,9 @@ Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_parameters_box(Gtk::ORIENTATION_HORIZONTAL),
     m_rows_label("rows:"),
-    m_rows_entry(Gtk::Adjustment::create(0, 0, 100, 1)),
+    m_rows_entry(Gtk::Adjustment::create(0, 0, 100)),
     m_columns_label("columns:"),
-    m_columns_entry(Gtk::Adjustment::create(0, 0, 100, 1))
+    m_columns_entry(Gtk::Adjustment::create(0, 0, 100))
 {
     set_label("Macropixel");
     set_shadow_type(Gtk::SHADOW_ETCHED_OUT);

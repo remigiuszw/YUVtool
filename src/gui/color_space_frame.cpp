@@ -88,7 +88,7 @@ Color_space_frame::Color_space_frame() :
     m_component_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_component_count_label("components_count:"),
     m_component_count_entry(
-        Gtk::Adjustment::create(0, 0, Rgba_component_count, 1)),
+        Gtk::Adjustment::create(0, 0, Rgba_component_count)),
     m_component_box()
 {
     set_label("Color space");
