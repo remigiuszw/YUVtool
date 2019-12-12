@@ -136,8 +136,7 @@ Color_space_frame::Color_space_frame() :
     m_predefined_entry.set_active(iter);
 
     const auto update_handler = sigc::mem_fun(this, &Color_space_frame::update);
-    m_predefined_entry.signal_changed().connect(
-        sigc::mem_fun(this, &Color_space_frame::on_predefined_entry));
+    m_predefined_entry.signal_changed().connect(update_handler);
     m_component_count_entry.signal_value_changed().connect(update_handler);
     for (auto &component : m_components)
     {
@@ -203,9 +202,10 @@ Color_space Color_space_frame::get_color_space() const
 /*----------------------------------------------------------------------------*/
 void Color_space_frame::set_color_space(const Color_space &color_space)
 {
-    if (!m_update_in_progress && get_color_space() == color_space)
+    if (get_color_space() == color_space)
         return;
 
+    m_update_in_progress = true;
     const auto predefined_container = m_predefined_list_store->children();
     const auto predefined_iter = std::find_if(
         predefined_container.begin(),
@@ -218,17 +218,14 @@ void Color_space_frame::set_color_space(const Color_space &color_space)
     if (predefined_iter == predefined_container.end())
     {
         m_predefined_entry.set_active(--predefined_container.end());
-        m_component_count_entry.set_sensitive(true);
-        m_component_box.set_sensitive(true);
     }
     else
     {
         m_predefined_entry.set_active(predefined_iter);
-        m_component_count_entry.set_sensitive(false);
-        m_component_box.set_sensitive(false);
     }
 
-    update_components(color_space);
+    update_entries(color_space);
+    m_update_in_progress = false;
 
     signal_color_space_changed().emit();
 }
@@ -245,12 +242,18 @@ void Color_space_frame::update()
         return;
 
     m_update_in_progress = true;
-    on_predefined_entry();
+    update_entries(get_color_space());
     m_update_in_progress = false;
 }
 /*----------------------------------------------------------------------------*/
-void Color_space_frame::update_components(const Color_space &color_space)
+void Color_space_frame::update_entries(const Color_space &color_space)
 {
+    const Color_space* predefined_cs =
+        (*m_predefined_entry.get_active())[m_predefined_column_record.pointer];
+    const bool use_predefined = predefined_cs != nullptr;
+    m_component_count_entry.set_sensitive(!use_predefined);
+    m_component_box.set_sensitive(!use_predefined);
+
     const Index components_count = color_space.components.size();
     m_component_count_entry.set_value(components_count);
 
@@ -281,16 +284,6 @@ void Color_space_frame::update_components(const Color_space &color_space)
             component_out.m_frame.hide();
         }
     }
-}
-/*----------------------------------------------------------------------------*/
-void Color_space_frame::on_predefined_entry()
-{
-    const Color_space* predefined_cs =
-        (*m_predefined_entry.get_active())[m_predefined_column_record.pointer];
-    const bool use_predefined = predefined_cs != nullptr;
-    m_component_count_entry.set_sensitive(!use_predefined);
-    m_component_box.set_sensitive(!use_predefined);
-    update_components(get_color_space());
 
     signal_color_space_changed().emit();
 }

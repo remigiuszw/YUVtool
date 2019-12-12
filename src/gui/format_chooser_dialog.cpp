@@ -41,19 +41,19 @@ Format_chooser_dialog::Format_chooser_dialog(
     /* predefined choice */
     {
         m_predefined_list_store =
-                Gtk::ListStore::create(m_pixel_format_column_record);
+                Gtk::ListStore::create(m_predefined_column_record);
         Gtk::ListStore::iterator iter;
         iter = m_predefined_list_store->append();
-        (*iter)[m_pixel_format_column_record.label] = "yuv420p";
-        (*iter)[m_pixel_format_column_record.pointer] = &yuv_420p_8bit;
+        (*iter)[m_predefined_column_record.label] = "yuv420p";
+        (*iter)[m_predefined_column_record.pointer] = &yuv_420p_8bit;
         iter = m_predefined_list_store->append();
-        (*iter)[m_pixel_format_column_record.label] = "rgb32bpp";
-        (*iter)[m_pixel_format_column_record.pointer] = &rgb_32bpp;
+        (*iter)[m_predefined_column_record.label] = "rgb32bpp";
+        (*iter)[m_predefined_column_record.pointer] = &rgb_32bpp;
         iter = m_predefined_list_store->append();
-        (*iter)[m_pixel_format_column_record.label] = "custom";
-        (*iter)[m_pixel_format_column_record.pointer] = nullptr;
+        (*iter)[m_predefined_column_record.label] = "custom";
+        (*iter)[m_predefined_column_record.pointer] = nullptr;
         m_predefined_choice.set_model(m_predefined_list_store);
-        m_predefined_choice.pack_start(m_pixel_format_column_record.label);
+        m_predefined_choice.pack_start(m_predefined_column_record.label);
         m_predefined_choice.set_active(iter);
     }
 
@@ -67,7 +67,7 @@ Format_chooser_dialog::Format_chooser_dialog(
     m_macropixel_frame.m_columns_entry.signal_value_changed().connect(
         update_handler);
 
-    update();
+    set_pixel_format(default_pixel_format);
 
     show_all();
 }
@@ -77,9 +77,8 @@ Format_chooser_dialog::~Format_chooser_dialog()
 /*----------------------------------------------------------------------------*/
 const Pixel_format Format_chooser_dialog::get_pixel_format() const
 {
-    const Pixel_format *predefined_format =
-            (*m_predefined_choice.get_active())[
-                m_pixel_format_column_record.pointer];
+    const Pixel_format* predefined_format =
+        (*m_predefined_choice.get_active())[m_predefined_column_record.pointer];
 
     if(predefined_format != nullptr)
     {
@@ -171,139 +170,30 @@ const Pixel_format Format_chooser_dialog::get_pixel_format() const
 /*----------------------------------------------------------------------------*/
 void Format_chooser_dialog::set_pixel_format(const Pixel_format& pixel_format)
 {
-    if (!m_update_in_progress && pixel_format == get_pixel_format())
+    if (pixel_format == get_pixel_format())
         return;
 
+    m_update_in_progress = true;
     const auto predefined_container = m_predefined_list_store->children();
     const auto predefined_iter = std::find_if(
         predefined_container.begin(),
         predefined_container.end(),
         [&pixel_format, this](const auto& x) {
             const Pixel_format* const predefined_pf =
-                x[m_pixel_format_column_record.pointer];
+                x[m_predefined_column_record.pointer];
             return predefined_pf && *predefined_pf == pixel_format;
         });
     if (predefined_iter == predefined_container.end())
     {
         m_predefined_choice.set_active(--predefined_container.end());
-        m_plane_frame.set_sensitive(true);
-        m_color_space_frame.set_sensitive(true);
-        m_macropixel_frame.set_sensitive(true);
     }
     else
     {
         m_predefined_choice.set_active(predefined_iter);
-        m_plane_frame.set_sensitive(false);
-        m_color_space_frame.set_sensitive(false);
-        m_macropixel_frame.set_sensitive(false);
     }
 
-    m_color_space_frame.set_color_space(pixel_format.color_space);
-
-    auto fix_size =
-        [](auto& container, const Index new_size, auto connect) {
-            const Index old_size = container.size();
-            container.resize(new_size);
-            for (Index i = old_size; i < new_size; ++i)
-            {
-                container[i] =
-                    std::make_unique<std::decay_t<decltype(*container[i])>>();
-                connect(*container[i]);
-            }
-        };
-    auto update_handler = sigc::mem_fun(*this, &Format_chooser_dialog::update);
-
-    const Index planes_count = pixel_format.planes.size();
-    m_plane_frame.m_planes_count_entry.set_value(planes_count);
-    fix_size(
-        m_plane_frame.m_planes,
-        planes_count,
-        [this, &update_handler](auto& plane_out) {
-            m_plane_frame.m_planes_box.pack_start(plane_out);
-            plane_out.m_row_count_entry.signal_value_changed().connect(
-                update_handler);
-        });
-    for (Index i = 0; i < planes_count; ++i)
-    {
-        auto &plane_out = *m_plane_frame.m_planes[i];
-        const auto &plane_in = pixel_format.planes[i];
-        const Index rows_count = plane_in.rows.size();
-        plane_out.m_row_count_entry.set_value(rows_count);
-        fix_size(
-            plane_out.m_rows,
-            rows_count,
-            [&plane_out, &update_handler](auto& row_out) {
-                plane_out.m_box.pack_start(row_out);
-                row_out.m_entry_count_entry.signal_value_changed().connect(
-                    update_handler);
-            });
-        for (Index j = 0; j < rows_count; ++j)
-        {
-            auto &row_out = *plane_out.m_rows[j];
-            const auto &row_in = plane_in.rows[j];
-            const Index entries_count = row_in.entries.size();
-            row_out.m_entry_count_entry.set_value(entries_count);
-            fix_size(
-                row_out.m_entries,
-                entries_count,
-                [&row_out, &update_handler](auto& entry_out) {
-                    row_out.pack_start(entry_out);
-                    entry_out.m_bit_count_entry.signal_value_changed().connect(
-                        update_handler);
-                });
-            for (Index k = 0; k < entries_count; ++k)
-            {
-                auto &entry_out = *row_out.m_entries[k];
-                const auto& entry_in = row_in.entries[k];
-                entry_out.m_bit_count_entry.set_value(
-                    entry_in.width.get_position());
-            }
-        }
-    }
-
-    const auto mp_size = pixel_format.macropixel_coding.size;
-    m_macropixel_frame.m_columns_entry.set_value(mp_size.x());
-    m_macropixel_frame.m_rows_entry.set_value(mp_size.y());
-    for (auto &pixel : m_macropixel_frame.m_pixels)
-    {
-        m_macropixel_frame.m_pixel_grid.remove(*pixel);
-    }
-    fix_size(
-        m_macropixel_frame.m_pixels, mp_size.x() * mp_size.y(), [](auto&) {});
-    m_macropixel_frame.reshape();
-
-    for (Index y = 0; y < mp_size.y(); ++y)
-    {
-        for (Index x = 0; x < mp_size.x(); ++x)
-        {
-            const Index i = y * mp_size.x() + x;
-            auto& pixel_out = *m_macropixel_frame.m_pixels[i];
-            const auto &pixel_in = pixel_format.macropixel_coding.pixels[i];
-            const Index components_count = pixel_in.components.size();
-            fix_size(
-                pixel_out.m_samples,
-                components_count,
-                [&pixel_out, &update_handler](auto& component_out) {
-                    pixel_out.m_box.pack_start(component_out);
-                    component_out.m_plane_entry.signal_value_changed().connect(
-                        update_handler);
-                    component_out.m_row_entry.signal_value_changed().connect(
-                        update_handler);
-                    component_out.m_index_entry.signal_value_changed().connect(
-                        update_handler);
-                });
-            for (Index j = 0; j < components_count; ++j)
-            {
-                auto &component_out = *pixel_out.m_samples[j];
-                const auto &component_in = pixel_in.components[j];
-                component_out.m_plane_entry.set_value(component_in.plane_index);
-                component_out.m_row_entry.set_value(component_in.row_index);
-                component_out.m_index_entry.set_value(component_in.entry_index);
-            }
-        }
-    }
-
-    show_all();
+    update_entries(pixel_format);
+    m_update_in_progress = false;
 }
 /*----------------------------------------------------------------------------*/
 Format_chooser_dialog::Entry_configurator::Entry_configurator() :
@@ -431,8 +321,125 @@ void Format_chooser_dialog::update()
         return;
 
     m_update_in_progress = true;
-    set_pixel_format(get_pixel_format());
+    update_entries(get_pixel_format());
     m_update_in_progress = false;
+}
+/*----------------------------------------------------------------------------*/
+void Format_chooser_dialog::update_entries(const Pixel_format &pixel_format)
+{
+    const Pixel_format* predefined_format =
+        (*m_predefined_choice.get_active())[m_predefined_column_record.pointer];
+    const bool use_predefined = predefined_format != nullptr;
+    m_plane_frame.set_sensitive(!use_predefined);
+    m_color_space_frame.set_sensitive(!use_predefined);
+    m_macropixel_frame.set_sensitive(!use_predefined);
+
+    m_color_space_frame.set_color_space(pixel_format.color_space);
+
+    auto fix_size =
+        [](auto& container, const Index new_size, auto connect) {
+            const Index old_size = container.size();
+            container.resize(new_size);
+            for (Index i = old_size; i < new_size; ++i)
+            {
+                container[i] =
+                    std::make_unique<std::decay_t<decltype(*container[i])>>();
+                connect(*container[i]);
+            }
+        };
+    auto update_handler = sigc::mem_fun(*this, &Format_chooser_dialog::update);
+
+    const Index planes_count = pixel_format.planes.size();
+    m_plane_frame.m_planes_count_entry.set_value(planes_count);
+    fix_size(
+        m_plane_frame.m_planes,
+        planes_count,
+        [this, &update_handler](auto& plane_out) {
+            m_plane_frame.m_planes_box.pack_start(plane_out);
+            plane_out.m_row_count_entry.signal_value_changed().connect(
+                update_handler);
+        });
+    for (Index i = 0; i < planes_count; ++i)
+    {
+        auto &plane_out = *m_plane_frame.m_planes[i];
+        const auto &plane_in = pixel_format.planes[i];
+        const Index rows_count = plane_in.rows.size();
+        plane_out.m_row_count_entry.set_value(rows_count);
+        fix_size(
+            plane_out.m_rows,
+            rows_count,
+            [&plane_out, &update_handler](auto& row_out) {
+                plane_out.m_box.pack_start(row_out);
+                row_out.m_entry_count_entry.signal_value_changed().connect(
+                    update_handler);
+            });
+        for (Index j = 0; j < rows_count; ++j)
+        {
+            auto &row_out = *plane_out.m_rows[j];
+            const auto &row_in = plane_in.rows[j];
+            const Index entries_count = row_in.entries.size();
+            row_out.m_entry_count_entry.set_value(entries_count);
+            fix_size(
+                row_out.m_entries,
+                entries_count,
+                [&row_out, &update_handler](auto& entry_out) {
+                    row_out.pack_start(entry_out);
+                    entry_out.m_bit_count_entry.signal_value_changed().connect(
+                        update_handler);
+                });
+            for (Index k = 0; k < entries_count; ++k)
+            {
+                auto &entry_out = *row_out.m_entries[k];
+                const auto& entry_in = row_in.entries[k];
+                entry_out.m_bit_count_entry.set_value(
+                    entry_in.width.get_position());
+            }
+        }
+    }
+
+    const auto mp_size = pixel_format.macropixel_coding.size;
+    m_macropixel_frame.m_columns_entry.set_value(mp_size.x());
+    m_macropixel_frame.m_rows_entry.set_value(mp_size.y());
+    for (auto &pixel : m_macropixel_frame.m_pixels)
+    {
+        m_macropixel_frame.m_pixel_grid.remove(*pixel);
+    }
+    fix_size(
+        m_macropixel_frame.m_pixels, mp_size.x() * mp_size.y(), [](auto&) {});
+    m_macropixel_frame.reshape();
+
+    for (Index y = 0; y < mp_size.y(); ++y)
+    {
+        for (Index x = 0; x < mp_size.x(); ++x)
+        {
+            const Index i = y * mp_size.x() + x;
+            auto& pixel_out = *m_macropixel_frame.m_pixels[i];
+            const auto &pixel_in = pixel_format.macropixel_coding.pixels[i];
+            const Index components_count = pixel_in.components.size();
+            fix_size(
+                pixel_out.m_samples,
+                components_count,
+                [&pixel_out, &update_handler](auto& component_out) {
+                    pixel_out.m_box.pack_start(component_out);
+                    component_out.m_plane_entry.signal_value_changed().connect(
+                        update_handler);
+                    component_out.m_row_entry.signal_value_changed().connect(
+                        update_handler);
+                    component_out.m_index_entry.signal_value_changed().connect(
+                        update_handler);
+                });
+            for (Index j = 0; j < components_count; ++j)
+            {
+                auto &component_out = *pixel_out.m_samples[j];
+                const auto &component_in = pixel_in.components[j];
+                component_out.m_plane_entry.set_value(component_in.plane_index);
+                component_out.m_row_entry.set_value(component_in.row_index);
+                component_out.m_index_entry.set_value(component_in.entry_index);
+            }
+        }
+    }
+
+    show_all();
 }
 /*----------------------------------------------------------------------------*/
 }

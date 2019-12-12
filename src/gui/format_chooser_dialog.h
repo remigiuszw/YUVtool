@@ -138,6 +138,7 @@ private:
     };
 
     void update();
+    void update_entries(const Pixel_format &pixel_format);
 
     Gtk::ComboBox m_predefined_choice;
     Plane_frame m_plane_frame;
@@ -145,7 +146,7 @@ private:
     Macropixel_frame m_macropixel_frame;
 
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
-    Pixel_format_column_record m_pixel_format_column_record;
+    Pixel_format_column_record m_predefined_column_record;
 
     bool m_update_in_progress{false};
 };
