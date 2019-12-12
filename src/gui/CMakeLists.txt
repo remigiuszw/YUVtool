@@ -11,9 +11,13 @@ add_executable(
     color_space_frame.h
     drawer_gl.cpp
     drawer_gl.h
-    format_chooser_dialog.cpp
-    format_chooser_dialog.h
+    format_chooser_widget.cpp
+    format_chooser_widget.h
     main.cpp
+    resolution_and_format_dialog.cpp
+    resolution_and_format_dialog.h
+    resolution_chooser_widget.cpp
+    resolution_chooser_widget.h
     scroll_adapter.cpp
     scroll_adapter.h
     viewer_frame.cpp

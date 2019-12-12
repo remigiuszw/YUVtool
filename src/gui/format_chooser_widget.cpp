@@ -17,26 +17,19 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <format_chooser_dialog.h>
-
-#define DEBUG 1
+#include <format_chooser_widget.h>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Format_chooser_dialog(
-        Gtk::Window &parent,
-        const Pixel_format &default_pixel_format) :
-    Gtk::Dialog("Choose pixel format", parent, true)
+Format_chooser_widget::Format_chooser_widget() :
+    m_box(Gtk::ORIENTATION_VERTICAL)
 {
-    add_button("OK", Gtk::RESPONSE_OK);
-    add_button("Cancel", Gtk::RESPONSE_CANCEL);
-    /* TODO: add preview button */
+    add(m_box);
 
-    Gtk::Box &content_area = *get_content_area();
-    content_area.pack_start(m_predefined_choice);
-    content_area.pack_start(m_color_space_frame);
-    content_area.pack_start(m_plane_frame);
-    content_area.pack_start(m_macropixel_frame);
+    m_box.pack_start(m_predefined_choice);
+    m_box.pack_start(m_color_space_frame);
+    m_box.pack_start(m_plane_frame);
+    m_box.pack_start(m_macropixel_frame);
 
     /* predefined choice */
     {
@@ -57,7 +50,7 @@ Format_chooser_dialog::Format_chooser_dialog(
         m_predefined_choice.set_active(iter);
     }
 
-    auto update_handler = sigc::mem_fun(*this, &Format_chooser_dialog::update);
+    auto update_handler = sigc::mem_fun(*this, &Format_chooser_widget::update);
     m_predefined_choice.signal_changed().connect(update_handler);
     m_color_space_frame.signal_color_space_changed().connect(update_handler);
     m_plane_frame.m_planes_count_entry.signal_value_changed().connect(
@@ -66,16 +59,12 @@ Format_chooser_dialog::Format_chooser_dialog(
         update_handler);
     m_macropixel_frame.m_columns_entry.signal_value_changed().connect(
         update_handler);
-
-    set_pixel_format(default_pixel_format);
-
-    show_all();
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::~Format_chooser_dialog()
+Format_chooser_widget::~Format_chooser_widget()
 { }
 /*----------------------------------------------------------------------------*/
-const Pixel_format Format_chooser_dialog::get_pixel_format() const
+const Pixel_format Format_chooser_widget::get_pixel_format() const
 {
     const Pixel_format* predefined_format =
         (*m_predefined_choice.get_active())[m_predefined_column_record.pointer];
@@ -168,7 +157,7 @@ const Pixel_format Format_chooser_dialog::get_pixel_format() const
     return result;
 }
 /*----------------------------------------------------------------------------*/
-void Format_chooser_dialog::set_pixel_format(const Pixel_format& pixel_format)
+void Format_chooser_widget::set_pixel_format(const Pixel_format& pixel_format)
 {
     if (pixel_format == get_pixel_format())
         return;
@@ -194,9 +183,10 @@ void Format_chooser_dialog::set_pixel_format(const Pixel_format& pixel_format)
 
     update_entries(pixel_format);
     m_update_in_progress = false;
+    signal_pixel_format_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Entry_configurator::Entry_configurator() :
+Format_chooser_widget::Entry_configurator::Entry_configurator() :
     Gtk::Box(Gtk::ORIENTATION_HORIZONTAL),
     m_entry_label("entry:"),
     m_bit_count_entry(Gtk::Adjustment::create(0, 0, 100, 1)),
@@ -207,7 +197,7 @@ Format_chooser_dialog::Entry_configurator::Entry_configurator() :
     pack_start(m_bits_label);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Row_in_plane_configurator::Row_in_plane_configurator() :
+Format_chooser_widget::Row_in_plane_configurator::Row_in_plane_configurator() :
     Gtk::Box(Gtk::ORIENTATION_VERTICAL),
     m_entry_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_entry_count_label("entries count:"),
@@ -218,7 +208,7 @@ Format_chooser_dialog::Row_in_plane_configurator::Row_in_plane_configurator() :
     m_entry_count_box.pack_start(m_entry_count_entry);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Plane_configurator::Plane_configurator() :
+Format_chooser_widget::Plane_configurator::Plane_configurator() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_row_count_label("rows count:"),
     m_row_count_entry(Gtk::Adjustment::create(0, 0, 100, 1))
@@ -229,7 +219,7 @@ Format_chooser_dialog::Plane_configurator::Plane_configurator() :
     m_row_count_box.pack_start(m_row_count_entry);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Plane_frame::Plane_frame() :
+Format_chooser_widget::Plane_frame::Plane_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_planes_count_box(Gtk::ORIENTATION_HORIZONTAL),
     m_planes_count_label("planes count: "),
@@ -246,7 +236,7 @@ Format_chooser_dialog::Plane_frame::Plane_frame() :
     m_box.pack_start(m_planes_box);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Sample_configurator::Sample_configurator() :
+Format_chooser_widget::Sample_configurator::Sample_configurator() :
     Gtk::Box(Gtk::ORIENTATION_HORIZONTAL),
     m_sample_label("sample:"),
     m_plane_label("plane:"),
@@ -265,13 +255,13 @@ Format_chooser_dialog::Sample_configurator::Sample_configurator() :
     pack_start(m_index_entry);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Pixel_configurator::Pixel_configurator() :
+Format_chooser_widget::Pixel_configurator::Pixel_configurator() :
     m_box(Gtk::ORIENTATION_VERTICAL)
 {
     add(m_box);
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
+Format_chooser_widget::Macropixel_frame::Macropixel_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL),
     m_parameters_box(Gtk::ORIENTATION_HORIZONTAL),
     m_rows_label("rows:"),
@@ -291,7 +281,7 @@ Format_chooser_dialog::Macropixel_frame::Macropixel_frame() :
     m_box.pack_start(m_pixel_grid);
 }
 /*----------------------------------------------------------------------------*/
-void Format_chooser_dialog::Macropixel_frame::reshape()
+void Format_chooser_widget::Macropixel_frame::reshape()
 {
     const Vector<Unit::pixel> mp_size(
                 m_columns_entry.get_value_as_int(),
@@ -312,13 +302,13 @@ void Format_chooser_dialog::Macropixel_frame::reshape()
     }
 }
 /*----------------------------------------------------------------------------*/
-Format_chooser_dialog::Pixel_format_column_record::Pixel_format_column_record()
+Format_chooser_widget::Pixel_format_column_record::Pixel_format_column_record()
 {
     add(label);
     add(pointer);
 }
 /*----------------------------------------------------------------------------*/
-void Format_chooser_dialog::update()
+void Format_chooser_widget::update()
 {
     if (m_update_in_progress)
         return;
@@ -326,9 +316,11 @@ void Format_chooser_dialog::update()
     m_update_in_progress = true;
     update_entries(get_pixel_format());
     m_update_in_progress = false;
+
+    signal_pixel_format_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
-void Format_chooser_dialog::update_entries(const Pixel_format &pixel_format)
+void Format_chooser_widget::update_entries(const Pixel_format &pixel_format)
 {
     const Pixel_format* predefined_format =
         (*m_predefined_choice.get_active())[m_predefined_column_record.pointer];
@@ -350,7 +342,7 @@ void Format_chooser_dialog::update_entries(const Pixel_format &pixel_format)
                 connect(*container[i]);
             }
         };
-    auto update_handler = sigc::mem_fun(*this, &Format_chooser_dialog::update);
+    auto update_handler = sigc::mem_fun(*this, &Format_chooser_widget::update);
 
     const Index planes_count = pixel_format.planes.size();
     m_plane_frame.m_planes_count_entry.set_value(planes_count);
@@ -443,6 +435,12 @@ void Format_chooser_dialog::update_entries(const Pixel_format &pixel_format)
     }
 
     show_all();
+}
+/*----------------------------------------------------------------------------*/
+sigc::signal<void()>& YUV_tool::Format_chooser_widget::
+    signal_pixel_format_changed()
+{
+    return m_signal_pixel_format_changed;
 }
 /*----------------------------------------------------------------------------*/
 }

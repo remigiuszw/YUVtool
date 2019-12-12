@@ -19,7 +19,7 @@
  *
  */
 #include <viewer_frame.h>
-#include <format_chooser_dialog.h>
+#include <resolution_and_format_dialog.h>
 #include <yuv/Errors.h>
 
 #include <gtkmm/stock.h>
@@ -252,18 +252,21 @@ void Viewer_frame::on_action_file_open()
         std::cerr << "failed to open file: " << file_name << '\n';
     }
 
-    {
-        Format_chooser_dialog format_dialog(
-                    *this,
-                    m_yuv_file.get_pixel_format());
+    /* TODO: remove hardcoded value */
+    m_yuv_file.set_resolution({176, 144});
 
-        const int result = format_dialog.run();
+    {
+        Resolution_and_format_dialog dialog(*this);
+        dialog.set_pixel_format(m_yuv_file.get_pixel_format());
+        dialog.set_resolution(m_yuv_file.get_resolution());
+
+        const int result = dialog.run();
 
         switch(result)
         {
         case Gtk::RESPONSE_OK:
-            m_yuv_file.set_resolution(Vector<Unit::pixel>(176, 144));
-            m_yuv_file.set_pixel_format(format_dialog.get_pixel_format());
+            m_yuv_file.set_resolution(dialog.get_resolution());
+            m_yuv_file.set_pixel_format(dialog.get_pixel_format());
             m_scroll_adapter.set_internal_size(m_yuv_file.get_resolution());
             break;
         case Gtk::RESPONSE_CANCEL:

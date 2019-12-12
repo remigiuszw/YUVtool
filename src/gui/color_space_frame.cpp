@@ -226,7 +226,6 @@ void Color_space_frame::set_color_space(const Color_space &color_space)
 
     update_entries(color_space);
     m_update_in_progress = false;
-
     signal_color_space_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
@@ -244,6 +243,7 @@ void Color_space_frame::update()
     m_update_in_progress = true;
     update_entries(get_color_space());
     m_update_in_progress = false;
+    signal_color_space_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
 void Color_space_frame::update_entries(const Color_space &color_space)
@@ -284,8 +284,6 @@ void Color_space_frame::update_entries(const Color_space &color_space)
             component_out.m_frame.hide();
         }
     }
-
-    signal_color_space_changed().emit();
 }
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

@@ -33,15 +33,14 @@
 
 namespace YUV_tool {
 
-class Format_chooser_dialog : public Gtk::Dialog
+class Format_chooser_widget : public Gtk::Frame
 {
 public:
-    Format_chooser_dialog(
-            Gtk::Window &parent,
-            const Pixel_format &default_pixel_format);
-    virtual ~Format_chooser_dialog();
+    Format_chooser_widget();
+    virtual ~Format_chooser_widget();
     const Pixel_format get_pixel_format() const;
-    void set_pixel_format(const Pixel_format &pixel_format);
+    void set_pixel_format(const Pixel_format& pixel_format);
+    sigc::signal<void()>& signal_pixel_format_changed();
 
 private:
     struct Entry_configurator : Gtk::Box
@@ -140,13 +139,17 @@ private:
     void update();
     void update_entries(const Pixel_format &pixel_format);
 
+    Gtk::Box m_box;
+
     Gtk::ComboBox m_predefined_choice;
-    Plane_frame m_plane_frame;
     Color_space_frame m_color_space_frame;
+    Plane_frame m_plane_frame;
     Macropixel_frame m_macropixel_frame;
 
     Glib::RefPtr<Gtk::ListStore> m_predefined_list_store;
     Pixel_format_column_record m_predefined_column_record;
+
+    sigc::signal<void()> m_signal_pixel_format_changed;
 
     bool m_update_in_progress{false};
 };
