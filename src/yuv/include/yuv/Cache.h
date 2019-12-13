@@ -52,8 +52,8 @@ private:
     {
         Index m_index_in_heap = -1;
         Time m_last_reference = 0;
-        Data *m_data = nullptr;
-        Key m_key;
+        Data m_data{};
+        Key m_key{};
     };
 
     struct Heap_element
@@ -80,9 +80,9 @@ private:
 
 private:
     std::vector<Slot> m_slots;
-    std::map<Key, Slot *> m_map;
-    Heap<Heap_element, std::greater<Heap_element> > m_heap;
-    std::vector<Slot *> m_free_slots;
+    std::map<Key, Slot*> m_map;
+    Heap<Heap_element, std::greater<Heap_element>> m_heap;
+    std::vector<Slot*> m_free_slots;
     Time m_time;
 
 public:
@@ -107,24 +107,24 @@ public:
         return m_heap.get_size();
     }
 
-    Data *get(const Key key)
+    std::optional<std::reference_wrapper<Data>> get(const Key &key)
     {
         return get_or_update(key, false);
     }
 
-    void update_key(const Key key)
+    void update_key(const Key &key)
     {
         Data *data = get_or_update(key, true);
         my_assert(data, "trying to update absent key");
     }
 
     /* more efficient if done at once */
-    Data *get_and_update(const Key key)
+    std::optional<std::reference_wrapper<Data>> get_and_update(const Key &key)
     {
         return get_or_update(key, true);
     }
 
-    Data *pop()
+    Data pop()
     {
         my_assert(m_map.size() != 0, "trying to pop empty cache");
         const Heap_element heap_element = m_heap.pop();
@@ -137,7 +137,7 @@ public:
         const Key key = slot->m_key;
         m_map.erase(key);
 
-        Data *const result = slot->m_data;
+        Data result = std::move(slot->m_data);
 
         /* clear the values in slot */
         *slot = Slot();
@@ -146,10 +146,10 @@ public:
         const Index map_size = m_map.size();
         my_assert(map_size == m_heap.get_size(), "heap - map size mismatch");
 
-        return result;
+        return std::move(result);
     }
 
-    void push(const TKey key, Data *const data)
+    void push(const TKey &key, Data &&data)
     {
         if(m_map.find(key) != m_map.end())
         {
@@ -167,7 +167,7 @@ public:
 
             m_map[key] = slot;
 
-            slot->m_data = data;
+            slot->m_data = std::move(data);
             slot->m_key = key;
 
             slot->m_index_in_heap = m_heap.get_size();
@@ -190,9 +190,10 @@ public:
     }
 
 private:
-    Data *get_or_update(const Key key, bool do_update)
+    std::optional<std::reference_wrapper<Data>> get_or_update(
+        const Key& key, const bool do_update)
     {
-        auto iter = m_map.find(key);
+        const auto iter = m_map.find(key);
         if(iter != m_map.end())
         {
             Slot *slot = iter->second;
@@ -202,7 +203,7 @@ private:
         }
         else
         {
-            return nullptr;
+            return std::nullopt;
         }
     }
 

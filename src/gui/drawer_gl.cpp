@@ -150,12 +150,12 @@ private:
             const std::vector<Tile_in_scaled_pic_coord> &buffers,
             Index zoom_level);
     void fill_tile(
-            GLuint buffer_index,
+            Index buffer_index,
             const Picture_buffer &source_buffer,
             Vector<Unit::pixel> offset_in_source,
             Rectangle<Unit::pixel, Reference_point::picture> rectangle);
-    GLuint assign_buffer_index(Resource_id key);
-    GLuint get_buffer_index(Resource_id key);
+    Index assign_buffer_index(Resource_id key);
+    Index get_buffer_index(Resource_id key);
     static Index get_picture_zoom_levels_count(Vector<Unit::pixel> resolution);
     static Index get_unzoom_steps_count(float scale);
     void check_gl_errors();
@@ -173,7 +173,8 @@ private:
     GLint m_viewport_start_location;
     GLint m_viewport_size_location;
 
-    Cache<Resource_id, GLuint> m_cache;
+    /* contains indices of elements in m_vertex_arrays array */
+    Cache<Resource_id, Index> m_cache;
 
     Yuv_file *m_yuv_file;
 
@@ -232,12 +233,12 @@ void main()
     texture_sampling2 = texture_sampling;
 }
 )";
-    glShaderSource(m_vertex_shader, 1, &vertex_shader_source, 0);
+    glShaderSource(m_vertex_shader, 1, &vertex_shader_source, nullptr);
     glCompileShader(m_vertex_shader);
     glGetShaderiv(m_vertex_shader, GL_COMPILE_STATUS, &success);
     if(!success)
     {
-        glGetShaderInfoLog(m_vertex_shader, max_log_length, 0, info_log);
+        glGetShaderInfoLog(m_vertex_shader, max_log_length, nullptr, info_log);
         my_assert(
                     false,
                     std::string("could not compile vertex shader: ")
@@ -258,12 +259,13 @@ void main()
     color = texture(my_texture, texture_sampling2);
 }
 )";
-    glShaderSource(m_fragment_shader, 1, &fragment_shader_source, 0);
+    glShaderSource(m_fragment_shader, 1, &fragment_shader_source, nullptr);
     glCompileShader(m_fragment_shader);
     glGetShaderiv(m_fragment_shader, GL_COMPILE_STATUS, &success);
     if(!success)
     {
-        glGetShaderInfoLog(m_fragment_shader, max_log_length, 0, info_log);
+        glGetShaderInfoLog(
+            m_fragment_shader, max_log_length, nullptr, info_log);
         my_assert(
                     false,
                     std::string("could not compile fragment shader: ")
@@ -279,7 +281,7 @@ void main()
     glGetProgramiv(m_shader_program, GL_LINK_STATUS, &success);
     if(!success)
     {
-        glGetShaderInfoLog(m_shader_program, max_log_length, 0, info_log);
+        glGetShaderInfoLog(m_shader_program, max_log_length, nullptr, info_log);
         my_assert(
                     false,
                     std::string("could not link shader program: ")
@@ -297,7 +299,7 @@ void main()
 
     /* buffers and cache */
     reallocate_buffers(cache_size);
-    m_cache = Cache<Resource_id, GLuint>(cache_size);
+    m_cache = Cache<Resource_id, Index>(cache_size);
 
     /* texture sampling buffer */
     glGenBuffers(1, &m_sampling_buffer);
@@ -472,8 +474,7 @@ std::vector<Tile_in_scaled_pic_coord>
         const Resource_id key(picture_index, tile_coordinates, zoom_level);
 
         /* no need to update priority, will update on draw */
-        GLuint const* array_index = m_cache.get(key);
-        if(array_index == nullptr)
+        if(!m_cache.get(key).has_value())
         {
             result.push_back(tile_coordinates);
         }
@@ -565,7 +566,7 @@ void Drawer_gl::Implementation::fill_missing_buffers(
 /* Buffer is expected to be in rgb_32bpp format. 64x64 rectangle will be
  * extracted from the source buffer. */
 void Drawer_gl::Implementation::fill_tile(
-        const GLuint buffer_index,
+        const Index buffer_index,
         const Picture_buffer &source_buffer,
         const Vector<Unit::pixel> offset_in_source,
         const Rectangle<Unit::pixel, Reference_point::picture> rectangle)
@@ -604,7 +605,7 @@ void Drawer_gl::Implementation::fill_tile(
                     0,
                     GL_RGBA,
                     GL_UNSIGNED_BYTE,
-                    0);
+                    nullptr);
     }
 
     const GLfloat x0 = rectangle.get_start().x();
@@ -638,7 +639,7 @@ void Drawer_gl::Implementation::fill_tile(
                     GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     }
 
     /* Buffer for generic vertex attribute 1 - texture sampling points */
@@ -646,7 +647,7 @@ void Drawer_gl::Implementation::fill_tile(
         glBindBuffer(GL_ARRAY_BUFFER, m_sampling_buffer);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     }
 
     glBindVertexArray(0);
@@ -655,35 +656,35 @@ void Drawer_gl::Implementation::fill_tile(
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 /*----------------------------------------------------------------------------*/
-GLuint Drawer_gl::Implementation::assign_buffer_index(const Resource_id key)
+Index Drawer_gl::Implementation::assign_buffer_index(const Resource_id key)
 {
     MY_ASSERT(is_initialized());
     const Index buffers_count = m_vertex_arrays.size();
     MY_ASSERT(m_cache.get_cache_size() == buffers_count);
 
-    GLuint *pointer = m_cache.get_and_update(key);
-    if(pointer == nullptr)
+    std::optional<Index> index {m_cache.get_and_update(key)};
+    if (!index.has_value())
     {
         if(m_cache.is_full())
         {
-            pointer = m_cache.pop();
+            index = m_cache.pop();
         }
         else
         {
-            pointer = &m_vertex_arrays[m_cache.get_used_slots_count()];
+            index = m_cache.get_used_slots_count();
         }
-        m_cache.push(key, pointer);
+        m_cache.push(key, Index{index.value()});
     }
-    return pointer - m_vertex_arrays.data();
+    return index.value();
 }
 /*----------------------------------------------------------------------------*/
-GLuint Drawer_gl::Implementation::get_buffer_index(const Resource_id key)
+Index Drawer_gl::Implementation::get_buffer_index(const Resource_id key)
 {
     MY_ASSERT(is_initialized());
 
-    const GLuint *pointer = m_cache.get(key);
-    MY_ASSERT(pointer);
-    return pointer - m_vertex_arrays.data();
+    auto optional_index = m_cache.get(key);
+    MY_ASSERT(optional_index.has_value());
+    return optional_index.value();
 }
 /*----------------------------------------------------------------------------*/
 Index Drawer_gl::Implementation::get_picture_zoom_levels_count(
@@ -719,7 +720,7 @@ void Drawer_gl::Implementation::check_gl_errors()
 
     while(error_code != GL_NO_ERROR)
     {
-        const char *error_name = 0;
+        const char *error_name = nullptr;
         switch(error_code)
         {
         case GL_INVALID_ENUM:

@@ -56,7 +56,7 @@ private:
     {
         Key m_key = -1;
         Time m_age = -1;
-        Data *m_data = nullptr;
+        std::optional<Data> m_data;
     };
 
 private:
@@ -72,7 +72,7 @@ public:
         return m_slots.size();
     }
 
-    Data *get(const Key key)
+    std::optional<Data> get(const Key key)
     {
         return get_or_update(key, false);
     }
@@ -84,12 +84,12 @@ public:
     }
 
     /* more efficient if done at once */
-    Data *get_and_update(const Key key)
+    std::optional<Data> get_and_update(const Key key)
     {
         return get_or_update(key, true);
     }
 
-    Data *pop()
+    Data pop()
     {
         auto iter =
                 std::max_element(
@@ -101,15 +101,15 @@ public:
                     });
         Slot &slot = *iter;
 
-        my_assert(slot.m_data, "trying to pop empty cache");
+        my_assert(slot.m_data.has_value(), "trying to pop empty cache");
 
-        Data *const result = slot.m_data;
+        Data result = slot.m_data.value();
         slot = Slot();
 
-        return result;
+        return std::move(result);
     }
 
-    void push(const Key key, Data *const data)
+    void push(const Key key, Data &&data)
     {
         auto iter =
                 std::find_if(
@@ -129,16 +129,16 @@ public:
                     std::find_if(
                         m_slots.begin(),
                         m_slots.end(),
-                        [](const Slot slot)
+                        [](const Slot &slot)
                         {
-                            return slot.m_data == nullptr;
+                            return !slot.m_data.has_value();
                         });
             my_assert(
                         empty_iter != m_slots.end(),
                         "trying to push more data than cache can hold");
 
             Slot &slot = *empty_iter;
-            slot.m_data = data;
+            slot.m_data = std::move(data);
             slot.m_key = key;
             update(slot);
         }
@@ -152,22 +152,20 @@ public:
                     m_slots.end(),
                     [](const Slot slot)
                     {
-                        return slot.m_data == nullptr;
+                        return !slot.m_data.has_value();
                     });
         return empty_iter == m_slots.end();
     }
 
 private:
-    Data *get_or_update(const Key key, bool do_update)
+    std::optional<Data> get_or_update(const Key key, bool do_update)
     {
-        auto iter =
-                std::find_if(
-                    m_slots.begin(),
-                    m_slots.end(),
-                    [key](const Slot slot)
-                    {
-                        return slot.m_key == key;
-                    });
+        auto iter = std::find_if(
+            m_slots.begin(),
+            m_slots.end(),
+            [key](const Slot slot) {
+                return slot.m_key == key && slot.m_data.has_value();
+            });
         if(iter != m_slots.end())
         {
             Slot &slot = *iter;
@@ -177,7 +175,7 @@ private:
         }
         else
         {
-            return nullptr;
+            return std::nullopt;
         }
     }
 
@@ -266,22 +264,22 @@ TEST(cache_test, push_get)
     std::vector<int> tests(2 * cache_size);
     randomize(tests.begin(), tests.end(), 15, key_range);
 
-    std::vector<int *> advanced_results;
-    std::vector<int *> primitive_results;
+    std::vector<std::optional<int *>> advanced_results;
+    std::vector<std::optional<int *>> primitive_results;
     advanced_results.reserve(5 * cache_size);
     primitive_results.reserve(5 * cache_size);
 
     {
         Timer timer("advanced");
-        Cache<int, int> advanced_cache(cache_size);
+        Cache<int, int *> advanced_cache(cache_size);
         for(int test : tests)
         {
-            int *sought_resource = advanced_cache.get_and_update(test);
+            std::optional<int*> sought_resource =
+                advanced_cache.get_and_update(test);
             advanced_results.push_back(sought_resource);
 
-            if(sought_resource)
+            if(sought_resource.has_value())
             {
-                ;
             }
             else
             {
@@ -290,23 +288,23 @@ TEST(cache_test, push_get)
                 else
                     sought_resource = &resources[test % cache_size];
 
-                advanced_cache.push(test, sought_resource);
+                advanced_cache.push(
+                    test, static_cast<int*>(sought_resource.value()));
             }
         }
     }
 
     {
         Timer timer("primitive");
-        Primitive_cache<int> primitive_cache(cache_size);
+        Primitive_cache<int *> primitive_cache(cache_size);
         for(int test : tests)
         {
-            int *sought_resource =
+            std::optional<int *> sought_resource =
                     primitive_cache.get_and_update(test);
             primitive_results.push_back(sought_resource);
 
             if(sought_resource)
             {
-                ;
             }
             else
             {
@@ -315,7 +313,8 @@ TEST(cache_test, push_get)
                 else
                     sought_resource = &resources[test % cache_size];
 
-                primitive_cache.push(test, sought_resource);
+                primitive_cache.push(
+                    test, static_cast<int*>(sought_resource.value()));
             }
         }
     }
@@ -329,27 +328,25 @@ TEST(cache_test, push_over_size)
     Cache<int, int> cache_test(cache_size);
 
     int resources[cache_size] = {1000, 1001, 1002};
-    cache_test.push(3, &resources[0]);
-    cache_test.push(7, &resources[1]);
-    cache_test.push(5, &resources[2]);
+    cache_test.push(3, int{resources[0]});
+    cache_test.push(7, int{resources[1]});
+    cache_test.push(5, int{resources[2]});
 
-
-    std::pair<int, int *> tests[] = {
-        {3, &resources[0]},
-        {4, nullptr},
-        {7, nullptr},
-        {4, &resources[1]}
+    std::pair<int, std::optional<int>> tests[] = {
+        {3, resources[0]},
+        {4, std::nullopt},
+        {7, std::nullopt},
+        {4, resources[1]}
     };
+
     for(auto test : tests)
     {
-        int *sought_resource =
-                cache_test.get_and_update(test.first);
-        my_assert(
-                    sought_resource == test.second,
-                    "unexpected resource returned in test");
-        if(sought_resource)
+        std::optional<int> sought_resource =
+            cache_test.get_and_update(test.first);
+        EXPECT_EQ(sought_resource, test.second);
+        if(sought_resource.has_value())
         {
-            ;/* resource found, just use it */
+            /* resource found, just use it */
         }
         else
         {
@@ -357,8 +354,8 @@ TEST(cache_test, push_over_size)
             /* need to produce the resource, fortunately we can reuse memory
              * allocated for the resource which is now removed from the
              * cache */
-            sought_resource = cache_test.pop();
-            cache_test.push(test.first, sought_resource);
+            int recycled_resource = cache_test.pop();
+            cache_test.push(test.first, std::move(recycled_resource));
         }
         /* use the resource */
     }
@@ -366,7 +363,7 @@ TEST(cache_test, push_over_size)
     bool test_passed = false;
     try
     {
-        cache_test.push(2, &resources[0]);
+        cache_test.push(2, int{resources[0]});
     }
     catch(std::runtime_error &)
     {
