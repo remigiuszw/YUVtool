@@ -22,8 +22,9 @@
 
 #include <yuv/trees_and_heaps.h>
 
-#include <map>
 #include <limits>
+#include <map>
+#include <numeric>
 
 namespace YUV_tool {
 /*----------------------------------------------------------------------------*/
@@ -218,14 +219,41 @@ private:
     {
         if(m_time == std::numeric_limits<Time>::max())
         {
-            Time span = m_map.size();
-            Time oldest_reference = m_time - span + 1;
-            for(Slot &slot : m_slots)
-                if(slot.m_data)
-                    slot.m_last_reference -= oldest_reference;
-            m_time -= oldest_reference;
+            struct Ordering_element {
+                Index index;
+                Time last_reference;
+            };
+            std::vector<Ordering_element> slot_order {m_slots.size()};
+            std::transform(
+                m_slots.begin(),
+                m_slots.end(),
+                slot_order.begin(),
+                [i {Index {0}}](const auto& slot) mutable {
+                    const Ordering_element result {i, slot.m_last_reference};
+                    ++i;
+                    return result;
+                });
+
+            std::sort(
+                slot_order.begin(),
+                slot_order.end(),
+                [](const auto& lhs, const auto& rhs) {
+                    return lhs.last_reference < rhs.last_reference;
+                });
+
+            m_time = 0;
+            std::for_each(
+                slot_order.begin(),
+                slot_order.end(),
+                [this](const auto& order) {
+                    m_slots[order.index].m_last_reference = m_time;
+                    ++m_time;
+                });
         }
-        m_time++;
+        else
+        {
+            ++m_time;
+        }
     }
 };
 /*----------------------------------------------------------------------------*/
