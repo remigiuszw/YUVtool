@@ -108,12 +108,6 @@ Viewer_frame::Viewer_frame() :
                 sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
     m_scroll_adapter.get_drawing_area().signal_realize().connect(
                 sigc::mem_fun(*this, &Viewer_frame::on_action_gl_context_init));
-    /* Please notice the last parameter to connect(), it makes sure handler is
-     * called _before_ the drawing area is unrealized. */
-    m_scroll_adapter.get_drawing_area().signal_unrealize().connect(
-                sigc::mem_fun(
-                    *this,
-                    &Viewer_frame::on_action_gl_context_deinit), false);
 
     m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(256, 128));
     m_box.pack_start(m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET);
@@ -124,7 +118,9 @@ Viewer_frame::Viewer_frame() :
 }
 //------------------------------------------------------------------------------
 Viewer_frame::~Viewer_frame()
-{ }
+{
+    on_action_gl_context_deinit();
+}
 //------------------------------------------------------------------------------
 void Viewer_frame::on_action_file_quit()
 {
