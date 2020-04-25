@@ -27,9 +27,10 @@ Format_chooser_widget::Format_chooser_widget() :
     add(m_box);
 
     m_box.pack_start(m_predefined_choice);
-    m_box.pack_start(m_color_space_frame);
-    m_box.pack_start(m_plane_frame);
-    m_box.pack_start(m_macropixel_frame);
+    m_box.pack_start(m_notebook);
+    m_notebook.append_page(m_color_space_frame, "Color space");
+    m_notebook.append_page(m_plane_frame, "Planes");
+    m_notebook.append_page(m_macropixel_frame, "Macropixel");
 
     /* predefined choice */
     {

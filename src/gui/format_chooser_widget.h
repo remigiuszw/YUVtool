@@ -142,6 +142,7 @@ private:
     Gtk::Box m_box;
 
     Gtk::ComboBox m_predefined_choice;
+    Gtk::Notebook m_notebook;
     Color_space_frame m_color_space_frame;
     Plane_frame m_plane_frame;
     Macropixel_frame m_macropixel_frame;
