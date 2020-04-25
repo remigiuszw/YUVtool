@@ -48,7 +48,7 @@ public:
     Gtk::GLArea &get_drawing_area();
 
 private:
-    void update_allocation();
+    void update_allocation(const Gtk::Allocation &allocation);
     void on_scroll();
 };
 

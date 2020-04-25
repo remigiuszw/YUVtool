@@ -364,8 +364,7 @@ void Viewer_frame::draw_frame()
     }
 }
 //------------------------------------------------------------------------------
-bool Viewer_frame::on_action_draw_event(
-        const Glib::RefPtr<Gdk::GLContext> &context)
+bool Viewer_frame::on_action_draw_event(const Glib::RefPtr<Gdk::GLContext>&)
 {
 //    std::cerr << "Viewer_frame::on_action_draw_event()" << std::endl;
     draw_frame();

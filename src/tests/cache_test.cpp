@@ -17,6 +17,7 @@
  * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include <memory>
 #include <yuv/Cache.h>
 
 #include <gtest/gtest.h>
@@ -370,4 +371,16 @@ TEST(cache_test, push_over_size)
         test_passed = true;
     }
     EXPECT_TRUE(test_passed);
+}
+
+TEST(cache_test, unique_pointers)
+{
+    Cache<int, std::unique_ptr<double>> cache(10);
+
+    cache.push(3, std::make_unique<double>(2));
+    cache.push(9, std::make_unique<double>(99));
+
+    std::unique_ptr<double> &x = cache.get(3).value();
+
+    EXPECT_EQ(*x, 2);
 }

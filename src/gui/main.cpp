@@ -20,7 +20,7 @@
 #include <gtkmm/main.h>
 #include "viewer_frame.h"
 
-int main( int argc, char *argv[] )
+int main(int argc, char* argv[])
 {
     using namespace YUV_tool;
 

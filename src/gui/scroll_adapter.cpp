@@ -39,9 +39,8 @@ Scroll_adapter::Scroll_adapter() :
     m_y_adjustment->signal_value_changed().connect(
             sigc::mem_fun(*this, &Scroll_adapter::on_scroll));
 
-    signal_size_allocate().connect_notify(
-            std::bind(
-                sigc::mem_fun(*this, &Scroll_adapter::update_allocation)));
+    m_drawing_area.signal_size_allocate().connect(
+                sigc::mem_fun(*this, &Scroll_adapter::update_allocation));
 
     m_drawing_area.set_hexpand();
     m_drawing_area.set_vexpand();
@@ -55,7 +54,7 @@ Scroll_adapter::Scroll_adapter() :
 void Scroll_adapter::set_internal_size(const Vector<Unit::pixel> &size)
 {
     m_internal_size = size;
-    update_allocation();
+    update_allocation(m_drawing_area.get_allocation());
 }
 /*----------------------------------------------------------------------------*/
 const Vector<Unit::pixel> &Scroll_adapter::get_internal_size() const
@@ -83,38 +82,36 @@ Gtk::GLArea &Scroll_adapter::get_drawing_area()
     return m_drawing_area;
 }
 /*----------------------------------------------------------------------------*/
-void Scroll_adapter::update_allocation()
+void Scroll_adapter::update_allocation(const Gtk::Allocation &allocation)
 {
     Gtk::Widget *child = get_child_at(0, 0);
     if(child)
     {
         m_x_adjustment->freeze_notify();
         m_y_adjustment->freeze_notify();
-        const Gtk::Allocation inner_allocation = child->get_allocation();
 
-        if(m_internal_size.x() > inner_allocation.get_width())
+        if(m_internal_size.x() > allocation.get_width())
         {
-            m_x_adjustment->set_page_size(inner_allocation.get_width());
+            m_x_adjustment->set_page_size(allocation.get_width());
             m_x_adjustment->set_upper(m_internal_size.x());
-
         }
         else
         {
-            m_x_adjustment->set_page_size(inner_allocation.get_width());
-            m_x_adjustment->set_upper(inner_allocation.get_width());
+            m_x_adjustment->set_page_size(allocation.get_width());
+            m_x_adjustment->set_upper(allocation.get_width());
             m_x_adjustment->set_value(0);
         }
 
-        if(m_internal_size.y() > inner_allocation.get_height())
+        if(m_internal_size.y() > allocation.get_height())
         {
-            m_y_adjustment->set_page_size(inner_allocation.get_height());
+            m_y_adjustment->set_page_size(allocation.get_height());
             m_y_adjustment->set_upper(m_internal_size.y());
-            m_y_adjustment->set_value(0);
         }
         else
         {
-            m_y_adjustment->set_page_size(inner_allocation.get_height());
-            m_y_adjustment->set_upper(inner_allocation.get_height());
+            m_y_adjustment->set_page_size(allocation.get_height());
+            m_y_adjustment->set_upper(allocation.get_height());
+            m_y_adjustment->set_value(0);
         }
 
         m_x_adjustment->thaw_notify();

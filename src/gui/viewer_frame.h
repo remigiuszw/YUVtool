@@ -44,7 +44,6 @@ private:
     void on_action_file_close();
     void on_action_help_info();
     void on_action_help_about();
-    void on_action_size_allocation();
     bool on_action_draw_event(const Glib::RefPtr<Gdk::GLContext> &context);
     void on_action_gl_context_init();
     void on_action_gl_context_deinit();
@@ -54,10 +53,9 @@ private:
     Glib::RefPtr<Gtk::ActionGroup> m_action_group;
     Glib::RefPtr<Gtk::UIManager> m_ui_manager;
     Gtk::Box m_box;
+    Yuv_file m_yuv_file;
     Drawer_gl m_drawer_gl;
     Scroll_adapter m_scroll_adapter;
-
-    Yuv_file m_yuv_file;
 };
 
 } /* namespace YUV_tool */

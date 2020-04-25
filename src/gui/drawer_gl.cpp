@@ -195,7 +195,7 @@ Drawer_gl::Implementation::Implementation() :
 /*----------------------------------------------------------------------------*/
 Drawer_gl::Implementation::~Implementation()
 {
-    if(m_initialized)
+    if (m_initialized)
         deinitialize();
 }
 /*----------------------------------------------------------------------------*/
@@ -744,13 +744,8 @@ void Drawer_gl::Implementation::check_gl_errors()
     }
 }
 /*----------------------------------------------------------------------------*/
-Drawer_gl::Drawer_gl() :
-    m_implementation(new Implementation)
-{
-    my_assert(
-                m_implementation.get(),
-                "failed to allocate Drawer_gl::Implementation");
-}
+Drawer_gl::Drawer_gl() : m_implementation(std::make_unique<Implementation>())
+{ }
 /*----------------------------------------------------------------------------*/
 Drawer_gl::~Drawer_gl()
 { }
@@ -781,10 +776,7 @@ void Drawer_gl::draw(
             visible_area,
         const float scale)
 {
-    m_implementation->draw(
-                frame_number,
-                visible_area,
-                scale);
+    m_implementation->draw(frame_number, visible_area, scale);
 }
 /*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */
