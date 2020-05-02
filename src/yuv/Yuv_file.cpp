@@ -1,3 +1,22 @@
+/* 
+ * Copyright 2015 Dominik Wójt
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <yuv/Yuv_file.h>
 #include <yuv/Errors.h>
 
@@ -12,7 +31,7 @@ Yuv_file::Yuv_file() :
 }
 //------------------------------------------------------------------------------
 Yuv_file::Yuv_file(
-        const boost::filesystem::path &path,
+        const std::filesystem::path &path,
         const std::ios_base::openmode mode) :
     m_path(path),
     m_parameters_valid(false)
@@ -27,7 +46,7 @@ bool Yuv_file::is_open() const
 }
 //------------------------------------------------------------------------------
 void Yuv_file::open(
-        const boost::filesystem::path &path,
+        const std::filesystem::path &path,
         const std::ios_base::openmode mode)
 {
     std::cout << "TYUV_file::TYUV_file(const std::string file_name)\n";
@@ -68,12 +87,12 @@ Bit_position Yuv_file::get_frame_size()
     return m_buffer_parameters.get_buffer_size();
 }
 //------------------------------------------------------------------------------
-int Yuv_file::get_frames_count()
+Index Yuv_file::get_frames_count()
 {
     return Bit_position(m_file_size, 0) / get_frame_size();
 }
 //------------------------------------------------------------------------------
-void Yuv_file::set_frames_count(const int i)
+void Yuv_file::set_frames_count(const Index i)
 {
     my_assert(get_frames_count() <= i, "file truncation not yet supported");
     while(get_frames_count() < i)
@@ -87,7 +106,7 @@ void Yuv_file::set_frames_count(const int i)
 }
 //------------------------------------------------------------------------------
 Picture_buffer Yuv_file::extract_buffer(
-        int picture_number,
+        Index picture_number,
         const Coordinates<Unit::pixel, Reference_point::picture> &start,
         const Coordinates<Unit::pixel, Reference_point::picture> &end)
 {
@@ -126,20 +145,20 @@ Picture_buffer Yuv_file::extract_buffer(
     const Bit_position picture_size = get_frame_size();
     const Bit_position picture_offset = picture_number * picture_size;
 
-    const int planes_count = pixel_format.m_planes.size();
-    for(int plane_idx = 0; plane_idx < planes_count; plane_idx++)
+    const Index planes_count = pixel_format.planes.size();
+    for(Index plane_idx = 0; plane_idx < planes_count; plane_idx++)
     {
         Bit_position plane_offset =
                 m_buffer_parameters.get_plane_offset(plane_idx);
-        const int pixel_rows_in_macropixel_in_plane =
+        const Index pixel_rows_in_macropixel_in_plane =
                 m_buffer_parameters.get_entry_rows_count_in_plane(plane_idx);
         const Bit_position macropixel_row_in_plane_size_in_bits =
                 m_buffer_parameters.get_macropixel_row_in_plane_size(plane_idx);
-        for(int buffer_macropixel_row = 0;
+        for(Index buffer_macropixel_row = 0;
             buffer_macropixel_row < buffer_size_in_macropixels.y();
             buffer_macropixel_row++)
         {
-            const int macropixel_row =
+            const Index macropixel_row =
                     cast_to_macropixels(
                         start,
                         macropixel_size,
@@ -148,11 +167,11 @@ Picture_buffer Yuv_file::extract_buffer(
             const Bit_position macropixel_row_offset =
                     macropixel_row_in_plane_size_in_bits * macropixel_row;
             Bit_position row_in_macropixel_offset = 0;
-            for(int row_in_macropixel = 0;
+            for(Index row_in_macropixel = 0;
                 row_in_macropixel < pixel_rows_in_macropixel_in_plane;
                 row_in_macropixel++)
             {
-                const Bit_position bits_per_entry_row_in_plane =
+                const Bit_position bits_per_entry_in_row_in_plane =
                         m_buffer_parameters.get_bits_per_macropixel_in_row_in_plane(
                             plane_idx, row_in_macropixel);
                 const Bit_position x_position_offset =
@@ -160,10 +179,10 @@ Picture_buffer Yuv_file::extract_buffer(
                             start,
                             macropixel_size,
                             dummy_vector).x()
-                        * bits_per_entry_row_in_plane;
+                        * bits_per_entry_in_row_in_plane;
                 const Bit_position read_length =
                         buffer_size_in_macropixels.x()
-                        * bits_per_entry_row_in_plane;
+                        * bits_per_entry_in_row_in_plane;
                 const Bit_position offset =
                         picture_offset
                         + plane_offset
@@ -182,7 +201,7 @@ Picture_buffer Yuv_file::extract_buffer(
                         read_length.get_bytes());
 
                 row_in_macropixel_offset +=
-                        bits_per_entry_row_in_plane *
+                        bits_per_entry_in_row_in_plane *
                         picture_size_in_macropixels.x();
                 offset_in_buffer += read_length;
             }
@@ -193,7 +212,7 @@ Picture_buffer Yuv_file::extract_buffer(
 //------------------------------------------------------------------------------
 void Yuv_file::insert_buffer(
         const Picture_buffer &buffer,
-        int picture_number,
+        Index picture_number,
         const Coordinates<Unit::pixel, Reference_point::picture> &start,
         const Coordinates<Unit::pixel, Reference_point::picture> &end)
 {
@@ -236,20 +255,20 @@ void Yuv_file::insert_buffer(
     const Bit_position picture_size = get_frame_size();
     const Bit_position picture_offset = picture_number * picture_size;
 
-    const int planes_count = pixel_format.m_planes.size();
-    for(int plane_idx = 0; plane_idx < planes_count; plane_idx++)
+    const Index planes_count = pixel_format.planes.size();
+    for(Index plane_idx = 0; plane_idx < planes_count; plane_idx++)
     {
         Bit_position plane_offset =
                 m_buffer_parameters.get_plane_offset(plane_idx);
-        const int pixel_rows_in_macropixel_in_plane =
+        const Index pixel_rows_in_macropixel_in_plane =
                 m_buffer_parameters.get_entry_rows_count_in_plane(plane_idx);
         const Bit_position macropixel_row_in_plane_size_in_bits =
                 m_buffer_parameters.get_macropixel_row_in_plane_size(plane_idx);
-        for(int buffer_macropixel_row = 0;
+        for(Index buffer_macropixel_row = 0;
             buffer_macropixel_row < buffer_size_in_macropixels.y();
             buffer_macropixel_row++)
         {
-            const int macropixel_row =
+            const Index macropixel_row =
                     cast_to_macropixels(
                         start,
                         macropixel_size,
@@ -258,7 +277,7 @@ void Yuv_file::insert_buffer(
             const Bit_position macropixel_row_offset =
                     macropixel_row_in_plane_size_in_bits * macropixel_row;
             Bit_position row_in_macropixel_offset = 0;
-            for(int row_in_macropixel = 0;
+            for(Index row_in_macropixel = 0;
                 row_in_macropixel < pixel_rows_in_macropixel_in_plane;
                 row_in_macropixel++)
             {

@@ -1,7 +1,27 @@
-#include <gui/viewer_frame.h>
-#include <gui/format_chooser_dialog.h>
+/* 
+ * Copyright 2015, 2016 Dominik Wójt
+ * Copyright 2015 Remigiusz Wilmont
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+#include <viewer_frame.h>
+#include <resolution_and_format_dialog.h>
+#include <yuv/Errors.h>
 
-#include <SFML/OpenGL.hpp>
 #include <gtkmm/stock.h>
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/socket.h>
@@ -14,6 +34,8 @@ namespace YUV_tool {
 Viewer_frame::Viewer_frame() :
     m_box(Gtk::ORIENTATION_VERTICAL)
 {
+    m_drawer_gl.attach_yuv_file(&m_yuv_file);
+
     /* File menu action group */
     m_action_group = Gtk::ActionGroup::create();
     m_action_group->add(
@@ -82,12 +104,12 @@ Viewer_frame::Viewer_frame() :
     Gtk::Widget *tool_bar = m_ui_manager->get_widget("/tool_bar");
     m_box.pack_start( *tool_bar, Gtk::PACK_SHRINK );
 
-    m_scroll_adapter.signal_update_viewport().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_size_allocation));
-    m_scroll_adapter.signal_update_drawing().connect(
-            sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
+    m_scroll_adapter.get_drawing_area().signal_render().connect(
+                sigc::mem_fun(*this, &Viewer_frame::on_action_draw_event));
+    m_scroll_adapter.get_drawing_area().signal_realize().connect(
+                sigc::mem_fun(*this, &Viewer_frame::on_action_gl_context_init));
 
-    m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(300, 300));
+    m_scroll_adapter.set_internal_size(Vector<Unit::pixel>(256, 128));
     m_box.pack_start(m_scroll_adapter, Gtk::PACK_EXPAND_WIDGET);
 
     add(m_box);
@@ -96,7 +118,9 @@ Viewer_frame::Viewer_frame() :
 }
 //------------------------------------------------------------------------------
 Viewer_frame::~Viewer_frame()
-{ }
+{
+    on_action_gl_context_deinit();
+}
 //------------------------------------------------------------------------------
 void Viewer_frame::on_action_file_quit()
 {
@@ -104,7 +128,10 @@ void Viewer_frame::on_action_file_quit()
 }
 //------------------------------------------------------------------------------
 namespace {
-void print_gdk_window(std::ostream &os, const std::string &name, const Glib::RefPtr<Gdk::Window> window)
+void print_gdk_window(
+        std::ostream &os,
+        const std::string &name,
+        const Glib::RefPtr<Gdk::Window> window)
 {
     int x, y;
     window->get_position(x, y);
@@ -221,17 +248,22 @@ void Viewer_frame::on_action_file_open()
         std::cerr << "failed to open file: " << file_name << '\n';
     }
 
-    {
-        Format_chooser_dialog format_dialog(
-                    *this,
-                    m_yuv_file.get_pixel_format());
+    /* TODO: remove hardcoded value */
+    m_yuv_file.set_resolution({176, 144});
 
-        const int result = format_dialog.run();
+    {
+        Resolution_and_format_dialog dialog(*this);
+        dialog.set_pixel_format(m_yuv_file.get_pixel_format());
+        dialog.set_resolution(m_yuv_file.get_resolution());
+
+        const int result = dialog.run();
 
         switch(result)
         {
         case Gtk::RESPONSE_OK:
-            m_yuv_file.set_pixel_format(format_dialog.get_pixel_format());
+            m_yuv_file.set_resolution(dialog.get_resolution());
+            m_yuv_file.set_pixel_format(dialog.get_pixel_format());
+            m_scroll_adapter.set_internal_size(m_yuv_file.get_resolution());
             break;
         case Gtk::RESPONSE_CANCEL:
             return;
@@ -299,88 +331,56 @@ void Viewer_frame::on_action_help_about()
     dialog.run();
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_size_allocation()
-{
-//    std::cerr << "Viewer_frame::on_action_size_allocation()" << std::endl;
-    const Gdk::Rectangle visible_area =
-            m_scroll_adapter.get_visible_area();
-    const Vector<Unit::pixel> internal_size =
-            m_scroll_adapter.get_internal_size();
-    const int width = std::min(visible_area.get_width(), internal_size.x());
-    const int height = std::min(visible_area.get_height(), internal_size.y());
-    const int x0 = visible_area.get_x();
-    const int y0 = visible_area.get_y();
-    const int bottom_margin = visible_area.get_height() - height;
-
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
-    glViewport(0, bottom_margin, width, height);
-
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    glOrtho(x0, x0 + width, y0 + height, y0, -1, 1);
-
-    glClearColor(0.0f, 0.5f, 0.0f, 0.0f);
-    glDisable(GL_DEPTH_TEST);
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
-}
-//------------------------------------------------------------------------------
-void Viewer_frame::draw_triangle()
-{
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
-    glClearColor( 0.0, 0.0, 0.5, 0.0 );
-    glClear( GL_COLOR_BUFFER_BIT );
-
-    glColor3f( 1.0, 1.0, 1.0 );
-    glBegin( GL_TRIANGLES );
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 300.0, 0.0);
-    glVertex3f(300.0, 0.0, 0.0);
-    glEnd();
-
-    glColor3f( 0.0, 1.0, 0.0 );
-    glBegin( GL_TRIANGLES );
-    glVertex3f(0.0, 300.0, 0.0);
-    glVertex3f(300.0, 300.0, 0.0);
-    glVertex3f(300.0, 0.0, 0.0);
-    glEnd();
-
-    glFlush();
-    m_scroll_adapter.display();
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
-}
-//------------------------------------------------------------------------------
 void Viewer_frame::draw_frame()
 {
-    if(!m_scroll_adapter.set_active(true))
-        return;
-
-    glClearColor( 0.0, 0.0, 0.0, 0.0 );
-    glClear( GL_COLOR_BUFFER_BIT );
-    glEnable( GL_TEXTURE_2D );
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
-
-    m_drawer_gl.draw( m_yuv_file, 0, m_scroll_adapter );
-
-    glFlush();
-    m_scroll_adapter.display();
-
-    if(!m_scroll_adapter.set_active(false))
-        return;
+    if(
+            m_yuv_file.is_open()
+            && m_yuv_file.get_pixel_format().macropixel_coding.size.x() > 0)
+    {
+        try
+        {
+            const Gdk::Rectangle visible_area =
+                    m_scroll_adapter.get_visible_area();
+            const Coordinates<Unit::pixel, Reference_point::scaled_picture>
+                    visible_area_start(
+                        visible_area.get_x(),
+                        visible_area.get_y());
+            const Vector<Unit::pixel> visible_area_size(
+                        visible_area.get_width(),
+                        visible_area.get_height());
+            m_drawer_gl.draw(
+                        0,
+                        make_rectangle(visible_area_start, visible_area_size),
+                        1.0);
+        }
+        catch(...)
+        {
+            std::cerr << "failed to draw picture";
+            my_assert(
+                        false,
+                        "TODO: The picture might have changed or be deleted. "
+                        "Try to reload a file and, if fail, close it");
+        }
+    }
 }
 //------------------------------------------------------------------------------
-void Viewer_frame::on_action_draw_event()
+bool Viewer_frame::on_action_draw_event(const Glib::RefPtr<Gdk::GLContext>&)
 {
 //    std::cerr << "Viewer_frame::on_action_draw_event()" << std::endl;
-    draw_triangle();
-    //draw_frame();
+    draw_frame();
+    return true;
 }
-
+/*----------------------------------------------------------------------------*/
+void Viewer_frame::on_action_gl_context_init()
+{
+    m_scroll_adapter.get_drawing_area().make_current();
+    m_drawer_gl.initialize(32);
+}
+/*----------------------------------------------------------------------------*/
+void Viewer_frame::on_action_gl_context_deinit()
+{
+    m_scroll_adapter.get_drawing_area().make_current();
+    m_drawer_gl.deinitialize();
+}
+/*----------------------------------------------------------------------------*/
 } /* namespace YUV_tool */

@@ -1,3 +1,22 @@
+/* 
+ * Copyright 2015 Dominik Wójt
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #ifndef PICTURE_BUFFER_H
 #define PICTURE_BUFFER_H
 
@@ -14,7 +33,6 @@ public:
     Picture_buffer(
             const Vector<Unit::pixel> &resolution,
             const Pixel_format &pixel_format);
-    ~Picture_buffer();
     void allocate(
             const Vector<Unit::pixel> &resolution,
             const Pixel_format &pixel_format);
@@ -28,11 +46,11 @@ public:
     int get_entry(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            int component_index) const;
+            Index component_index) const;
     void set_entry(
             const Coordinates<Unit::pixel, Reference_point::picture>
                 &coordinates,
-            int component_index,
+            Index component_index,
             int value);
     void convert_color_space(const Color_space &color_space);
 
