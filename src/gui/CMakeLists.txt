@@ -33,3 +33,5 @@ target_link_libraries(
         yuv
         PkgConfig::gtkmm-3.0
         PkgConfig::epoxy)
+
+install(TARGETS yuvtool RUNTIME DESTINATION bin)
