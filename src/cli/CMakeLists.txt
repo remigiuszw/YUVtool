@@ -1,13 +1,7 @@
-include_directories( ${YUVtool_SOURCE_DIR}/src/yuv )
-link_directories( ${YUVtool_BINARY_DIR}/src/yuv )
+project(cli)
 
-set( CPP_SOURCE_FILES
-  main.cpp
-)
+add_executable(yuvtool_cli)
+target_sources(yuvtool_cli PRIVATE main.cpp)
+target_link_libraries(yuvtool_cli PRIVATE yuv)
 
-set( HEADER_FILES
-)
-
-add_executable( yuvtool_cli ${CPP_SOURCE_FILES} ${HEADER_FILES} )
-
-target_link_libraries( yuvtool_cli yuv )
+install(TARGETS yuvtool_cli RUNTIME DESTINATION bin)

@@ -1,49 +1,35 @@
-find_package( Inkscape REQUIRED )
-find_package( LATEX REQUIRED )
-include( UseLATEX )
+# copied from: https://eb2.co/blog/2012/03/sphinx-and-cmake-beautiful-documentation-for-c-projects/
+# Author: Eric Scott Barr
 
-set( DEV_DOC_INKSCAPE_IMAGES
-  GUI/images/YUV_view_window.svg
-  implementation/images/entries_in_plane.svg
-)
-
-foreach( file ${DEV_DOC_INKSCAPE_IMAGES} )
-  get_filename_component( file_we ${file} NAME_WE )
-  get_filename_component( file_path ${file} PATH )
-  set( file_path_we ${file_path}/${file_we} )
-  add_custom_command(
-    OUTPUT
-      ${CMAKE_CURRENT_BINARY_DIR}/${file_path_we}.pdf_tex
-      ${CMAKE_CURRENT_BINARY_DIR}/${file_path_we}.pdf
-    DEPENDS
-      ${CMAKE_CURRENT_SOURCE_DIR}/${file_path_we}.svg
-    COMMAND
-      ${CMAKE_COMMAND}
-    ARGS
-      -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${file_path}
-    COMMAND
-      ${INKSCAPE_EXECUTABLE}
-    ARGS
-      -D
-      -z
-      --file=${CMAKE_CURRENT_SOURCE_DIR}/${file_path_we}.svg
-      --export-pdf=${CMAKE_CURRENT_BINARY_DIR}/${file_path_we}.pdf
-      --export-latex
-  )
-  set( DEV_DOC_INKSCAPE_IMAGES_PDF
-    ${DEV_DOC_INKSCAPE_IMAGES_PDF}
-    ${CMAKE_CURRENT_BINARY_DIR}/${file_path_we}.pdf
-    ${CMAKE_CURRENT_BINARY_DIR}/${file_path_we}.pdf_tex
-  )
-endforeach()
-
-add_latex_document(
-    YUVtool_developers_documentation.tex
-  INPUTS
-    Introduction.tex
-    GUI/GUI.tex
-    implementation/implementation.tex
-  DEPENDS
-    ${DEV_DOC_INKSCAPE_IMAGES_PDF}
-  DEFAULT_PDF
-)
+find_package(Sphinx REQUIRED)
+ 
+if(NOT DEFINED SPHINX_THEME)
+    set(SPHINX_THEME default)
+endif()
+ 
+if(NOT DEFINED SPHINX_THEME_DIR)
+    set(SPHINX_THEME_DIR)
+endif()
+ 
+# configured documentation tools and intermediate build results
+set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
+ 
+# Sphinx cache with pickled ReST documents
+set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
+ 
+# HTML output directory
+set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/html")
+ 
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in"
+    "${BINARY_BUILD_DIR}/conf.py"
+    @ONLY)
+ 
+add_custom_target(my_project_docs ALL
+    ${SPHINX_EXECUTABLE}
+        -q -b html
+        -c "${BINARY_BUILD_DIR}"
+        -d "${SPHINX_CACHE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${SPHINX_HTML_DIR}"
+    COMMENT "Building HTML documentation with Sphinx")

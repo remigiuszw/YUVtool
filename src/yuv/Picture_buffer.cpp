@@ -1,5 +1,25 @@
+/* 
+ * Copyright 2015 Dominik Wójt
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <yuv/Picture_buffer.h>
 #include <yuv/Errors.h>
+#include <yuv/saturable_fixed.h>
 
 #include <Eigen/Dense>
 #include <algorithm>
@@ -45,10 +65,6 @@ Picture_buffer::Picture_buffer(
         const Pixel_format &pixel_format)
 {
     allocate(resolution, pixel_format);
-}
-//------------------------------------------------------------------------------
-Picture_buffer::~Picture_buffer()
-{
 }
 //------------------------------------------------------------------------------
 void Picture_buffer::allocate(
@@ -140,7 +156,7 @@ const std::vector< Byte > &Picture_buffer::get_data() const
 //------------------------------------------------------------------------------
 int Picture_buffer::get_entry(
         const Coordinates<Unit::pixel, Reference_point::picture> &coordinates,
-        const int component_index) const
+        const Index component_index) const
 {
     Bit_position start =
             get_parameters().get_entry_offset(coordinates, component_index);
@@ -151,7 +167,7 @@ int Picture_buffer::get_entry(
 //------------------------------------------------------------------------------
 void Picture_buffer::set_entry(
         const Coordinates<Unit::pixel, Reference_point::picture> &coordinates,
-        const int component_index,
+        const Index component_index,
         const int value)
 {
     Bit_position start =
@@ -168,81 +184,90 @@ void Picture_buffer::convert_color_space(
             m_parameters.is_expanded(),
             "color space conversion of not expanded pixel formats is not "
             "supported");
-    if(color_space == m_parameters.get_pixel_format().m_color_space)
+    if(color_space == m_parameters.get_pixel_format().color_space)
         return;
     const auto &input_components =
-            m_parameters.get_pixel_format().m_color_space.m_components;
-    const auto &output_components =
-            color_space.m_components;
-    const int input_components_count = input_components.size();
-    const int output_components_count = output_components.size();
+            m_parameters.get_pixel_format().color_space.components;
+    const auto &output_components = color_space.components;
+    const Index input_components_count = input_components.size();
+    const Index output_components_count = output_components.size();
 
-    Eigen::Matrix4d input_matrix;
-    Eigen::Matrix4d output_matrix;
-    for(int i = 0; i < Rgba_component_count; i++)
+    using Matrix4sf = Eigen::Matrix<saturable_fixed, 4, 4>;
+    using Vector4sf = Eigen::Matrix<saturable_fixed, 4, 1>;
+    Matrix4sf input_matrix;
+    Matrix4sf output_matrix;
+    for(Index i = 0; i < Rgba_component_count; i++)
     {
-        for(int j = 0; j < Rgba_component_count; j++)
+        for(Index j = 0; j < Rgba_component_count; j++)
         {
             if(i < input_components_count)
-                input_matrix(i, j) = input_components[i].m_coeff[j];
+                input_matrix(i, j) = input_components[i].coeff[j];
             else
                 input_matrix(i, j) = (i == j) ? 1 : 0;
             if(i < output_components_count)
-                output_matrix(i, j) = output_components[i].m_coeff[j];
+                output_matrix(i, j) = output_components[i].coeff[j];
             else
                 output_matrix(i, j) = (i == j) ? 1 : 0;
         }
     }
-    Eigen::Matrix4d combined_matrix =
-            output_matrix * input_matrix.inverse();
+    Matrix4sf combined_matrix = output_matrix * input_matrix.inverse();
 
     /* TODO: combine all the operations into one matrix multiplication and one
      * vector addition */
 
-    for(const auto &xy : m_parameters.get_pixel_range())
+    for(const auto xy : m_parameters.get_pixel_range())
     {
-        Eigen::Vector4d input;
-        for(int i = 0; i < Rgba_component_count; i++)
+        Vector4sf input;
+        for(Index i = 0; i < Rgba_component_count; i++)
         {
             if(i >= input_components_count)
             {
                 input(i) = 1;
                 continue;
             }
-            const int quantized_input = get_entry(xy, i);
-            const int input_width =
+            const Index quantized_input = get_entry(xy, i);
+            const Index input_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
             const Component &input_component = input_components[i];
-            const double (&valid_range)[2] = input_component.m_valid_range;
-            const double (&encoded_range)[2] = input_component.m_encoded_range;
+            const std::array<saturable_fixed, 2> &valid_range =
+                    input_component.valid_range;
+            const std::array<saturable_fixed, 2> &encoded_range =
+                    input_component.coded_range;
             /* the maximal value ((1 << input_width) - 1) represents 1 */
-            const double input_in_encoded_range =
-                    static_cast<double>(quantized_input)
+            const saturable_fixed input_in_encoded_range =
+                    saturable_fixed(quantized_input)
                     / ((1 << input_width) - 1);
-            const double input_in_0_to_1 =
+            const saturable_fixed input_in_0_to_1 =
                     (input_in_encoded_range - encoded_range[0])
                     / (encoded_range[1] - encoded_range[0]);
             input[i] =
-                    input_in_0_to_1 * (valid_range[1] - valid_range[0])
-                    + valid_range[0];
+                        input_in_0_to_1 * (valid_range[1] - valid_range[0])
+                        + valid_range[0];
         }
-        Eigen::Vector4d output = combined_matrix * input;
-        for(int i = 0; i < output_components_count; i++)
+        Vector4sf output = combined_matrix * input;
+        for(Index i = 0; i < output_components_count; i++)
         {
             const Component &output_component = output_components[i];
-            const double (&valid_range)[2] = output_component.m_valid_range;
-            const double (&encoded_range)[2] = output_component.m_encoded_range;
-            const double output_in_0_to_1 =
+            const std::array<saturable_fixed, 2> &valid_range =
+                    output_component.valid_range;
+            const std::array<saturable_fixed, 2> &encoded_range =
+                    output_component.coded_range;
+            saturable_fixed output_in_0_to_1 =
                     (output[i] - valid_range[0])
                     / (valid_range[1] - valid_range[0]);
-            const double output_in_encoded_range =
+            output_in_0_to_1 =
+                    std::max<saturable_fixed>(
+                        std::min<saturable_fixed>(1, output_in_0_to_1),
+                        0);
+            const saturable_fixed output_in_encoded_range =
                     output_in_0_to_1 * (encoded_range[1] - encoded_range[0])
                     + encoded_range[0];
-            const int output_width =
+            const Index output_width =
                     m_parameters.get_bits_per_entry(xy, i).get_position();
-            const int quantized_output =
-                    std::round(
-                        output_in_encoded_range * ((1 << output_width) - 1));
+            const Index quantized_output =
+                    (
+                        output_in_encoded_range
+                        * ((1 << output_width) - 1)).to_int_round();
             set_entry(xy, i, quantized_output);
         }
     }
@@ -321,7 +346,7 @@ Picture_buffer convert(
         const Pixel_format &pixel_format)
 {
     Picture_buffer expanded = expand_sampling(source);
-    expanded.convert_color_space(pixel_format.m_color_space);
+    expanded.convert_color_space(pixel_format.color_space);
     return subsample(expanded, pixel_format);
 }
 //------------------------------------------------------------------------------
@@ -345,22 +370,22 @@ Picture_buffer expand_sampling(const Picture_buffer &source)
             == source.get_resolution(),
             "not supported yet");
 
-    for(int iy = 0; iy < size_in_macropixels.y(); iy++)
+    for(Index iy = 0; iy < size_in_macropixels.y(); iy++)
     {
-        for(int jy = 0; jy < macropixel_size.y(); jy++)
+        for(Index jy = 0; jy < macropixel_size.y(); jy++)
         {
-            for(int ix = 0; ix < size_in_macropixels.x(); ix++)
+            for(Index ix = 0; ix < size_in_macropixels.x(); ix++)
             {
-                for(int jx = 0; jx < macropixel_size.x(); jx++)
+                for(Index jx = 0; jx < macropixel_size.x(); jx++)
                 {
                     const Coordinates<Unit::pixel, Reference_point::picture>
                             coordinates(
                                 ix * macropixel_size.x() + jx,
                                 iy * macropixel_size.y() + jy);
-                    const int components_count =
+                    const Index components_count =
                             source_parameters.get_components_count();
                     for(
-                            int component_index = 0;
+                            Index component_index = 0;
                             component_index < components_count;
                             component_index++)
                     {
@@ -413,23 +438,23 @@ Picture_buffer subsample(
             cast_to_pixels(size_in_macropixels, macropixel_size)
             == source.get_resolution(),
             "not supported yet");
-    const int planes_count = subsampled_parameters.get_planes_count();
+    const Index planes_count = subsampled_parameters.get_planes_count();
 
-    for(int plane_index = 0; plane_index < planes_count; plane_index++)
+    for(Index plane_index = 0; plane_index < planes_count; plane_index++)
     {
-        for(int my = 0; my < size_in_macropixels.y(); my++)
+        for(Index my = 0; my < size_in_macropixels.y(); my++)
         {
-            const int entry_rows_count_in_plane =
+            const Index entry_rows_count_in_plane =
                     subsampled_parameters.get_entry_rows_count_in_plane(
                         plane_index);
             for(
-                    int row_index = 0;
+                    Index row_index = 0;
                     row_index < entry_rows_count_in_plane;
                     row_index++)
             {
-                for(int mx = 0; mx < size_in_macropixels.x(); mx++)
+                for(Index mx = 0; mx < size_in_macropixels.x(); mx++)
                 {
-                    const int entries_in_row_count =
+                    const Index entries_in_row_count =
                         subsampled_parameters.get_entry_count_in_row_in_plane(
                                 plane_index,
                                 row_index);
@@ -437,7 +462,7 @@ Picture_buffer subsample(
                             Unit::macropixel,
                             Reference_point::picture> macropixel(mx, my);
                     for(
-                            int entry_index = 0;
+                            Index entry_index = 0;
                             entry_index < entries_in_row_count;
                             entry_index++)
                     {
@@ -455,7 +480,7 @@ Picture_buffer subsample(
                                         macropixel,
                                         macropixel_size,
                                         sampling_point);
-                        const int component_index =
+                        const Index component_index =
                                 subsampled_parameters.get_sampled_component(
                                     plane_index,
                                     row_index,

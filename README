@@ -3,11 +3,11 @@ YUVtool - application for viewing raw video sequences
 This is work in progress. Application is not usable in the current state.
 
 Build requirements:
-- cmake 3.0 or later
-- c++ compiler supporting C++11
+- cmake 3.12 or later
+- c++ compiler supporting C++17
 - gtkmm dev libraries 3.18 or later
-- sfml dev libraries 2.1 or later
+- libepoxy
+- libtinyxml2
 
 Additionally, to build developers documentation, these are required:
-- latex(babel with english and polish support, pdftex)
-- inkscape
+- sphinx

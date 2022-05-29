@@ -1,33 +1,42 @@
-set(Boost_USE_STATIC_LIBS        ON)
-set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME    OFF)
+project(yuv)
 
-find_package(
-    Boost
-    REQUIRED
-    COMPONENTS filesystem system)
-include_directories(${Boost_INCLUDE_DIRS})
+find_package(Eigen3 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(tinyxml2 REQUIRED tinyxml2 IMPORTED_TARGET)
 
-find_package(
-    Eigen3
-    REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+add_library(yuv)
 
-set(CPP_SOURCE_FILES
-    Errors.cpp
-    Picture_buffer.cpp
-    Pixel_format.cpp
-    Yuv_file.cpp
-)
+target_sources(
+    yuv
+    PRIVATE
+        Errors.cpp
+        Picture_buffer.cpp
+        Pixel_format.cpp
+        saturable_fixed.cpp
+        Yuv_file.cpp
+        xml_metadata.cpp
+        include/yuv/Cache.h
+        include/yuv/Coordinates.h
+        include/yuv/Errors.h
+        include/yuv/saturable_fixed.h
+        include/yuv/Picture_buffer.h
+        include/yuv/Pixel_format.h
+        include/yuv/saturable_fixed.h
+        include/yuv/trees_and_heaps.h
+        include/yuv/utils.h
+        include/yuv/xml_metadata.h
+        include/yuv/Yuv_file.h)
 
-set(HEADER_FILES
-    Coordinates.h
-    Errors.h
-    Picture_buffer.h
-    Pixel_format.h
-    utils.h
-    Yuv_file.h
-)
+target_include_directories(
+    yuv
+    PUBLIC
+        include
+    PRIVATE
+        .)
 
-add_library(yuv ${CPP_SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(yuv ${Boost_LIBRARIES})
+target_link_libraries(
+    yuv
+    PUBLIC
+        Eigen3::Eigen
+        PkgConfig::tinyxml2
+        stdc++fs)

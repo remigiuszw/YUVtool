@@ -1,7 +1,27 @@
-#include <iostream>
-#include "Errors.h"
+/* 
+ * Copyright 2015 Dominik Wójt
+ * 
+ * This file is part of YUVtool.
+ * 
+ * YUVtool is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * YUVtool is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with YUVtool.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-#include "Yuv_file.h"
+#include <yuv/Errors.h>
+#include <yuv/Yuv_file.h>
+
+#include <iostream>
 
 void print_stream_info(YUV_tool::Yuv_file &yuv_file)
 {
@@ -58,7 +78,7 @@ int main(int argc, char *argv[]) try
             throw GeneralError(help_string);
 
         Yuv_file input_file(argv[4]);
-        Yuv_file output_file(argv[5], std::ios::in|std::ios::out);
+        Yuv_file output_file(argv[5], std::ios::out);
 
         Vector<Unit::pixel> resolution;
         resolution.set_x(std::atoi(argv[2]));
